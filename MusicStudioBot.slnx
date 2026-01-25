@@ -3,4 +3,5 @@
     <Project Path="src/IdentityService/IdentityService.csproj" />
   </Folder>
   <Folder Name="/tests/" />
+  <Project Path="RoomService/RoomService.csproj" Id="420613ee-c8bf-423e-a619-6728593e0a2c" />
 </Solution>
