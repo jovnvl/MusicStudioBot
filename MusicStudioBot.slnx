@@ -1,7 +1,9 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/IdentityService/IdentityService.csproj" />
+  <Folder Name="/docker/">
+    <File Path="docker-compose.yml" />
   </Folder>
-  <Folder Name="/tests/" />
-  <Project Path="RoomService/RoomService.csproj" Id="420613ee-c8bf-423e-a619-6728593e0a2c" />
+  <Folder Name="/src/">
+    <Project Path="IdentityService/IdentityService.csproj" Id="792c384a-024f-4284-97df-fa24dc6da6c3" />
+    <Project Path="RoomService/RoomService.csproj" Id="420613ee-c8bf-423e-a619-6728593e0a2c" />
+  </Folder>
 </Solution>
