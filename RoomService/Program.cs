@@ -19,6 +19,11 @@ namespace RoomService
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+
+                //app.UseSwaggerUI(options =>
+                //{
+                //    options.SwaggerEndpoint("/openapi/v1.json", "RoomService API v1");
+                //});
             }
 
             app.UseHttpsRedirection();
@@ -27,6 +32,8 @@ namespace RoomService
 
 
             app.MapControllers();
+
+            //app.MapGet("/", () => "RoomService API is running. Use /swagger for API documentation.");
 
             app.Run();
         }
