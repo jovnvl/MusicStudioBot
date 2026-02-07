@@ -1,4 +1,7 @@
 
+using RoomService.Repositories;
+using RoomService.Services;
+
 namespace RoomService
 {
     public class Program
@@ -6,6 +9,8 @@ namespace RoomService
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddScoped<IRoomsService, RoomsService>();
+            builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
 
             // Add services to the container.
 

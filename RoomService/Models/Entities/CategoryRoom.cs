@@ -2,10 +2,10 @@
 
 namespace RoomService.Models.Entities
 {
-    public class CategoryRoom
+    public class CategoryRoomDto
     {
-        int Id { get; }
-        string? Name { get; set; }
-        string? Description { get; set; }
+        public int Id { get; }
+        public string? Name { get; private set; }
+        public  string? Description { get; private set; }
     }
 }
