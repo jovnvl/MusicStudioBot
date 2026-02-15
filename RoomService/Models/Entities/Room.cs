@@ -2,14 +2,14 @@
 {
     public class Room
     {
-        public int Id { get; private set; }
-        public string? Name { get; private set; }
-        public string? Description { get; private set; }
-        public byte[]? Photo { get; private set; }
-        public DateOnly CreationDate { get; private set; }
-        public CategoryRoomDto CategoryRoomId { get; private set; }
-        public int? Status { get; private set; }
-        public Room(int id, string? name, string? description, byte[]? photo, DateOnly creationDate, CategoryRoomDto categoryRoomId, int? status)
+        public int Id { get; }
+        public string? Name { get; }
+        public string? Description { get; }
+        public byte[]? Photo { get; }
+        public DateOnly CreationDate { get; }
+        public CategoryRoom CategoryRoomId { get; }
+        public int? Status { get; }
+        public Room(int id, string? name, string? description, byte[]? photo, DateOnly creationDate, CategoryRoom categoryRoomId, int? status)
         {
             Id = id;
             Name = name;

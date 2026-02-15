@@ -1,20 +1,34 @@
-﻿using RoomService.Models.Entities;
+﻿using RoomService.DTO;
+using RoomService.Models.Entities;
 using RoomService.Repositories;
 
 namespace RoomService.Services
 {
     public class RoomsService : IRoomsService
     {
-        IRoomRepository _roomRepository;
+        private readonly IRoomRepository _roomRepository;
+        private readonly ICategoryRoomService _categoryRoomService;
 
-        public RoomsService(IRoomRepository roomRepository)
+        public RoomsService(IRoomRepository roomRepository, ICategoryRoomService categoryRoomService)
         {
             _roomRepository = roomRepository;
+            _categoryRoomService = categoryRoomService;
         }
 
-        public async Task CreateRoomAsync(Room room, CancellationToken ct)
+        public async Task<Room?> CreateRoomAsync(CreateRoomDto createRoomDto, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var categoryExists = await _categoryRoomService.ExistsCategoryRoomAsync(createRoomDto.CategoryRoomId, ct);
+            if (!categoryExists)
+            {
+                return null;
+            }
+
+            var room = await GetRoomByNameAsync(createRoomDto.Name, ct);
+            if (room != null)
+            {
+                return null;
+            }
+            return await _roomRepository.AddRoomAsync(createRoomDto, ct);
         }
 
         public async Task<bool> DeleteRoomAsync(int id, CancellationToken ct)
@@ -27,14 +41,22 @@ namespace RoomService.Services
             return await _roomRepository.GetAllRoomsAsync(ct);
         }
 
-        public async Task<Room?> GetRoomAsync(int id, CancellationToken ct)
+        public async Task<Room?> GetRoomByIdAsync(int id, CancellationToken ct)
         {
-            return await _roomRepository.GetRoomAsync(id, ct);
+            var result = await _roomRepository.GetAllRoomsAsync(ct);
+            return result.Where(x => x.Id == id).FirstOrDefault();
         }
 
-        public async Task<bool> ExistsRoomAsync(int id, CancellationToken ct)
+        public async Task<Room?> GetRoomByNameAsync(string name, CancellationToken ct)
         {
-            return await GetRoomAsync(id, ct) != null;
+            var result = await _roomRepository.GetAllRoomsAsync(ct);
+            return result.Where(x => x.Name == name).FirstOrDefault();
+        }
+
+        public async Task<List<Room>> GetRoomsByCategoryIdAsync(int categoryRoomId, CancellationToken ct)
+        {
+            var result = await _roomRepository.GetAllRoomsAsync(ct);
+            return result.Where(x => x.CategoryRoomId.Id == categoryRoomId).ToList();
         }
     }
 }
