@@ -8,12 +8,12 @@ namespace RoomService.Services
     public class CategoryRoomService : ICategoryRoomService
     {
         private readonly ICategoryRoomRepository _categoryRoomRepository;
-        private readonly IRoomsService _roomsService;
+        private readonly IRoomRepository _roomRepository;
 
-        public CategoryRoomService(ICategoryRoomRepository categoryRoomRepository, IRoomsService roomsService)
+        public CategoryRoomService(ICategoryRoomRepository categoryRoomRepository, IRoomRepository roomsRepository)
         {
             _categoryRoomRepository = categoryRoomRepository;
-            _roomsService = roomsService;
+            _roomRepository = roomsRepository;
         }
         public async Task<CategoryRoom?> CreateCategoryRoomAsync(CreateCategoryRoomDto createCategoryRoomDto, CancellationToken ct)
         {
@@ -26,13 +26,16 @@ namespace RoomService.Services
 
         public async Task<bool> DeleteCategoryRoomAsync(int id, CancellationToken ct)
         {
-            
-            var roomList = await _roomsService.GetRoomsByCategoryIdAsync(id, ct);
+
+            var result = await _roomRepository.GetAllRoomsAsync(ct);
+            var roomList = result.Where(x => x.CategoryRoomId.Id == id).ToList();
+
             if (roomList.Count > 0)
             {
                 return false;
             }
             return await _categoryRoomRepository.RemoveCategoryRoomAsync(id, ct);
+
         }
 
         public async Task<bool> ExistsCategoryRoomAsync(int id, CancellationToken ct)
