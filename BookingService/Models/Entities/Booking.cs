@@ -3,15 +3,15 @@
     public class Booking
     {
         public int Id { get; }
-        public int UserId { get; }
-        public int RoomId { get; }       
+        public User User { get; }
+        public Room Room { get; }       
         public DateTime CreationDate { get; }
         public int? Status { get; }
-        public Booking(int id, int userId, int roomId, DateTime creationDate, int? status)
+        public Booking(int id, User user, Room room, DateTime creationDate, int? status)
         {
             Id = id;
-            UserId  = userId;
-            RoomId = roomId;
+            User  = user;
+            Room = room;
             CreationDate = creationDate;
             Status = status;
         }
