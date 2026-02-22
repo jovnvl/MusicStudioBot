@@ -56,7 +56,7 @@ namespace RoomService.Services
         public async Task<List<Room>> GetRoomsByCategoryIdAsync(int categoryRoomId, CancellationToken ct)
         {
             var result = await _roomRepository.GetAllRoomsAsync(ct);
-            return result.Where(x => x.CategoryRoomId.Id == categoryRoomId).ToList();
+            return result.Where(x => x.CategoryRoomId == categoryRoomId).ToList();
         }
     }
 }

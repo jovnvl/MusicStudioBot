@@ -11,6 +11,7 @@ namespace RoomService.DTO
         [Display(Name = "Название категории")]
         public string Name { get; init; }
 
+        [Required(ErrorMessage = "Описание категории обязательно")]
         [StringLength(500,
            ErrorMessage = "Описание категории не должно превышать 500 символов")]
         [Display(Name = "Описание категории")]

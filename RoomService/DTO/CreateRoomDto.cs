@@ -32,6 +32,6 @@ namespace RoomService.DTO
         [Range(0, 3,
             ErrorMessage = "Статус должен быть от 0 до 3 (0-свободна, 1-занята, 2-бронирование, 3-недоступна)")]
         [Display(Name = "Статус комнаты")]
-        public int Status { get; init; }
+        public RoomStatus Status { get; init; }
     }
 }

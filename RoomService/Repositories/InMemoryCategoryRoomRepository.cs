@@ -13,7 +13,12 @@ namespace RoomService.Repositories
         }
         public async Task<CategoryRoom> AddGategoryRoomAsync(CreateCategoryRoomDto createCategoryRoomDto, CancellationToken ct)
         {
-            var categoryRoom = new CategoryRoom(_categoryRoomList.Count + 1, createCategoryRoomDto.Name, createCategoryRoomDto.Description);
+            var categoryRoom = new CategoryRoom
+            {
+                Id = _categoryRoomList.Count + 1,
+                Name = createCategoryRoomDto.Name,
+                Description = createCategoryRoomDto.Description
+            };
             _categoryRoomList.Add(categoryRoom);
             return categoryRoom;
         }

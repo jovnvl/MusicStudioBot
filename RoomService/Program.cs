@@ -1,5 +1,7 @@
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using RoomService.Data;
 using RoomService.Repositories;
 using RoomService.Services;
 
@@ -11,9 +13,12 @@ namespace RoomService
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddScoped<IRoomsService, RoomsService>();
-            builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
             builder.Services.AddScoped<ICategoryRoomService, CategoryRoomService>();
-            builder.Services.AddScoped<ICategoryRoomRepository, InMemoryCategoryRoomRepository>();
+            //builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
+            //builder.Services.AddScoped<ICategoryRoomRepository, InMemoryCategoryRoomRepository>();
+            builder.Services.AddScoped<IRoomRepository, PgRoomRepository>();
+            builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
+            builder.Services.AddDbContext<DataContext>();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 

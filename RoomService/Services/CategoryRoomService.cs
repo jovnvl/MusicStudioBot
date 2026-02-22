@@ -28,7 +28,7 @@ namespace RoomService.Services
         {
 
             var result = await _roomRepository.GetAllRoomsAsync(ct);
-            var roomList = result.Where(x => x.CategoryRoomId.Id == id).ToList();
+            var roomList = result.Where(x => x.CategoryRoomId == id).ToList();
 
             if (roomList.Count > 0)
             {
