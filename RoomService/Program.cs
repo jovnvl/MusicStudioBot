@@ -12,13 +12,25 @@ namespace RoomService
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Configuration.AddEnvironmentVariables();
+
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                ?? Environment.GetEnvironmentVariable("PG_RoomService");
+
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                Console.WriteLine("Не настроена строка подключения");
+                return;
+            }
+
             builder.Services.AddScoped<IRoomsService, RoomsService>();
             builder.Services.AddScoped<ICategoryRoomService, CategoryRoomService>();
             //builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
             //builder.Services.AddScoped<ICategoryRoomRepository, InMemoryCategoryRoomRepository>();
             builder.Services.AddScoped<IRoomRepository, PgRoomRepository>();
             builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
-            builder.Services.AddDbContext<DataContext>();
+            builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -44,10 +56,7 @@ namespace RoomService
             }
 
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
-
-
             app.MapControllers();
 
             //app.MapGet("/", () => "RoomService API is running. Use /swagger for API documentation.");

@@ -8,15 +8,8 @@ namespace RoomService.Data
     {
         public DbSet<Room> Rooms {  get; set; }
         public DbSet<CategoryRoom> CategoryRooms{ get; set; }
-        public DataContext()
-        {
-            //Database.EnsureCreated();
-        }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
+        public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
-            optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=admin;Database=MusicStudio");
-            base.OnConfiguring(optionsBuilder);
-        }
+
     }
 }
