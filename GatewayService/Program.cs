@@ -1,17 +1,31 @@
+using GatewayService.Configuration;
+using GatewayService.Services.Telegram;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.Configure<TelegramSettings>(builder.Configuration.GetSection("Telegram"));
+builder.Services.Configure<ServicesSettings>(builder.Configuration.GetSection("Services"));
 
+builder.Services.AddHttpClient();
 builder.Services.AddControllers();
+
+builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
+
+builder.Services.AddHostedService<TelegramPollingService>();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
