@@ -2,18 +2,23 @@
 {
     public class Booking
     {
-        public int Id { get; }
+        public Guid Id { get; set; }
         public User User { get; }
-        public Room Room { get; }       
-        public DateTime CreationDate { get; }
-        public int? Status { get; }
-        public Booking(int id, User user, Room room, DateTime creationDate, int? status)
+        public Room Room { get; }
+        public DateTime CreationDate { get; set; } = DateTime.UtcNow;
+        public BookingStatus? Status { get; set; } = BookingStatus.NotConfirmed;
+        public DateTime? TimeBegin { get; }
+        public DateTime? TimeEnd { get; }
+        public string? Description { get; }
+        public Booking(User user, Room room, DateTime creationDate, BookingStatus? status, DateTime? timeBegin, DateTime? timeEnd, string? description)
         {
-            Id = id;
             User  = user;
             Room = room;
             CreationDate = creationDate;
             Status = status;
+            TimeBegin = timeBegin;
+            TimeEnd = timeEnd;
+            Description = description;
         }
     }
 }
