@@ -54,6 +54,12 @@ namespace RoomService.Migrations
                 name: "IDX_rooms_category_room_id",
                 table: "rooms",
                 column: "category_room_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IDX_rooms_name",
+                table: "rooms",
+                column: "name",
+                unique: true);
         }
 
         /// <inheritdoc />

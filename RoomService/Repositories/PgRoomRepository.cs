@@ -36,14 +36,33 @@ namespace RoomService.Repositories
             return _rooms.AsReadOnly();
         }
 
+        public async Task<Room?> GetRoomByIdAsync(int Id, CancellationToken ct)
+        {
+            var room = await _dataContext.Rooms.FindAsync(Id, ct);
+            return room;
+        }
+
         public async Task<bool> RemoveRoomAsync(int id, CancellationToken ct)
         {
-            var room = await _dataContext.Rooms.FindAsync(id, ct);
+            var room = await GetRoomByIdAsync(id, ct);
 
             if (room == null)
                 return false;
 
             _dataContext.Rooms.Remove(room);
+            await _dataContext.SaveChangesAsync(ct);
+
+            return true;
+        }
+
+        public async Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct)
+        {
+            var room = await GetRoomByIdAsync(updateRoomDto.Id, ct);
+
+            if (room == null)
+                return false;
+
+            room.Status = updateRoomDto.Status;
             await _dataContext.SaveChangesAsync(ct);
 
             return true;

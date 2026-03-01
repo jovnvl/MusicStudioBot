@@ -150,5 +150,39 @@ namespace RoomService.Controllers
 
             }
         }
+
+        // PUT: api/rooms
+        [HttpPut]
+        public async Task<ActionResult<Room>> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
+
+            try
+            {
+                var createdRoom = await _roomsService.UpdateRoomAsync(updateRoomDto, ct);
+
+                if (!createdRoom)
+                    return BadRequest(new { Message = "Не удалось обновить комнату" });
+
+                return Ok();
+            }
+
+            catch (OperationCanceledException)
+            {
+                return StatusCode(499);
+            }
+
+            catch (Exception ex)
+            {
+                // Добавить логирование ошибки
+
+                return StatusCode(500, new
+                {
+                    Message = "Внутренняя ошибка сервера",
+                    //Error = ex.Message    GUID ошибки в логгере
+                });
+            }
+        }
     }
 }

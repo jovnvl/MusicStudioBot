@@ -11,5 +11,6 @@ namespace RoomService.Services
         Task<Room?> CreateRoomAsync(CreateRoomDto createRoomDto, CancellationToken ct);
         Task<bool> DeleteRoomAsync(int id, CancellationToken ct);
         Task<IReadOnlyList<Room>>GetAllRoomsAsync(CancellationToken ct);
+        Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct);
     }
 }
