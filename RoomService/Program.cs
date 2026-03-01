@@ -18,18 +18,18 @@ namespace RoomService
                 ?? Environment.GetEnvironmentVariable("PG_RoomService");
 
 
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                Console.WriteLine("Не настроена строка подключения");
-                return;
-            }
+            //if (string.IsNullOrEmpty(connectionString))
+            //{
+            //    Console.WriteLine("Не настроена строка подключения");
+            //    return;
+            //}
 
             builder.Services.AddScoped<IRoomsService, RoomsService>();
             builder.Services.AddScoped<ICategoryRoomService, CategoryRoomService>();
-            //builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
-            //builder.Services.AddScoped<ICategoryRoomRepository, InMemoryCategoryRoomRepository>();
-            builder.Services.AddScoped<IRoomRepository, PgRoomRepository>();
-            builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
+            builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
+            builder.Services.AddScoped<ICategoryRoomRepository, InMemoryCategoryRoomRepository>();
+            //builder.Services.AddScoped<IRoomRepository, PgRoomRepository>();
+            //builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
