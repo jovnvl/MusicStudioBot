@@ -89,6 +89,9 @@ namespace RoomService.Migrations
 
                     b.HasIndex(new[] { "CategoryRoomId" }, "IDX_rooms_category_room_id");
 
+                    b.HasIndex(new[] { "Name" }, "IDX_rooms_name")
+                        .IsUnique();
+
                     b.ToTable("rooms");
                 });
 

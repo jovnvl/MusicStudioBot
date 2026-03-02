@@ -1,21 +1,21 @@
-﻿using RoomService.DTO;
-using RoomService.Models.Entities;
-using RoomService.Repositories;
+﻿using BookingService.DTO;
+using BookingService.Models.Entities;
+using BookingService.Repositories;
 
-namespace RoomService.Services
+namespace BookingService.Services
 {
-    public class RoomsService : IRoomsService
+    public class RoomService : IRoomService
     {
         private readonly IRoomRepository _roomRepository;
         private readonly ICategoryRoomService _categoryRoomService;
 
-        public RoomsService(IRoomRepository roomRepository, ICategoryRoomService categoryRoomService)
+        public RoomService(IRoomRepository roomRepository, ICategoryRoomService categoryRoomService)
         {
             _roomRepository = roomRepository;
             _categoryRoomService = categoryRoomService;
         }
 
-        public async Task<Room?> CreateRoomAsync(CreateRoomDto createRoomDto, CancellationToken ct)
+        public async Task<Room?> CreateRoomAsync(RoomDto createRoomDto, CancellationToken ct)
         {
             var categoryExists = await _categoryRoomService.ExistsCategoryRoomAsync(createRoomDto.CategoryRoomId, ct);
             if (!categoryExists)
@@ -43,8 +43,8 @@ namespace RoomService.Services
 
         public async Task<Room?> GetRoomByIdAsync(int id, CancellationToken ct)
         {
-            var result = await _roomRepository.GetRoomByIdAsync(id, ct);
-            return result;
+            var result = await _roomRepository.GetAllRoomsAsync(ct);
+            return result.Where(x => x.Id == id).FirstOrDefault();
         }
 
         public async Task<Room?> GetRoomByNameAsync(string name, CancellationToken ct)
@@ -58,11 +58,9 @@ namespace RoomService.Services
             var result = await _roomRepository.GetAllRoomsAsync(ct);
             return result.Where(x => x.CategoryRoomId == categoryRoomId).ToList();
         }
-
-        public async Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct)
+        public async Task<bool> ExistsRoomAsync(int id, CancellationToken ct)
         {
-            var result = await _roomRepository.UpdateRoomAsync(updateRoomDto, ct);
-            return result;
+            return await GetRoomByIdAsync(id, ct) != null;
         }
     }
 }

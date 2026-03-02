@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using RoomService.DTO;
-using RoomService.Models.Entities;
-using RoomService.Services;
+using BookingService.DTO;
+using BookingService.Models.Entities;
+using BookingService.Services;
 
-namespace RoomService.Controllers
+namespace BookingService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RoomsController : ControllerBase
+    public class RoomController : ControllerBase
     {
-        private readonly IRoomsService _roomsService;
-        public RoomsController(IRoomsService roomService)
+        private readonly IRoomService _roomsService;
+        public RoomController(IRoomService roomService)
         {
             _roomsService = roomService;
         }
@@ -52,7 +52,7 @@ namespace RoomService.Controllers
                 var room = await _roomsService.GetRoomByIdAsync(id, ct);
                 if (room == null)
                 {
-                    return NotFound(new { Message = $"Комната с ID {id} не найдена" });
+                    return NotFound(new { Message = $"Кабиент с ID {id} не найден" });
                 }
                 return Ok(room);
             }
@@ -77,7 +77,7 @@ namespace RoomService.Controllers
 
         // POST: api/rooms
         [HttpPost]
-        public async Task<ActionResult<Room>> CreateRoomAsync(CreateRoomDto roomDto, CancellationToken ct = default)
+        public async Task<ActionResult<Room>> CreateRoomAsync(RoomDto roomDto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
                 return ValidationProblem(ModelState);
@@ -87,7 +87,7 @@ namespace RoomService.Controllers
                 var createdRoom = await _roomsService.CreateRoomAsync(roomDto, ct);
 
                 if (createdRoom == null)
-                    return BadRequest(new { Message = "Не удалось создать комнату" });
+                    return BadRequest(new { Message = "Не удалось создать кабинет" });
 
                 return CreatedAtRoute(
                     "GetRoomAsync",
@@ -127,7 +127,7 @@ namespace RoomService.Controllers
                 var deleted = await _roomsService.DeleteRoomAsync(id, ct);
                 if (!deleted)
                 {
-                    return BadRequest(new { Message = "Не удалось удалить комнату" });
+                    return BadRequest(new { Message = "Не удалось удалить кaбанет" });
                 }
 
                 return Ok();
@@ -148,40 +148,6 @@ namespace RoomService.Controllers
                     //Error = ex.Message    GUID ошибки в логгере
                 });
 
-            }
-        }
-
-        // PUT: api/rooms
-        [HttpPut]
-        public async Task<ActionResult<Room>> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct = default)
-        {
-            if (!ModelState.IsValid)
-                return ValidationProblem(ModelState);
-
-            try
-            {
-                var createdRoom = await _roomsService.UpdateRoomAsync(updateRoomDto, ct);
-
-                if (!createdRoom)
-                    return BadRequest(new { Message = "Не удалось обновить комнату" });
-
-                return Ok();
-            }
-
-            catch (OperationCanceledException)
-            {
-                return StatusCode(499);
-            }
-
-            catch (Exception ex)
-            {
-                // Добавить логирование ошибки
-
-                return StatusCode(500, new
-                {
-                    Message = "Внутренняя ошибка сервера",
-                    //Error = ex.Message    GUID ошибки в логгере
-                });
             }
         }
     }

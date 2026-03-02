@@ -12,7 +12,7 @@ using RoomService.Data;
 namespace RoomService.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20260222142314_InitialCreate")]
+    [Migration("20260301134453_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -91,6 +91,9 @@ namespace RoomService.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex(new[] { "CategoryRoomId" }, "IDX_rooms_category_room_id");
+
+                    b.HasIndex(new[] { "Name" }, "IDX_rooms_name")
+                        .IsUnique();
 
                     b.ToTable("rooms");
                 });
