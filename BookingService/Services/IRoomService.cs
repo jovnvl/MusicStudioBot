@@ -12,5 +12,6 @@ namespace BookingService.Services
         Task<bool> DeleteRoomAsync(int id, CancellationToken ct);
         Task<IReadOnlyList<Room>>GetAllRoomsAsync(CancellationToken ct);
         Task<bool> ExistsRoomAsync(int id, CancellationToken ct);
+        Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct);
     }
 }

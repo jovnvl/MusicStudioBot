@@ -8,6 +8,7 @@ namespace BookingService.Models.Entities
 {
     [Table("rooms")]
     [Index(nameof(CategoryRoomId), Name = "IDX_rooms_category_room_id")]
+    [Index(nameof(Name), IsUnique = true, Name = "IDX_rooms_name")]
     public class Room
     {
         [Key]

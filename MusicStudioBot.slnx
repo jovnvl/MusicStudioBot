@@ -3,9 +3,7 @@
     <File Path="docker-compose.yml" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="BookingService/BookingService.csproj" Id="e7112142-c8eb-419f-ba01-6c333a924341">
-      <Build Solution="Debug|*" Project="false" />
-    </Project>
+    <Project Path="BookingService/BookingService.csproj" Id="e7112142-c8eb-419f-ba01-6c333a924341" />
     <Project Path="GatewayService/GatewayService.csproj" Id="88a8ff4c-e620-4b1d-b47a-1dc31a644936" />
     <Project Path="IdentityService/IdentityService.csproj" Id="792c384a-024f-4284-97df-fa24dc6da6c3" />
     <Project Path="RoomService/RoomService.csproj" Id="420613ee-c8bf-423e-a619-6728593e0a2c" />

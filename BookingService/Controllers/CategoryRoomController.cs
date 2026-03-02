@@ -137,7 +137,7 @@ namespace BookingService.Controllers
 
                 return StatusCode(500, new
                 {
-                    Message = "Внутренняя ошибка сервера",
+                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
                     //Error = ex.Message    GUID ошибки в логгере
                 });
 
