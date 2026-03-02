@@ -70,6 +70,7 @@ namespace GatewayService.Services.Telegram
             /register - Регистрация нового пользователя (формат: /register 'username' 'password' 'firstname' 'lastname')
             /login - Вход в систему (формат: /login 'password')
             /help - Список всех команд
+            /myprofile - Получить данные профиля
             ";
             await SendMessageAsync(chatId, helpMessage);
             _logger.LogInformation("Sent help command response to ChatId: {ChatId}", chatId);
