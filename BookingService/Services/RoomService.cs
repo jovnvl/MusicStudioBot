@@ -43,8 +43,8 @@ namespace BookingService.Services
 
         public async Task<Room?> GetRoomByIdAsync(int id, CancellationToken ct)
         {
-            var result = await _roomRepository.GetAllRoomsAsync(ct);
-            return result.Where(x => x.Id == id).FirstOrDefault();
+            var result = await _roomRepository.GetRoomByIdAsync(id, ct);
+            return result;
         }
 
         public async Task<Room?> GetRoomByNameAsync(string name, CancellationToken ct)
@@ -61,6 +61,11 @@ namespace BookingService.Services
         public async Task<bool> ExistsRoomAsync(int id, CancellationToken ct)
         {
             return await GetRoomByIdAsync(id, ct) != null;
+        }
+        public async Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct)
+        {
+            var result = await _roomRepository.UpdateRoomAsync(updateRoomDto, ct);
+            return result;
         }
     }
 }
