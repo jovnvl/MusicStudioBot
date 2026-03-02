@@ -13,9 +13,11 @@ namespace BookingService.Repositories
         }
         public async Task<CategoryRoom> AddGategoryRoomAsync(CategoryRoomDto createCategoryRoomDto, CancellationToken ct)
         {
-            var categoryRoom = new CategoryRoom(name: createCategoryRoomDto.Name, description: createCategoryRoomDto.Description)
+            var categoryRoom = new CategoryRoom()
             {
                 Id = _categoryRoomList.Count + 1,
+                Name = createCategoryRoomDto.Name,
+                Description =  createCategoryRoomDto.Description,                
             };
             _categoryRoomList.Add(categoryRoom);
             return categoryRoom;
