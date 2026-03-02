@@ -1,4 +1,5 @@
 using GatewayService.Configuration;
+using GatewayService.Services;
 using GatewayService.Services.Telegram;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
+builder.Services.AddSingleton<IUserSessionService, UserSessionService>();
 
 builder.Services.AddHostedService<TelegramPollingService>();
 

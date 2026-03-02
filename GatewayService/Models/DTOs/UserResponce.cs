@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace IdentityService.Models.DTOs
+namespace GatewayService.Models.DTOs
 {
     public class UserResponse
     {

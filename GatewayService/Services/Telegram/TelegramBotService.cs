@@ -14,14 +14,16 @@ namespace GatewayService.Services.Telegram
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<TelegramBotService> _logger;
         private readonly ServicesSettings _servicesSettings;
+        private readonly IUserSessionService _sessionService;
         private const int RegisterCommandPartsCount = 5;
         private const int LoginCommandPartsCount = 2;
-        public TelegramBotService(IHttpClientFactory httpClientFactory, ILogger<TelegramBotService> logger, IOptions<TelegramSettings> settings, IOptions<ServicesSettings> servicesSettings) 
+        public TelegramBotService(IHttpClientFactory httpClientFactory, ILogger<TelegramBotService> logger, IOptions<TelegramSettings> settings, IOptions<ServicesSettings> servicesSettings, IUserSessionService sessionService) 
         {
             _botClient = new TelegramBotClient(settings.Value.BotToken); ;
             _httpClientFactory = httpClientFactory;
             _logger = logger;
             _servicesSettings = servicesSettings.Value;
+            _sessionService = sessionService;
         }
 
         public async Task HandleUpdateAsync(Update update)
@@ -43,6 +45,8 @@ namespace GatewayService.Services.Telegram
                 await HandleRegisterCommand(chatId, messageText);
             else if (messageText.StartsWith("/login"))
                 await HandleLoginCommand(chatId, messageText);
+            else if (messageText.StartsWith("/myprofile"))
+                await HandleMyProfileCommand(chatId);
             else
                 await SendMessageAsync(chatId, "Неизвестная команда. Используйте /help");
         }
@@ -166,6 +170,7 @@ namespace GatewayService.Services.Telegram
                         return;
                     }
                     _logger.LogInformation("Login successful. User token: {Token}", authResponse.Token);
+                    _sessionService.SaveToken(chatId, authResponse.Token);
                     await SendMessageAsync(chatId, "Успешный вход.");
                 }
                 else
@@ -181,6 +186,45 @@ namespace GatewayService.Services.Telegram
             }
         }
 
+        private async Task HandleMyProfileCommand(long chatId)
+        {
+            var token = _sessionService.GetToken(chatId);
+            if (string.IsNullOrEmpty(token))
+            {
+                await SendMessageAsync(chatId, "Вы не авторизованы. Используйте /login");
+                return;
+            }
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
+            try
+            {
+                var response = await httpClient.GetAsync($"{identityServiceUrl}/api/auth/user/telegram/{chatId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    var userResponse = JsonSerializer.Deserialize<UserResponse>(body);
+                    if (userResponse == null)
+                    {
+                        _logger.LogError("Failed to deserialize UserResponse");
+                        return;
+                    }
+                    _logger.LogInformation("Successful receipt of user information. User: {Id}, {Username}", userResponse.Id, userResponse.Username);
+                    await SendMessageAsync(chatId, $"Id: {userResponse.Id}\nЛогин: {userResponse.Username}\nИмя: {userResponse.FirstName}\nФамилия: {userResponse.LastName}");
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to IdentityService failed");
+                await SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
+        }
 
         public async Task SendMessageAsync(long chatId, string text)
         {
