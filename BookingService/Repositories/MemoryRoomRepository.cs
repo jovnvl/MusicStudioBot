@@ -20,7 +20,7 @@ namespace BookingService.Repositories
                 Id = _roomList.Count + 1,
                 Name = createRoomDto.Name,
                 Description = createRoomDto.Description,
-                Photo = createRoomDto.Photo,
+                //Photo = createRoomDto.Photo,
                 CreationDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 CategoryRoomId = createRoomDto.CategoryRoomId,
                 Status = createRoomDto.Status,

@@ -44,7 +44,7 @@ namespace BookingService.Controllers
         }
 
         // GET: api/booking/<GUID>
-        [HttpGet("{id:int}", Name = "GetBookingAsync")]
+        [HttpGet("{id:guid}", Name = "GetBookingAsync")]
         public async Task<ActionResult<Booking>> GetBookingAsync(Guid id, CancellationToken ct = default)
         {
             try
@@ -87,7 +87,7 @@ namespace BookingService.Controllers
                 var createdBooking = await _bookingService.CreateBookingAsync(bookingDto, ct);
 
                 if (createdBooking == null)
-                    return BadRequest(new { Message = "Не удалось создать кабинет" });
+                    return BadRequest(new { Message = "Не удалось создать бронь на кабинет" });
 
                 return CreatedAtRoute(
                     "GetBookingAsync",
@@ -113,7 +113,7 @@ namespace BookingService.Controllers
         }
 
         // DELETE: api/bookings/<GUID>
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteBookingAsync(Guid id, CancellationToken ct = default)
         {
             try

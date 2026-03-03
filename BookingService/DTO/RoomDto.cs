@@ -15,18 +15,18 @@ namespace BookingService.DTO
             ErrorMessage = "Описание не должно превышать 500 символов")]
         [Display(Name = "Описание")]
         public string Description { get; init; } = string.Empty;
-
+        /*
         [DataType(DataType.Upload)]
         [MaxLength(5 * 1024 * 1024, // 5MB
             ErrorMessage = "Фото не должно превышать 5 МБ")]
         [Display(Name = "Фото комнаты")]
         public byte[]? Photo { get; init; }
-
+        */
         [Required(ErrorMessage = "ID категории комнаты обязателен")]
         [Range(1, int.MaxValue,
             ErrorMessage = "ID категории должен быть положительным числом")]
         [Display(Name = "ID категории комнаты")]
-        public int CategoryRoomId { get; init; }
+        public int CategoryRoomId { get; init; } = 1;
 
         [Required(ErrorMessage = "Статус комнаты обязателен")]
         [Range(0, 3,

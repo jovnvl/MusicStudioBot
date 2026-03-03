@@ -61,7 +61,6 @@ namespace BookingService
                 return;
             }
 
-            builder.Services.AddScoped<IAuthService, BookingService.Services.AuthService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
