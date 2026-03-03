@@ -1,26 +1,25 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Formats.Asn1;
 using System.Text.Json.Serialization;
 
 namespace BookingService.Models.Entities
 {
-    [Table("category_rooms")]
+    [Table("CategoryRoom")]
     public class CategoryRoom
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Column("id")]
+        [Column("Id")]
         public int Id { get; set; }
 
         [Required]
         [MaxLength(50)]
-        [Column("name")]
+        [Column("Name")]
         public string Name { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(500)]
-        [Column("description")]
+        [Column("Description")]
         public string Description { get; set; } = string.Empty;
 
         [JsonIgnore]

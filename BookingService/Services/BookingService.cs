@@ -11,10 +11,10 @@ namespace BookingService.Services
         private readonly ICategoryRoomService _categoryRoomService;
         private readonly IAuthService _authService;
 
-        public BookingService(IBookingRepository bookingRepository, IRoomService roomRepository, ICategoryRoomService categoryRoomService, IAuthService authService)
+        public BookingService(IBookingRepository bookingRepository, IRoomService roomService, ICategoryRoomService categoryRoomService, IAuthService authService)
         {
             _bookingRepository = bookingRepository;
-            _roomService = roomRepository;
+            _roomService = roomService;
             _categoryRoomService = categoryRoomService;
             _authService = authService;
         }

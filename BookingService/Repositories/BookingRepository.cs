@@ -16,12 +16,15 @@ namespace BookingService.Repositories
 
         public async Task<Booking> AddBookingAsync(BookingDto createBookingDto, CancellationToken ct)
         {
-            var booking = new Booking(room: createBookingDto.Room, user: createBookingDto.User,
-                status: createBookingDto.Status, 
-                timeBegin: DateTime.UtcNow,
-                timeEnd: DateTime.UtcNow.AddMinutes(60),
-                description: createBookingDto.Description, creationDate: DateTime.UtcNow)
+            var booking = new Booking()
             {
+                Room =  createBookingDto.Room,
+                User =  createBookingDto.User,
+                Status = createBookingDto.Status, 
+                TimeBegin = DateTime.UtcNow,
+                TimeEnd = DateTime.UtcNow.AddMinutes(60),
+                Description = createBookingDto.Description,
+                CreationDate = DateTime.UtcNow,
                 Id = Guid.NewGuid(),
             };
             await _dataContext.Bookings.AddAsync(booking, ct);

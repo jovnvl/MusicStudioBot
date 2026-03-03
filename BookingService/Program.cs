@@ -61,13 +61,16 @@ namespace BookingService
                 return;
             }
 
+            builder.Services.AddScoped<IAuthService, BookingService.Services.AuthService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
             builder.Services.AddScoped<IRoomService, RoomService>();
             builder.Services.AddScoped<ICategoryRoomService, CategoryRoomService>();
-            //builder.Services.AddScoped<IRoomRepository, MemoryRoomRepository>();
-            //builder.Services.AddScoped<ICategoryRoomRepository, MemoryCategoryRoomRepository>();
+            ////builder.Services.AddScoped<IRoomRepository, MemoryRoomRepository>();
+            ////builder.Services.AddScoped<ICategoryRoomRepository, MemoryCategoryRoomRepository>();
             builder.Services.AddScoped<IRoomRepository, RoomRepository>();
             builder.Services.AddScoped<ICategoryRoomRepository, CategoryRoomRepository>();
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));

@@ -2,40 +2,39 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using System.Xml.Linq;
 
 namespace BookingService.Models.Entities
 {
-    [Table("rooms")]
-    [Index(nameof(CategoryRoomId), Name = "IDX_rooms_category_room_id")]
-    [Index(nameof(Name), IsUnique = true, Name = "IDX_rooms_name")]
+    [Table("Room")]
+    [Index(nameof(CategoryRoomId), Name = "IDX_RoomCategoryRoomId")]
+    [Index(nameof(Name), IsUnique = true, Name = "IDX_RoomName")]
     public class Room
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Column("id")]
+        [Column("Id")]
         public int Id { get; set; }
 
         [Required]
         [MaxLength(50)]
-        [Column("name")]
+        [Column("Name")]
         public string Name { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(500)]
-        [Column("description")]
+        [Column("Description")]
         public string Description { get; set; } = string.Empty;
 
-        [Column("photo", TypeName = "bytea")]
+        [Column("Photo", TypeName = "bytea")]
         public byte[]? Photo { get; set; }
 
         [Required]
-        [Column("creation_date", TypeName = "date")]
+        [Column("CreationDate", TypeName = "date")]
         public DateOnly CreationDate { get; set; }
 
         [Required]
         [ForeignKey(nameof(CategoryRoom))]
-        [Column("category_room_id")]
+        [Column("CategoryRoomId")]
         public int CategoryRoomId { get; set; }
 
         [Required]
@@ -43,7 +42,7 @@ namespace BookingService.Models.Entities
         public CategoryRoom CategoryRoom { get; set; } = null!;
 
         [Required]
-        [Column("status")]
+        [Column("Status")]
         public RoomStatus Status { get; set; }
     }
 }
