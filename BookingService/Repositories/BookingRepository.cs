@@ -18,15 +18,15 @@ namespace BookingService.Repositories
         {
             var booking = new Booking()
             {
-                Room =  createBookingDto.Room,
-                User =  createBookingDto.User,
+                RoomId =  createBookingDto.RoomId,
+                UserId =  createBookingDto.UserId,
                 Status = createBookingDto.Status, 
                 TimeBegin = DateTime.UtcNow,
                 TimeEnd = DateTime.UtcNow.AddMinutes(60),
                 Description = createBookingDto.Description,
                 CreationDate = DateTime.UtcNow,
                 Id = Guid.NewGuid(),
-            };
+            };                        
             await _dataContext.Bookings.AddAsync(booking, ct);
             await _dataContext.SaveChangesAsync(ct);
             return booking;

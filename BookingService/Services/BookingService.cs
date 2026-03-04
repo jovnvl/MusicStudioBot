@@ -21,14 +21,11 @@ namespace BookingService.Services
 
         public async Task<Booking?> CreateBookingAsync(BookingDto createBookingDto, CancellationToken ct)
         {
-            var _categoryExists = await _categoryRoomService.ExistsCategoryRoomAsync(createBookingDto.Room.CategoryRoomId, ct);
-            if (!_categoryExists)
-                return null;
-            var _roomExists = await _roomService.ExistsRoomAsync(createBookingDto.Room.CategoryRoomId, ct);
+            var _roomExists = await _roomService.ExistsRoomAsync(createBookingDto.RoomId, ct);
             if (!_roomExists)
                 return null;
 
-            var _userExists = await _authService.ExistsUserAsync(createBookingDto.User.Id, ct);
+            var _userExists = await _authService.ExistsUserAsync(createBookingDto.UserId, ct);
             if (!_userExists)
                 return null;
 
