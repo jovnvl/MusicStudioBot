@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RabbitMQ.Client;
 using RoomService.DTO;
 using RoomService.Models.Entities;
 using RoomService.Services;
+using System.Text;
+using System.Text.Json;
 
 namespace RoomService.Controllers
 {
@@ -85,6 +88,26 @@ namespace RoomService.Controllers
             try
             {
                 var createdRoom = await _roomsService.CreateRoomAsync(roomDto, ct);
+
+                var factory = new ConnectionFactory() { HostName = "localhost" };
+                using var connection = await factory.CreateConnectionAsync(ct);
+                using var channel = await connection.CreateChannelAsync(cancellationToken: ct);
+                await channel.QueueDeclareAsync(queue: "room_created_queue",
+                                                durable: false,
+                                                exclusive: false,
+                                                autoDelete: false,
+                                                cancellationToken: ct
+                                                );
+                var message = JsonSerializer.Serialize(createdRoom);
+                var body = Encoding.UTF8.GetBytes(message);
+
+                await channel.BasicPublishAsync(
+                    exchange: "",
+                    routingKey: "room_created_queue",
+                    body: body,
+                    cancellationToken: ct
+                );
+
 
                 if (createdRoom == null)
                     return BadRequest(new { Message = "Не удалось создать комнату" });
