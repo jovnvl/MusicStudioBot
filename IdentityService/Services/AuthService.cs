@@ -21,13 +21,8 @@ namespace IdentityService.Services
             _configuration = configuration;
         }
 
-        public async Task<UserResponse?> GetUserByIdAsync(Guid userId)
+        private static UserResponse MapToResponce(User user)
         {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null) 
-            { 
-                return null; 
-            }
             return new UserResponse
             {
                 Id = user.Id,
@@ -41,24 +36,16 @@ namespace IdentityService.Services
             };
         }
 
+        public async Task<UserResponse?> GetUserByIdAsync(Guid userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            return user == null ? null : MapToResponce(user);
+        }
+
         public async Task<UserResponse?> GetUserByTelegramIdAsync(long telegramId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.TelegramId == telegramId);
-            if (user == null)
-            {
-                return null;
-            }
-            return new UserResponse
-            {
-                Id = user.Id,
-                TelegramId = user.TelegramId,
-                Username = user.Username,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Role = user.Role.ToString(),
-                IsActive = user.IsActive,
-                CreatedAt = user.CreatedAt,
-            };
+            return user == null ? null : MapToResponce(user);
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)

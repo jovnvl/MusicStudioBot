@@ -1,6 +1,4 @@
-﻿using Telegram.Bot.Types;
-
-namespace GatewayService.Handlers
+﻿namespace GatewayService.Handlers
 {
     public interface ICommandHandler
     {
