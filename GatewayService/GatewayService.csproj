@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Handlers\" />
     <Folder Include="Models\Telegram\" />
     <Folder Include="Services\Http\" />
   </ItemGroup>

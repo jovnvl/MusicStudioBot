@@ -1,4 +1,5 @@
 using GatewayService.Configuration;
+using GatewayService.Handlers;
 using GatewayService.Services;
 using GatewayService.Services.Telegram;
 
@@ -10,16 +11,14 @@ builder.Services.Configure<ServicesSettings>(builder.Configuration.GetSection("S
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
 
-builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
 builder.Services.AddSingleton<IUserSessionService, UserSessionService>();
-
+builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
+builder.Services.AddSingleton<IMessageSender, MessageSenderService>();
+builder.Services.AddSingleton<ICommandHandler, CommandHandler>();
 builder.Services.AddHostedService<TelegramPollingService>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 

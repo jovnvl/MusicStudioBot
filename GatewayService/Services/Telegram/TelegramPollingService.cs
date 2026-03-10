@@ -11,8 +11,8 @@ namespace GatewayService.Services.Telegram
     {
         private readonly ITelegramBotService _botService;
         private readonly TelegramBotClient _botClient;
-        private readonly ILogger<TelegramBotService> _logger;
-        public TelegramPollingService(ITelegramBotService telegramBotService, IOptions<TelegramSettings> settings, ILogger<TelegramBotService> logger)
+        private readonly ILogger<TelegramPollingService> _logger;
+        public TelegramPollingService(ITelegramBotService telegramBotService, IOptions<TelegramSettings> settings, ILogger<TelegramPollingService> logger)
         {
             _botService = telegramBotService;
             _botClient = new TelegramBotClient(settings.Value.BotToken); ;
@@ -21,19 +21,27 @@ namespace GatewayService.Services.Telegram
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var receiverOptions = new ReceiverOptions
+            try
             {
-                AllowedUpdates = Array.Empty<UpdateType>()
-            };
-            _botClient.StartReceiving(
-                updateHandler: HandleUpdateAsync,
-                errorHandler: HandlePollingErrorAsync,
-                receiverOptions: receiverOptions,
-                cancellationToken: stoppingToken
-            );
-            _logger.LogInformation("Telegram polling started");
+                var receiverOptions = new ReceiverOptions
+                {
+                    AllowedUpdates = Array.Empty<UpdateType>()
+                };
+                _botClient.StartReceiving(
+                    updateHandler: HandleUpdateAsync,
+                    errorHandler: HandlePollingErrorAsync,
+                    receiverOptions: receiverOptions,
+                    cancellationToken: stoppingToken
+                );
+                _logger.LogInformation("Telegram polling started");
 
-            await Task.Delay(Timeout.Infinite, stoppingToken);
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Failed to start Telegram polling");
+                throw;
+            }
         }
         private async Task HandleUpdateAsync(
             ITelegramBotClient botClient,
