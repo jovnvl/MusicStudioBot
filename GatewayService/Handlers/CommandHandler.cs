@@ -48,6 +48,7 @@ namespace GatewayService.Handlers
             /help - Список всех команд
             /myprofile - Получить данные профиля
             /update_profile - Изменить данные профиля (формат: /update_profile [username] [firstname] [lastname]; для пропуска параметра ставить символ -)
+            /rooms - Получить информацию о комнатах
             ";
             await _messageSender.SendMessageAsync(chatId, helpMessage);
             _logger.LogInformation("Sent help command response to ChatId: {ChatId}", chatId);
@@ -271,6 +272,55 @@ namespace GatewayService.Handlers
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to IdentityService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
+        }
+
+        public async Task HandleRoomsCommand(long chatId)
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
+            try
+            {
+                var response = await httpClient.GetAsync($"{roomServiceUrl}/api/rooms");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    var rooms = JsonSerializer.Deserialize<List<RoomResponse>>(body);
+                    if (rooms == null || rooms.Count == 0)
+                    {
+                        _logger.LogError("Failed to deserialize RoomResponse");
+                        await _messageSender.SendMessageAsync(chatId, "Комнат пока нет");
+                        return;
+                    }
+                    _logger.LogInformation("Successful receipt of rooms information.");
+                    var message = "📍 Доступные комнаты:\n\n";
+                    foreach (var room in rooms)
+                    {
+                        var statusEmoji = room.Status switch
+                        {
+                            0 => "✅", // Available
+                            1 => "🔴", // Occupied
+                            2 => "🟡", // Reserved
+                            3 => "🔧", // Maintenance
+                            _ => "❓"
+                        };
+
+                        message += $"{statusEmoji} {room.Name}\n";
+                        message += $"  └ {room.Description}\n\n";
+                        await _messageSender.SendMessageAsync(chatId, message);
+                    }
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to RoomService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
             }
         }
