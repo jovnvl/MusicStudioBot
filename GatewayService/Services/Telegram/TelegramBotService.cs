@@ -38,6 +38,8 @@ namespace GatewayService.Services.Telegram
                 await _commandHandler.HandleLoginCommand(chatId, messageText);
             else if (messageText.StartsWith("/myprofile"))
                 await _commandHandler.HandleMyProfileCommand(chatId);
+            else if (messageText.StartsWith("/update_profile"))
+                await _commandHandler.HandleUpdateProfileCommand(chatId, messageText);
             else
                 await _messageSender.SendMessageAsync(chatId, "Неизвестная команда. Используйте /help");
         }

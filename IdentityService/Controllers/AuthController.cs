@@ -1,6 +1,8 @@
 ﻿using IdentityService.Models.DTOs;
 using IdentityService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 
 namespace IdentityService.Controllers
@@ -71,6 +73,28 @@ namespace IdentityService.Controllers
             {
                 var user = await _authService.GetUserByTelegramIdAsync(telegramId);
                 if (user == null) return NotFound();
+                return Ok(user);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // PUT api/auth/user/update_profile
+        [HttpPut("user/update_profile")]
+        [Authorize]
+        public async Task<ActionResult<UserResponse>> UpdateProfile([FromBody] UpdateProfileRequest request)
+        {
+            try
+            {
+                // Получаем ID из JWT токена
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+                    return Unauthorized();
+
+                var user = await _authService.UpdateProfileAsync(userId, request);
                 return Ok(user);
             }
             catch (InvalidOperationException ex)

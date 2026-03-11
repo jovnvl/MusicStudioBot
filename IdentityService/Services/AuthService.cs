@@ -54,7 +54,7 @@ namespace IdentityService.Services
             
             if (user == null)
             {
-                throw new AuthenticationException("Пользователь с таким именем не найден.");
+                throw new AuthenticationException("Пользователь не найден.");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -75,7 +75,7 @@ namespace IdentityService.Services
         {
             if (await _context.Users.AnyAsync(u => u.TelegramId == request.TelegramId))
             {
-                throw new InvalidOperationException("Пользователь с таким именем уже зарегистрирован.");
+                throw new InvalidOperationException("Пользователь уже зарегистрирован.");
             }
 
             var user = new User
@@ -92,9 +92,26 @@ namespace IdentityService.Services
                 IsActive = true,
             };
 
-            _context.Users.Add(user); await _context.SaveChangesAsync();
+            _context.Users.Add(user); 
+            await _context.SaveChangesAsync();
             var token = GenerateJwtToken(user);
             return new AuthResponse{Token = token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
+        }
+
+        public async Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                throw new AuthenticationException("Пользователь не найден.");
+            }
+
+            user.Username = request.Username ?? user.Username;
+            user.FirstName = request.FirstName ?? user.FirstName;
+            user.LastName = request.LastName ?? user.LastName;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return MapToResponce(user); 
         }
 
         private string GenerateJwtToken(User user)
@@ -109,9 +126,7 @@ namespace IdentityService.Services
             };
 
             // 2. Получаем SecretKey из конфигурации и создаем ключ
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]!)
-            );
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]!));
 
             // 3. Создаем подпись (алгоритм HMAC-SHA256)
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

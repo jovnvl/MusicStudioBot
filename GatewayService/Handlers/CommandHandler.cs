@@ -16,6 +16,7 @@ namespace GatewayService.Handlers
         private readonly IMessageSender _messageSender;
         private const int RegisterCommandPartsCount = 5;
         private const int LoginCommandPartsCount = 2;
+        private const int UpdateCommandMinPartsCount = 2;
 
         public CommandHandler(IHttpClientFactory httpClientFactory, ILogger<CommandHandler> logger, IOptions<ServicesSettings> servicesSettings, IUserSessionService sessionService, IMessageSender messageSender)
         {
@@ -46,6 +47,7 @@ namespace GatewayService.Handlers
             /login - Вход в систему (формат: /login 'password')
             /help - Список всех команд
             /myprofile - Получить данные профиля
+            /update_profile - Изменить данные профиля (формат: /update_profile [username] [firstname] [lastname]; для пропуска параметра ставить символ -)
             ";
             await _messageSender.SendMessageAsync(chatId, helpMessage);
             _logger.LogInformation("Sent help command response to ChatId: {ChatId}", chatId);
@@ -188,6 +190,76 @@ namespace GatewayService.Handlers
                         return;
                     }
                     _logger.LogInformation("Successful receipt of user information. User: {Id}, {Username}", userResponse.Id, userResponse.Username);
+                    await _messageSender.SendMessageAsync(chatId, $"Id: {userResponse.Id}\nЛогин: {userResponse.Username}\nИмя: {userResponse.FirstName}\nФамилия: {userResponse.LastName}");
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to IdentityService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
+        }
+
+        public async Task HandleUpdateProfileCommand(long chatId, string messageText)
+        {
+            var token = _sessionService.GetToken(chatId);
+            if (string.IsNullOrEmpty(token))
+            {
+                await _messageSender.SendMessageAsync(chatId, "Вы не авторизованы. Используйте /login");
+                return;
+            }
+
+            string[] updateCommand = messageText.Split(' ');
+            if (updateCommand.Length < UpdateCommandMinPartsCount)
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "Неверный формат команды!\nИспользуйте: /update_profile [username] [firstName] [lastName]\n" +
+                    "Можно указать только нужные параметры, используя - для пропуска:\n" +
+                    "Пример: /update_profile new_user - NewLastName");
+                return;
+            }
+
+            var updateProfileRequest = new UpdateProfileRequest
+            {
+                Username = updateCommand.Length > 1 && updateCommand[1] != "-" ? updateCommand[1] : null,
+                FirstName = updateCommand.Length > 2 && updateCommand[2] != "-" ? updateCommand[2] : null,
+                LastName = updateCommand.Length > 3 && updateCommand[3] != "-" ? updateCommand[3] : null
+            };
+
+            if (updateProfileRequest.Username == null &&
+                updateProfileRequest.FirstName == null &&
+                updateProfileRequest.LastName == null)
+            {
+                await _messageSender.SendMessageAsync(chatId, "Укажите хотя бы один параметр для обновления!");
+                return;
+            }
+
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);  
+            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
+
+            var json = JsonSerializer.Serialize(updateProfileRequest);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await httpClient.PutAsync($"{identityServiceUrl}/api/auth/user/update_profile", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    var userResponse = JsonSerializer.Deserialize<UserResponse>(body);
+                    if (userResponse == null)
+                    {
+                        _logger.LogError("Failed to deserialize UserResponse");
+                        return;
+                    }
+                    _logger.LogInformation("Successful update of user information. User: {Id}, {Username}", userResponse.Id, userResponse.Username);
                     await _messageSender.SendMessageAsync(chatId, $"Id: {userResponse.Id}\nЛогин: {userResponse.Username}\nИмя: {userResponse.FirstName}\nФамилия: {userResponse.LastName}");
                 }
                 else
