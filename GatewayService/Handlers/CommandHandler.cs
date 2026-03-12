@@ -60,9 +60,9 @@ namespace GatewayService.Handlers
         public async Task HandleStartCommand(long chatId)
         {
             string welcomeMessage = @"
-            Приветствуем в Music Studio Bot! 🎵
+Приветствуем в Music Studio Bot! 🎵
    
-            Этот бот поможет вам забронировать комнату для репетиций
+Этот бот поможет вам забронировать комнату для репетиций
             ";
             await _messageSender.SendMessageAsync(chatId, welcomeMessage);
             _logger.LogInformation("Sent start command response to ChatId: {ChatId}", chatId);
@@ -70,20 +70,18 @@ namespace GatewayService.Handlers
 
         public async Task HandleHelpCommand(long chatId)
         {
-            string helpMessage = @"
-            Доступные команды:
-            /start - Начать работу
-            /register - Регистрация нового пользователя (формат: /register username password firstname lastname)
-            /login - Вход в систему (формат: /login password)
-            /help - Список всех команд
-            /myprofile - Получить данные профиля
-            /update_profile - Изменить данные профиля (формат: /update_profile [username] [firstname] [lastname]; для пропуска параметра ставить символ -)
-            /rooms - Получить информацию о комнатах
-            /create_room - Создать комнату (формат: /create_room name | category_id | description)
-            /create_room_category - Создать категорию комнат (формат: /create_room_category name | description)
-            /get_room - Получить информацию о комнате (формат: /get_room id)
-            /update_room_status - Обновить статус комнаты (формат: /update_room_status id status)
-            ";
+            string helpMessage = @"Доступные команды:
+/start - Начать работу
+/register - Регистрация (формат: /register username password firstname lastname)
+/login - Вход (формат: /login password)
+/help - Список всех команд
+/myprofile - Получить данные профиля
+/update_profile - Изменить профиль (формат: /update_profile [username] [firstname] [lastname])
+/rooms - Получить информацию о комнатах
+/create_room - Создать комнату (формат: /create_room name | category_id | description)
+/create_room_category - Создать категорию (формат: /create_room_category name | description)
+/get_room - Получить комнату (формат: /get_room id)
+/update_room_status - Обновить статус (формат: /update_room_status id status)";
             await _messageSender.SendMessageAsync(chatId, helpMessage);
             _logger.LogInformation("Sent help command response to ChatId: {ChatId}", chatId);
         }
