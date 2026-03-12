@@ -1,10 +1,12 @@
 ﻿using GatewayService.Configuration;
 using GatewayService.DTO;
 using GatewayService.Models.DTOs;
+using GatewayService.Models.Enums;
 using GatewayService.Models.Events;
 using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
 using Microsoft.Extensions.Options;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json;
 
@@ -23,6 +25,8 @@ namespace GatewayService.Handlers
         private const int UpdateCommandMinPartsCount = 2;
         private const int CreateRoomCategoryCommandPartsCount = 2;
         private const int CreateRoomCommandPartsCount = 3;
+        private const int UpdateRoomCommandMinPartsCount = 2;
+        private const int GetRoomCommandMinPartsCount = 1;
 
         public CommandHandler(
             IHttpClientFactory httpClientFactory, 
@@ -39,6 +43,18 @@ namespace GatewayService.Handlers
             _sessionService = sessionService;
             _messageSender = messageSender;
             _rabbitMQPublisher = rabbitMQPublisher;
+        }
+
+        private string MapToEmojiStatus(int status)
+        {
+            return status switch
+            {
+                0 => "✅", // Available
+                1 => "🔴", // Occupied
+                2 => "🟡", // Reserved
+                3 => "🔧", // Maintenance
+                _ => "❓"
+            };
         }
 
         public async Task HandleStartCommand(long chatId)
@@ -65,6 +81,8 @@ namespace GatewayService.Handlers
             /rooms - Получить информацию о комнатах
             /create_room - Создать комнату (формат: /create_room name | category_id | description)
             /create_room_category - Создать категорию комнат (формат: /create_room_category name | description)
+            /get_room - Получить информацию о комнате (формат: /get_room id)
+            /update_room_status - Обновить статус комнаты (формат: /update_room_status id status)
             ";
             await _messageSender.SendMessageAsync(chatId, helpMessage);
             _logger.LogInformation("Sent help command response to ChatId: {ChatId}", chatId);
@@ -310,7 +328,7 @@ namespace GatewayService.Handlers
             }
         }
 
-        public async Task HandleRoomsCommand(long chatId)
+        public async Task HandleGetRoomsCommand(long chatId)
         {
             var httpClient = _httpClientFactory.CreateClient();
             var roomServiceUrl = _servicesSettings.RoomServiceUrl;
@@ -332,16 +350,9 @@ namespace GatewayService.Handlers
                     var message = "Доступные комнаты:\n\n";
                     foreach (var room in rooms)
                     {
-                        var statusEmoji = room.Status switch
-                        {
-                            0 => "✅", // Available
-                            1 => "🔴", // Occupied
-                            2 => "🟡", // Reserved
-                            3 => "🔧", // Maintenance
-                            _ => "❓"
-                        };
+                        var statusEmoji = MapToEmojiStatus(room.Status);
 
-                        message += $"{statusEmoji} {room.Name}\n";
+                        message += $"{statusEmoji} {room.Name} (id:{room.Id})\n";
                         message += $"  └ {room.Description}\n\n";                       
                     }
                     await _messageSender.SendMessageAsync(chatId, message);
@@ -417,9 +428,49 @@ namespace GatewayService.Handlers
             }
         }
 
-        public Task HandleUpdateRoomCommand(long chatId, string messageText)
+        public async Task HandleUpdateRoomCommand(long chatId, string messageText)
         {
-            throw new NotImplementedException();
+            string[] updateRoomCommand = messageText.Split(' ');
+            if (updateRoomCommand.Length < UpdateRoomCommandMinPartsCount || !int.TryParse(updateRoomCommand[1], out int id) || !RoomStatus.TryParse(updateRoomCommand[2], out RoomStatus status))
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "Неверный формат команды!\nИспользуйте: /update_room id status");
+                return;
+            }
+
+            var updateRoomRequest = new UpdateRoomRequest
+            {
+                Id = id,
+                Status = status,
+            };
+
+            var httpClient = _httpClientFactory.CreateClient();
+            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
+
+            var json = JsonSerializer.Serialize(updateRoomRequest);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await httpClient.PutAsync($"{roomServiceUrl}/api/rooms", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Successful update of room information.");
+                    var message = "Статус комнаты обновлен";
+                    await _messageSender.SendMessageAsync(chatId, message);
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to RoomService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
         }
 
         public async Task HandleCreateRoomCategoryCommand(long chatId, string messageText)
@@ -462,6 +513,51 @@ namespace GatewayService.Handlers
                     _logger.LogInformation("Added new room category. Room Category:{Id}, {Name}",roomCategoryResponse.Id,roomCategoryResponse.Name);
 
                     await _messageSender.SendMessageAsync(chatId, "Категория добавлена");
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to RoomService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
+        }
+
+        public async Task HandleGetRoomCommand(long chatId, string messageText)
+        {
+            string[] getRoomCommand = messageText.Split(' ');
+            if (getRoomCommand.Length < GetRoomCommandMinPartsCount || !int.TryParse(getRoomCommand[1], out int id))
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "Неверный формат команды!\nИспользуйте: /get_room id");
+                return;
+            }
+
+            var httpClient = _httpClientFactory.CreateClient();
+            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
+            try
+            {
+                var response = await httpClient.GetAsync($"{roomServiceUrl}/api/rooms/{id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    var roomResponse = JsonSerializer.Deserialize<RoomResponse>(body);
+                    if (roomResponse == null)
+                    {
+                        _logger.LogError("Failed to deserialize RoomResponse");
+                        await _messageSender.SendMessageAsync(chatId, "Такой комнаты нет");
+                        return;
+                    }
+                    _logger.LogInformation("Successful receipt of room with Id : {Id}  information.", roomResponse.Id);
+                    var statusEmoji = MapToEmojiStatus(roomResponse.Status);
+                    var message = $"{statusEmoji} {roomResponse.Name} (id:{roomResponse.Id})\n";
+                    message += $"  └ {roomResponse.Description}\n\n";
+                    await _messageSender.SendMessageAsync(chatId, message);
                 }
                 else
                 {

@@ -8,7 +8,8 @@
         Task HandleLoginCommand(long chatId, string messageText);
         Task HandleMyProfileCommand(long chatId);
         Task HandleUpdateProfileCommand(long chatId, string messageText);
-        Task HandleRoomsCommand(long chatId);
+        Task HandleGetRoomsCommand(long chatId);
+        Task HandleGetRoomCommand(long chatId, string messageText);
         Task HandleCreateRoomCommand (long chatId, string messageText);
         Task HandleUpdateRoomCommand (long chatId, string messageText);
         Task HandleCreateRoomCategoryCommand(long chatId, string messageText);

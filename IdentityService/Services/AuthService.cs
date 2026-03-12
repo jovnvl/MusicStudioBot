@@ -21,7 +21,7 @@ namespace IdentityService.Services
             _configuration = configuration;
         }
 
-        private static UserResponse MapToResponce(User user)
+        private static UserResponse MapToResponse(User user)
         {
             return new UserResponse
             {
@@ -39,13 +39,13 @@ namespace IdentityService.Services
         public async Task<UserResponse?> GetUserByIdAsync(Guid userId)
         {
             var user = await _context.Users.FindAsync(userId);
-            return user == null ? null : MapToResponce(user);
+            return user == null ? null : MapToResponse(user);
         }
 
         public async Task<UserResponse?> GetUserByTelegramIdAsync(long telegramId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.TelegramId == telegramId);
-            return user == null ? null : MapToResponce(user);
+            return user == null ? null : MapToResponse(user);
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -111,7 +111,7 @@ namespace IdentityService.Services
             user.LastName = request.LastName ?? user.LastName;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-            return MapToResponce(user); 
+            return MapToResponse(user); 
         }
 
         private string GenerateJwtToken(User user)
