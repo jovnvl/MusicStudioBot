@@ -44,6 +44,8 @@ namespace GatewayService.Services.Telegram
                 await _commandHandler.HandleRoomsCommand(chatId);
             else if (messageText.StartsWith("/create_room_category"))
                 await _commandHandler.HandleCreateRoomCategoryCommand(chatId, messageText);
+            else if (messageText.StartsWith("/create_room"))
+                await _commandHandler.HandleCreateRoomCommand(chatId, messageText);
             else
                 await _messageSender.SendMessageAsync(chatId, "Неизвестная команда. Используйте /help");
         }

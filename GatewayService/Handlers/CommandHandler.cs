@@ -1,4 +1,5 @@
 ﻿using GatewayService.Configuration;
+using GatewayService.DTO;
 using GatewayService.Models.DTOs;
 using GatewayService.Models.Events;
 using GatewayService.Services;
@@ -21,6 +22,7 @@ namespace GatewayService.Handlers
         private const int LoginCommandPartsCount = 2;
         private const int UpdateCommandMinPartsCount = 2;
         private const int CreateRoomCategoryCommandPartsCount = 2;
+        private const int CreateRoomCommandPartsCount = 3;
 
         public CommandHandler(
             IHttpClientFactory httpClientFactory, 
@@ -55,12 +57,14 @@ namespace GatewayService.Handlers
             string helpMessage = @"
             Доступные команды:
             /start - Начать работу
-            /register - Регистрация нового пользователя (формат: /register 'username' 'password' 'firstname' 'lastname')
-            /login - Вход в систему (формат: /login 'password')
+            /register - Регистрация нового пользователя (формат: /register username password firstname lastname)
+            /login - Вход в систему (формат: /login password)
             /help - Список всех команд
             /myprofile - Получить данные профиля
             /update_profile - Изменить данные профиля (формат: /update_profile [username] [firstname] [lastname]; для пропуска параметра ставить символ -)
             /rooms - Получить информацию о комнатах
+            /create_room - Создать комнату (формат: /create_room name | category_id | description)
+            /create_room_category - Создать категорию комнат (формат: /create_room_category name | description)
             ";
             await _messageSender.SendMessageAsync(chatId, helpMessage);
             _logger.LogInformation("Sent help command response to ChatId: {ChatId}", chatId);
@@ -325,7 +329,7 @@ namespace GatewayService.Handlers
                         return;
                     }
                     _logger.LogInformation("Successful receipt of rooms information.");
-                    var message = "📍 Доступные комнаты:\n\n";
+                    var message = "Доступные комнаты:\n\n";
                     foreach (var room in rooms)
                     {
                         var statusEmoji = room.Status switch
@@ -338,9 +342,9 @@ namespace GatewayService.Handlers
                         };
 
                         message += $"{statusEmoji} {room.Name}\n";
-                        message += $"  └ {room.Description}\n\n";
-                        await _messageSender.SendMessageAsync(chatId, message);
+                        message += $"  └ {room.Description}\n\n";                       
                     }
+                    await _messageSender.SendMessageAsync(chatId, message);
                 }
                 else
                 {
@@ -355,9 +359,62 @@ namespace GatewayService.Handlers
             }
         }
 
-        public Task HandleCreateRoomCommand(long chatId, string messageText)
+        public async Task HandleCreateRoomCommand(long chatId, string messageText)
         {
-            throw new NotImplementedException();
+            string[] createRoomCommand = messageText.Split('|');
+            if (createRoomCommand.Length < CreateRoomCommandPartsCount || !int.TryParse(createRoomCommand[1], out int category_id))
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "Неверный формат команды!\nИспользуйте: /create_room name | category_id | description");
+                return;
+            }
+
+            string name = createRoomCommand[0].Substring(createRoomCommand[0].IndexOf(' ') + 1).Trim();
+            string description = createRoomCommand[2].Trim();
+
+            var httpClient = _httpClientFactory.CreateClient();
+            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
+
+            var createRoomRequest = new CreateRoomRequest
+            {
+                Name = name,
+                CategoryRoomId = category_id,
+                Description = description,
+                Photo = null,
+                Status = 0,
+            };
+
+            var json = JsonSerializer.Serialize(createRoomRequest);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await httpClient.PostAsync($"{roomServiceUrl}/api/rooms", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    var roomResponse = JsonSerializer.Deserialize<RoomResponse>(body);
+                    if (roomResponse == null)
+                    {
+                        _logger.LogError("Failed to deserialize RoomResponse");
+                        return;
+                    }
+                    _logger.LogInformation("Added new room. Room:{Name}, {CategoryRoomId}", roomResponse.Name, roomResponse.CategoryRoomId);
+
+                    await _messageSender.SendMessageAsync(chatId, "Комната добавлена");
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to RoomService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
         }
 
         public Task HandleUpdateRoomCommand(long chatId, string messageText)
@@ -414,7 +471,7 @@ namespace GatewayService.Handlers
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError(ex, "HTTP request to IdentityService failed");
+                _logger.LogError(ex, "HTTP request to RoomService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
             }
         }
