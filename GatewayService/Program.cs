@@ -1,6 +1,7 @@
 using GatewayService.Configuration;
 using GatewayService.Handlers;
 using GatewayService.Services;
+using GatewayService.Services.RabbitMQ;
 using GatewayService.Services.Telegram;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
 builder.Services.AddSingleton<IMessageSender, MessageSenderService>();
 builder.Services.AddSingleton<ICommandHandler, CommandHandler>();
 builder.Services.AddHostedService<TelegramPollingService>();
+builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

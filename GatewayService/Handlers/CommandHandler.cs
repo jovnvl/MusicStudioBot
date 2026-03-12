@@ -1,6 +1,8 @@
 ﻿using GatewayService.Configuration;
 using GatewayService.Models.DTOs;
+using GatewayService.Models.Events;
 using GatewayService.Services;
+using GatewayService.Services.RabbitMQ;
 using Microsoft.Extensions.Options;
 using System.Text;
 using System.Text.Json;
@@ -14,17 +16,27 @@ namespace GatewayService.Handlers
         private readonly ServicesSettings _servicesSettings;
         private readonly IUserSessionService _sessionService;
         private readonly IMessageSender _messageSender;
+        private readonly IRabbitMQPublisher _rabbitMQPublisher;
         private const int RegisterCommandPartsCount = 5;
         private const int LoginCommandPartsCount = 2;
         private const int UpdateCommandMinPartsCount = 2;
+        private const int CreateRoomCategoryCommandPartsCount = 2;
 
-        public CommandHandler(IHttpClientFactory httpClientFactory, ILogger<CommandHandler> logger, IOptions<ServicesSettings> servicesSettings, IUserSessionService sessionService, IMessageSender messageSender)
+        public CommandHandler(
+            IHttpClientFactory httpClientFactory, 
+            ILogger<CommandHandler> logger, 
+            IOptions<ServicesSettings> servicesSettings, 
+            IUserSessionService sessionService, 
+            IMessageSender messageSender, 
+            IRabbitMQPublisher rabbitMQPublisher
+            )
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
             _servicesSettings = servicesSettings.Value;
             _sessionService = sessionService;
             _messageSender = messageSender;
+            _rabbitMQPublisher = rabbitMQPublisher;
         }
 
         public async Task HandleStartCommand(long chatId)
@@ -98,6 +110,15 @@ namespace GatewayService.Handlers
                         return;
                     }
                     _logger.LogInformation("Registration successful. New user token: {Token}", authResponse.Token);
+
+                    await _rabbitMQPublisher.PublishAsync("user_registered_queue", new UserRegisteredEvent
+                    {
+                        UserId = authResponse.UserId,
+                        TelegramId = chatId,
+                        Username = authResponse.Username,
+                        RegisteredAt = DateTime.UtcNow
+                    });
+
                     await _messageSender.SendMessageAsync(chatId, "Успешная регистрация! Теперь вы можете использовать /login");
                 }
                 else
@@ -150,6 +171,15 @@ namespace GatewayService.Handlers
                         return;
                     }
                     _logger.LogInformation("Login successful. User token: {Token}", authResponse.Token);
+
+                    await _rabbitMQPublisher.PublishAsync("user_logged_in_queue", new UserLoggedInEvent
+                    {
+                        UserId = authResponse.UserId,
+                        TelegramId = chatId,
+                        Username = authResponse.Username,
+                        LoggedInAt = DateTime.UtcNow
+                    });
+
                     _sessionService.SaveToken(chatId, authResponse.Token);
                     await _messageSender.SendMessageAsync(chatId, "Успешный вход.");
                 }
@@ -321,6 +351,70 @@ namespace GatewayService.Handlers
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to RoomService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
+        }
+
+        public Task HandleCreateRoomCommand(long chatId, string messageText)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task HandleUpdateRoomCommand(long chatId, string messageText)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task HandleCreateRoomCategoryCommand(long chatId, string messageText)
+        {
+            string[] createRoomCategoryCommand = messageText.Split('|');
+            if (createRoomCategoryCommand.Length < CreateRoomCategoryCommandPartsCount)
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "Неверный формат команды!\nИспользуйте: /create_room_category name | description");
+                return;
+            }
+            string name = createRoomCategoryCommand[0].Substring(createRoomCategoryCommand[0].IndexOf(' ') + 1).Trim();
+            string description = createRoomCategoryCommand[1].Trim();
+
+            var httpClient = _httpClientFactory.CreateClient();
+            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
+
+            var createRoomCategoryRequest = new CreateRoomCategoryRequest
+            {
+                Name = name,
+                Description = description,
+            };
+
+            var json = JsonSerializer.Serialize(createRoomCategoryRequest);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await httpClient.PostAsync($"{roomServiceUrl}/api/categories", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    var roomCategoryResponse = JsonSerializer.Deserialize<RoomCategoryResponse>(body);
+                    if (roomCategoryResponse == null)
+                    {
+                        _logger.LogError("Failed to deserialize RoomCategoryResponse");
+                        return;
+                    }
+                    _logger.LogInformation("Added new room category. Room Category:{Id}, {Name}",roomCategoryResponse.Id,roomCategoryResponse.Name);
+
+                    await _messageSender.SendMessageAsync(chatId, "Категория добавлена");
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
             }
         }
