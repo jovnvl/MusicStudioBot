@@ -6,7 +6,9 @@ using GatewayService.Models.Events;
 using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
 using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.NetworkInformation;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -55,6 +57,31 @@ namespace GatewayService.Handlers
                 3 => "🔧", // Maintenance
                 _ => "❓"
             };
+        }
+
+        private async Task<bool> IsPermitted(long chatId, UserRole role)
+        {
+            var token = _sessionService.GetToken(chatId);
+            if (string.IsNullOrEmpty(token))
+            {
+                await _messageSender.SendMessageAsync(chatId, "Вы не авторизованы.");
+                return false;
+            }
+            if (!HasRole(token, role))
+            {
+                await _messageSender.SendMessageAsync(chatId, "Недостаточно прав.");
+                return false;
+            }
+            return true;
+        }
+
+        private bool HasRole(string token, UserRole requiredRole)
+        {
+            var claims = new JwtSecurityTokenHandler().ReadJwtToken(token).Claims;
+            var tokenRole = claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+            if (!Enum.TryParse<UserRole>(tokenRole, out var userRole))
+                return false;
+            return (int)userRole >= (int)requiredRole;
         }
 
         public async Task HandleStartCommand(long chatId)
@@ -328,6 +355,8 @@ namespace GatewayService.Handlers
 
         public async Task HandleGetRoomsCommand(long chatId)
         {
+            if (!await IsPermitted(chatId, UserRole.Moderator))
+                return;
             var httpClient = _httpClientFactory.CreateClient();
             var roomServiceUrl = _servicesSettings.RoomServiceUrl;
             try
@@ -370,6 +399,8 @@ namespace GatewayService.Handlers
 
         public async Task HandleCreateRoomCommand(long chatId, string messageText)
         {
+            if (!await IsPermitted(chatId, UserRole.Admin))
+                return;
             string[] createRoomCommand = messageText.Split('|');
             if (createRoomCommand.Length < CreateRoomCommandPartsCount || !int.TryParse(createRoomCommand[1], out int category_id))
             {
@@ -428,6 +459,8 @@ namespace GatewayService.Handlers
 
         public async Task HandleUpdateRoomCommand(long chatId, string messageText)
         {
+            if (!await IsPermitted(chatId, UserRole.Moderator))
+                return;
             string[] updateRoomCommand = messageText.Split(' ');
             if (updateRoomCommand.Length < UpdateRoomCommandMinPartsCount || !int.TryParse(updateRoomCommand[1], out int id) || !RoomStatus.TryParse(updateRoomCommand[2], out RoomStatus status))
             {
@@ -473,6 +506,8 @@ namespace GatewayService.Handlers
 
         public async Task HandleCreateRoomCategoryCommand(long chatId, string messageText)
         {
+            if (!await IsPermitted(chatId, UserRole.Admin))
+                return;
             string[] createRoomCategoryCommand = messageText.Split('|');
             if (createRoomCategoryCommand.Length < CreateRoomCategoryCommandPartsCount)
             {
@@ -527,6 +562,8 @@ namespace GatewayService.Handlers
 
         public async Task HandleGetRoomCommand(long chatId, string messageText)
         {
+            if (!await IsPermitted(chatId, UserRole.Moderator))
+                return;
             string[] getRoomCommand = messageText.Split(' ');
             if (getRoomCommand.Length < GetRoomCommandMinPartsCount || !int.TryParse(getRoomCommand[1], out int id))
             {
