@@ -64,6 +64,22 @@ namespace IdentityService.Controllers
             }
         }
 
+        // GET api/auth/user/all
+        [HttpGet("user/all")]
+        public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetUsers()
+        {
+            try
+            {
+                var users = await _authService.GetAllUsersAsync();
+                if (users == null) return NotFound();
+                return Ok(users);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // GET api/auth/user/telegram/{telegramId}
         [HttpGet("user/telegram/{telegramId:long}")]
 

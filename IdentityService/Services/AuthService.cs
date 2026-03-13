@@ -36,6 +36,12 @@ namespace IdentityService.Services
             };
         }
 
+        public async Task<IReadOnlyList<UserResponse>> GetAllUsersAsync()
+        {
+            var users = await _context.Users.ToListAsync(); 
+            return users.Select(u => MapToResponse(u)).ToList();
+        }
+
         public async Task<UserResponse?> GetUserByIdAsync(Guid userId)
         {
             var user = await _context.Users.FindAsync(userId);

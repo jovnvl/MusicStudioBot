@@ -104,6 +104,7 @@ namespace GatewayService.Handlers
 /help - Список всех команд
 /myprofile - Получить данные профиля
 /update_profile - Изменить профиль (формат: /update_profile [username] [firstname] [lastname])
+/users - Получить список пользователей
 /rooms - Получить информацию о комнатах
 /create_room - Создать комнату (формат: /create_room name | category_id | description)
 /create_room_category - Создать категорию (формат: /create_room_category name | description)
@@ -399,7 +400,7 @@ namespace GatewayService.Handlers
 
         public async Task HandleCreateRoomCommand(long chatId, string messageText)
         {
-            if (!await IsPermitted(chatId, UserRole.Admin))
+            if (!await IsPermitted(chatId, UserRole.Administrator))
                 return;
             string[] createRoomCommand = messageText.Split('|');
             if (createRoomCommand.Length < CreateRoomCommandPartsCount || !int.TryParse(createRoomCommand[1], out int category_id))
@@ -506,7 +507,7 @@ namespace GatewayService.Handlers
 
         public async Task HandleCreateRoomCategoryCommand(long chatId, string messageText)
         {
-            if (!await IsPermitted(chatId, UserRole.Admin))
+            if (!await IsPermitted(chatId, UserRole.Administrator))
                 return;
             string[] createRoomCategoryCommand = messageText.Split('|');
             if (createRoomCategoryCommand.Length < CreateRoomCategoryCommandPartsCount)
@@ -603,6 +604,49 @@ namespace GatewayService.Handlers
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to RoomService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
+        }
+
+        public async Task HandleGetUsersCommand(long chatId)
+        {
+            if (!await IsPermitted(chatId, UserRole.Moderator))
+                return;
+            var httpClient = _httpClientFactory.CreateClient();
+            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
+            try
+            {
+                var response = await httpClient.GetAsync($"{identityServiceUrl}/api/auth/user/all");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    var users = JsonSerializer.Deserialize<List<UserResponse>>(body);
+                    if (users == null || users.Count == 0)
+                    {
+                        _logger.LogError("Failed to deserialize UserResponse");
+                        await _messageSender.SendMessageAsync(chatId, "Пользователей пока нет");
+                        return;
+                    }
+                    _logger.LogInformation("Successful receipt of users information.");
+                    var message = "Список пользователей:\n\n";
+                    foreach (var user in users)
+                    {
+
+                        message += $"* {user.Username} (id:{user.Id}, role: {user.Role})\n";
+                        message += $"   └ {user.LastName} {user.FirstName}\n\n";
+                    }
+                    await _messageSender.SendMessageAsync(chatId, message);
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
             }
         }

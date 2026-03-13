@@ -9,5 +9,6 @@ namespace IdentityService.Services
         Task<UserResponse?> GetUserByIdAsync(Guid userId);
         Task<UserResponse?> GetUserByTelegramIdAsync(long telegramId);
         Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
+        Task<IReadOnlyList<UserResponse>> GetAllUsersAsync();
     }
 }

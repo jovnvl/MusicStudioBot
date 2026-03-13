@@ -13,5 +13,6 @@
         Task HandleCreateRoomCommand (long chatId, string messageText);
         Task HandleUpdateRoomCommand (long chatId, string messageText);
         Task HandleCreateRoomCategoryCommand(long chatId, string messageText);
+        Task HandleGetUsersCommand(long chatId);
     }
 }

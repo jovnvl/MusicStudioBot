@@ -4,6 +4,6 @@
     {
         Student = 0,
         Moderator = 1,
-        Admin = 2,
+        Administrator = 2,
     }
 }
