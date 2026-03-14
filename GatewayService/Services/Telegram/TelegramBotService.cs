@@ -42,6 +42,8 @@ namespace GatewayService.Services.Telegram
                 await _commandHandler.HandleUpdateProfileCommand(chatId, messageText);
             else if (messageText.StartsWith("/users"))
                 await _commandHandler.HandleGetUsersCommand(chatId);
+            else if (messageText.StartsWith("/change_role"))
+                await _commandHandler.HandleChangeUserRoleCommand(chatId, messageText);
             else if (messageText.StartsWith("/rooms"))
                 await _commandHandler.HandleGetRoomsCommand(chatId);
             else if (messageText.StartsWith("/create_room_category"))

@@ -36,6 +36,24 @@ namespace IdentityService.Services
             };
         }
 
+        public async Task<UserResponse> ChangeRoleAsync(ChangeRoleRequest request)
+        {
+            var user = await _context.Users.FindAsync(request.Id);
+            if (user == null)
+            {
+                throw new InvalidOperationException("Пользователь не найден.");
+            }
+
+            if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var requestRole))
+            {
+                throw new InvalidOperationException("Ошибка чтения запроса.");
+            }
+            user.Role = requestRole;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return MapToResponse(user);
+        }
+
         public async Task<IReadOnlyList<UserResponse>> GetAllUsersAsync()
         {
             var users = await _context.Users.ToListAsync(); 

@@ -29,6 +29,7 @@ namespace GatewayService.Handlers
         private const int CreateRoomCommandPartsCount = 3;
         private const int UpdateRoomCommandMinPartsCount = 2;
         private const int GetRoomCommandMinPartsCount = 1;
+        private const int ChangeUserRoleCommandPartsCount = 3;
 
         public CommandHandler(
             IHttpClientFactory httpClientFactory, 
@@ -105,6 +106,7 @@ namespace GatewayService.Handlers
 /myprofile - Получить данные профиля
 /update_profile - Изменить профиль (формат: /update_profile [username] [firstname] [lastname])
 /users - Получить список пользователей
+/change_role - Изменить роль пользователя (формат: /change_role id role)
 /rooms - Получить информацию о комнатах
 /create_room - Создать комнату (формат: /create_room name | category_id | description)
 /create_room_category - Создать категорию (формат: /create_room_category name | description)
@@ -636,6 +638,69 @@ namespace GatewayService.Handlers
                         message += $"* {user.Username} (id:{user.Id}, role: {user.Role})\n";
                         message += $"   └ {user.LastName} {user.FirstName}\n\n";
                     }
+                    await _messageSender.SendMessageAsync(chatId, message);
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to IdentityService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
+        }
+
+        public async Task HandleChangeUserRoleCommand(long chatId, string messageText)
+        {
+            if (!await IsPermitted(chatId, UserRole.Administrator))
+                return;
+            string[] changeUserRoleCommand = messageText.Split(' ');
+            if (changeUserRoleCommand.Length < ChangeUserRoleCommandPartsCount)
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "Неверный формат команды!\nИспользуйте: /change_user_role id role");
+                return;
+            }
+
+            if (!Guid.TryParse(changeUserRoleCommand[1], out Guid id))
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "Неверный id.");
+                return;
+            }
+
+            string role = changeUserRoleCommand[2];
+
+            var httpClient = _httpClientFactory.CreateClient();
+            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
+
+            var changeRoleRequest = new ChangeRoleRequest
+            {
+                Id = id,
+                Role = role,
+            };
+
+            var json = JsonSerializer.Serialize(changeRoleRequest);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            try
+            {
+                var response = await httpClient.PutAsync($"{identityServiceUrl}/api/auth/user/change_role", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    var userResponse = JsonSerializer.Deserialize<UserResponse>(body);
+                    if (userResponse == null)
+                    {
+                        _logger.LogError("Failed to deserialize UserResponse");
+                        await _messageSender.SendMessageAsync(chatId, "Такого пользователя нет");
+                        return;
+                    }
+                    _logger.LogInformation("User {Id} role Successfully changed to {Role}.", userResponse.Id, userResponse.Role);
+                    var message = "Роль пользователя изменена";
                     await _messageSender.SendMessageAsync(chatId, message);
                 }
                 else

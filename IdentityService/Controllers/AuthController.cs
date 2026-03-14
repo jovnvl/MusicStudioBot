@@ -118,5 +118,20 @@ namespace IdentityService.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // PUT api/auth/user/change_role
+        [HttpPut("user/change_role")]
+        public async Task<ActionResult<UserResponse>> ChangeRole(ChangeRoleRequest request)
+        {
+            try
+            {
+                var result = await _authService.ChangeRoleAsync(request);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
