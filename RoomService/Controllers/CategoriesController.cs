@@ -11,9 +11,11 @@ namespace RoomService.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryRoomService _categoryRoomsService;
-        public CategoriesController(ICategoryRoomService categoryRoomService)
+        private readonly IMessageBrokerService _brokerService;
+        public CategoriesController(ICategoryRoomService categoryRoomService, IMessageBrokerService brokerService)
         {
             _categoryRoomsService = categoryRoomService;
+            _brokerService = brokerService;
         }
 
         // GET: api/categories
@@ -23,6 +25,7 @@ namespace RoomService.Controllers
             try
             {
                 var categoryRooms = await _categoryRoomsService.GetAllCategoryRoomAsync(ct);
+                await _brokerService.SendMessageToLogAsync(LogLevel.Information, "Успешно получен список всех категорий", "get-categories", ct);
                 return Ok(categoryRooms);
             }
             
@@ -33,13 +36,8 @@ namespace RoomService.Controllers
             
             catch (Exception ex)
             {
-                // Добавить логирование ошибки
-
-                return StatusCode(500, new
-                {
-                    Message = "Внутренняя ошибка сервера",
-                    //Error = ex.Message  GUID ошибки в логгере
-                });
+                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "get-categories", ct);
+                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
 
@@ -47,20 +45,19 @@ namespace RoomService.Controllers
         [HttpPost]
         public async Task<ActionResult<CategoryRoom>> CreateCategoryRoomAsync(CreateCategoryRoomDto categoryRoomDto, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid)
-                return ValidationProblem(ModelState);
-
             try
             {
                 var createdCategory = await _categoryRoomsService.CreateCategoryRoomAsync(categoryRoomDto, ct);
 
                 if (createdCategory == null)
-                    return BadRequest(new { Message = "Не удалось создать категорию" });
+                {
+                    var message = "Не удалось создать категорию";
+                    await _brokerService.SendMessageToLogAsync(LogLevel.Warning, message, "add-category", ct);
+                    return BadRequest(new { Message = message });
+                }
 
-                return CreatedAtRoute(
-                    "GetCategoryRoomAsync",
-                    new { id = createdCategory.Id },
-                    createdCategory);
+                await _brokerService.SendMessageToLogAsync(LogLevel.Information, $"Создана категория с ID {createdCategory.Id}", "add-category", ct);
+                return CreatedAtRoute("GetCategoryRoomAsync",new { id = createdCategory.Id }, createdCategory);
             }
             
             catch (OperationCanceledException)
@@ -70,13 +67,8 @@ namespace RoomService.Controllers
             
             catch (Exception ex)
             {
-                // Добавить логирование ошибки
-
-                return StatusCode(500, new
-                {
-                    Message = "Внутренняя ошибка сервера",
-                    //Error = ex.Message    GUID ошибки в логгере
-                });
+                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "add-category", ct);
+                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
 
@@ -89,10 +81,13 @@ namespace RoomService.Controllers
                 var deleted = await _categoryRoomsService.DeleteCategoryRoomAsync(id, ct);
                 if (!deleted)
                 {
-                    return BadRequest(new { Message = "Не удалось удалить категорию" });
+                    var message = "Не удалось удалить категорию";
+                    await _brokerService.SendMessageToLogAsync(LogLevel.Warning, message, "delete-category", ct);
+                    return BadRequest(new { Message = message });
                 }
-
-                return Ok();
+                
+                await _brokerService.SendMessageToLogAsync(LogLevel.Information, $"Удалена категория с ID {id}", "delete-category", ct);
+                return NoContent();
             }
 
             catch (OperationCanceledException)
@@ -102,13 +97,8 @@ namespace RoomService.Controllers
 
             catch (Exception ex)
             {
-                // Добавить логирование ошибки
-
-                return StatusCode(500, new
-                {
-                    Message = "Внутренняя ошибка сервера",
-                    //Error = ex.Message    GUID ошибки в логгере
-                });
+                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "delete-category", ct);
+                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
 
@@ -121,8 +111,11 @@ namespace RoomService.Controllers
                 var room = await _categoryRoomsService.GetCategoryRoomByIdAsync(id, ct);
                 if (room == null)
                 {
-                    return NotFound(new { Message = $"Категория с ID {id} не найдена" });
+                    var message = $"Категория с ID {id} не найдена";
+                    await _brokerService.SendMessageToLogAsync(LogLevel.Warning, message, "get-category", ct);
+                    return NotFound(new { Message = message });
                 }
+                await _brokerService.SendMessageToLogAsync(LogLevel.Information, $"Получена категория с ID {id}", "get-category", ct);
                 return Ok(room);
             }
 
@@ -133,14 +126,8 @@ namespace RoomService.Controllers
 
             catch (Exception ex)
             {
-                // Добавить логирование ошибки
-
-                return StatusCode(500, new
-                {
-                    Message = "Внутренняя ошибка сервера",
-                    //Error = ex.Message    GUID ошибки в логгере
-                });
-
+                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "get-category", ct);
+                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
     }
