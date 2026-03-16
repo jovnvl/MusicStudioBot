@@ -1,0 +1,45 @@
+IDENTITYSERVICE - HTTP ЭНДПОИНТЫ
+-----------------------------------
+
+Базовый путь: /api/auth
+
+POST /api/auth/register
+  Описание: Регистрация нового пользователя
+  Авторизация: не требуется
+  Тело запроса: { Username, Password, FirstName, LastName, TelegramId }
+  Ответ: { Token, UserId, Username, Role }
+
+POST /api/auth/login
+  Описание: Вход в систему
+  Авторизация: не требуется
+  Тело запроса: { TelegramId, Password }
+  Ответ: { Token, UserId, Username, Role }
+
+GET /api/auth/user/{id}
+  Описание: Получение пользователя по GUID
+  Авторизация: не требуется
+  Параметры пути: id (GUID)
+  Ответ: { Id, TelegramId, Username, FirstName, LastName, Role, IsActive, CreatedAt }
+
+GET /api/auth/user/telegram/{telegramId}
+  Описание: Получение пользователя по Telegram ID
+  Авторизация: не требуется
+  Параметры пути: telegramId (long)
+  Ответ: { Id, TelegramId, Username, FirstName, LastName, Role, IsActive, CreatedAt }
+
+GET /api/auth/user/all
+  Описание: Получение списка всех пользователей
+  Авторизация: не требуется на уровне эндпоинта (контролируется в GatewayService)
+  Ответ: массив объектов UserResponse
+
+PUT /api/auth/user/update_profile
+  Описание: Обновление профиля текущего пользователя
+  Авторизация: требуется JWT токен ([Authorize]), ID пользователя извлекается из токена
+  Тело запроса: { Username, FirstName, LastName } - все поля опциональны
+  Ответ: { Id, TelegramId, Username, FirstName, LastName, Role, IsActive, CreatedAt }
+
+PUT /api/auth/user/change_role
+  Описание: Изменение роли пользователя
+  Авторизация: не требуется на уровне эндпоинта (контролируется в GatewayService)
+  Тело запроса: { Id (GUID), Role (string) }
+  Ответ: { Id, TelegramId, Username, FirstName, LastName, Role, IsActive, CreatedAt }

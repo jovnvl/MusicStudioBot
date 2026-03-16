@@ -1,0 +1,55 @@
+IDENTITYSERVICE
+---------------
+
+Назначение
+Сервис аутентификации и управления пользователями. Отвечает за регистрацию, вход,
+управление профилем и ролями пользователей.
+
+Платформа и фреймворк
+ASP.NET Core, .NET. Entity Framework Core для работы с базой данных.
+
+База данных
+PostgreSQL. Подключение через Npgsql.EntityFrameworkCore.PostgreSQL.
+Контекст базы данных - IdentityDbContext.
+Миграции управляются через Entity Framework Core Migrations.
+Поле Role хранится в базе данных как строка (HasConversion<string>()).
+
+Сущность пользователя (User)
+Id (Guid), TelegramId (long, уникальный индекс), Username, FirstName, LastName,
+PasswordHash, Role (UserRole enum), CreatedAt, UpdatedAt, IsActive.
+
+Хеширование паролей
+Пароли хранятся в виде хешей, вычисленных через BCrypt.Net (алгоритм BCrypt).
+При входе пароль проверяется через BCrypt.Verify.
+
+JWT-токены
+Токены генерируются при регистрации и входе. Алгоритм подписи - HMAC-SHA256.
+Токен содержит следующие claims:
+  - ClaimTypes.NameIdentifier - Id пользователя (Guid)
+  - ClaimTypes.Name - Username
+  - ClaimTypes.Role - роль пользователя
+  - telegram_id - TelegramId пользователя
+
+Параметры токена (Issuer, Audience, SecretKey, ExpirationMinutes) хранятся в конфигурации.
+SecretKey хранится в User Secrets.
+
+Валидация JWT
+Настроена через AddJwtBearer в Program.cs. Проверяются: Issuer, Audience, срок действия,
+подпись ключом. Используется для защиты эндпоинта update_profile через атрибут [Authorize].
+
+Паттерны проектирования
+- Dependency Inversion: IAuthService инжектируется в контроллер через конструктор.
+- DTO-слой: входящие данные принимаются через Request-объекты, исходящие - через
+  Response-объекты. Маппинг выполняется в приватном методе MapToResponse.
+- Guard clauses: ранний выход из методов при ошибках валидации.
+
+Роли пользователей (UserRole enum)
+Student = 0, Moderator = 1, Administrator = 2.
+Новые пользователи регистрируются с ролью Student по умолчанию.
+
+Логирование
+Используется стандартный ILogger через ASP.NET Core.
+
+Конфигурация
+Строка подключения к базе данных хранится в appsettings.json.
+Чувствительные данные (SecretKey) хранятся в User Secrets.
