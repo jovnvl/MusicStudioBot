@@ -1,67 +1,98 @@
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using RabbitMQ.Client;
 using RoomService.Data;
+using RoomService.Infrastructure;
 using RoomService.Repositories;
 using RoomService.Services;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace RoomService
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
-            builder.Configuration.AddEnvironmentVariables();
-
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                ?? Environment.GetEnvironmentVariable("PG_RoomService");
-
-
-            //if (string.IsNullOrEmpty(connectionString))
-            //{
-            //    Console.WriteLine("Не настроена строка подключения");
-            //    return;
-            //}
-
-            builder.Services.AddScoped<IRoomsService, RoomsService>();
-            builder.Services.AddScoped<ICategoryRoomService, CategoryRoomService>();
-            builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
-            builder.Services.AddScoped<ICategoryRoomRepository, InMemoryCategoryRoomRepository>();
-            //builder.Services.AddScoped<IRoomRepository, PgRoomRepository>();
-            //builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
-            builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            try
             {
-                app.MapOpenApi();
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                var connectionFactory = new ConnectionFactory() { HostName = "localhost" };
+                var connection = await connectionFactory.CreateConnectionAsync();
+                var channel = await connection.CreateChannelAsync();
 
-                //app.UseSwaggerUI(options =>
-                //{
-                //    options.SwaggerEndpoint("/openapi/v1.json", "RoomService API v1");
-                //});
+                var builder = WebApplication.CreateBuilder(args);
+                builder.Configuration.AddEnvironmentVariables();
+
+                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                    ?? Environment.GetEnvironmentVariable("PG_RoomService");
+
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    Console.WriteLine("Не настроена строка подключения");
+                    return;
+                }
+
+                builder.Services.AddScoped<IRoomsService, RoomsService>();
+                builder.Services.AddScoped<ICategoryRoomService, CategoryRoomService>();
+                //builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
+                //builder.Services.AddScoped<ICategoryRoomRepository, InMemoryCategoryRoomRepository>();
+                builder.Services.AddScoped<IRoomRepository, PgRoomRepository>();
+
+                //builder.Services.AddSingleton<IConnection>(connection);
+                //builder.Services.AddSingleton<IChannel>(channel);
+                builder.Services.AddSingleton<IMessageBroker>(sp => 
+                {
+                    var rabbitTask = RabbitBroker.CreateAsync("logging_service_queue", connection, channel);
+                    return rabbitTask.GetAwaiter().GetResult();
+                });
+                builder.Services.AddScoped<IMessageBrokerService, RabbitService>();
+
+                builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
+                builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen();
+
+                // Add services to the container.
+
+                builder.Services.AddControllers();
+                // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+                builder.Services.AddOpenApi();
+
+                var app = builder.Build();
+
+                // Configure the HTTP request pipeline.
+                if (app.Environment.IsDevelopment())
+                {
+                    app.MapOpenApi();
+                    app.UseSwagger();
+                    app.UseSwaggerUI();
+
+                    //app.UseSwaggerUI(options =>
+                    //{
+                    //    options.SwaggerEndpoint("/openapi/v1.json", "RoomService API v1");
+                    //});
+                }
+
+                app.UseHttpsRedirection();
+                app.UseAuthorization();
+                app.MapControllers();
+
+                //app.MapGet("/", () => "RoomService API is running. Use /swagger for API documentation.");
+
+                app.Lifetime.ApplicationStopped.Register(() =>
+                {
+                    channel?.CloseAsync();
+                    connection?.CloseAsync();
+                });
+
+                app.Run();
             }
-
-            app.UseHttpsRedirection();
-            app.UseAuthorization();
-            app.MapControllers();
-
-            //app.MapGet("/", () => "RoomService API is running. Use /swagger for API documentation.");
-
-            app.Run();
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                
+            }
         }
     }
 }
