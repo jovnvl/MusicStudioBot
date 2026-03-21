@@ -1,4 +1,6 @@
 
+using LoggingService.Services;
+
 namespace LoggingService
 {
     public class Program
@@ -12,6 +14,7 @@ namespace LoggingService
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            builder.Services.AddHostedService<LogConsumerService>();
 
             var app = builder.Build();
 
