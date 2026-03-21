@@ -1,41 +1,34 @@
-﻿using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System.Text;
 
 namespace LoggingService
 {
-    internal class Program
+    public class Program
     {
-        static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost" };
-            using var connection = await factory.CreateConnectionAsync();
-            using var channel = await connection.CreateChannelAsync();
+            var builder = WebApplication.CreateBuilder(args);
 
-            string queueName = "logging_service_queue";
-            // Объявляем ту же очередь (на всякий случай)
-            await channel.QueueDeclareAsync(queue: queueName,
-                                 durable: false,
-                                 exclusive: false,
-                                 autoDelete: false,
-                                 arguments: null);
+            // Add services to the container.
 
-            Console.WriteLine(" [*] Ожидание сообщений...");
+            builder.Services.AddControllers();
+            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+            builder.Services.AddOpenApi();
 
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.ReceivedAsync += async (model, ea) =>
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
             {
-                var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-                Console.WriteLine($" [x] Получено: {message}");
-            };
+                app.MapOpenApi();
+            }
 
-            await channel.BasicConsumeAsync(queue: queueName,
-                                 autoAck: true,
-                                 consumer: consumer);
+            app.UseHttpsRedirection();
 
-            Console.WriteLine(" Нажмите [enter] для выхода.");
-            Console.ReadLine();
+            app.UseAuthorization();
+
+
+            app.MapControllers();
+
+            app.Run();
         }
     }
 }
