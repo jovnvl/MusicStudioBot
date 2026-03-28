@@ -1,5 +1,6 @@
 
 using LoggingService.Data;
+using LoggingService.Repositories;
 using LoggingService.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,8 @@ namespace LoggingService
 
             builder.Services.AddControllers();
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
+            builder.Services.AddScoped<ILogService, LogService>();
+            builder.Services.AddScoped<IRepository, PgLogsRepository>();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
             builder.Services.AddHostedService<LogConsumerService>();

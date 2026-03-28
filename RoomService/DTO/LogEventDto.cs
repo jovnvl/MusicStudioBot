@@ -14,7 +14,7 @@ namespace RoomService.DTO
         //public DurationMs = stopwatch.ElapsedMilliseconds,
         public LogEventDto(string level, string eventType, string message   )
         {
-            Timestamp = DateTime.Now;
+            Timestamp = DateTime.UtcNow;
             Service = "room-service";
             Level = level; 
             EventType = eventType;

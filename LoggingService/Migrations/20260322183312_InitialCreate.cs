@@ -19,8 +19,8 @@ namespace LoggingService.Migrations
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    service = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    level = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    service = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    level = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     event_type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     message = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false)
                 },
@@ -38,11 +38,6 @@ namespace LoggingService.Migrations
                 name: "IDX_logs_level",
                 table: "Logs",
                 column: "level");
-
-            migrationBuilder.CreateIndex(
-                name: "IDX_logs_message",
-                table: "Logs",
-                column: "message");
 
             migrationBuilder.CreateIndex(
                 name: "IDX_logs_service",

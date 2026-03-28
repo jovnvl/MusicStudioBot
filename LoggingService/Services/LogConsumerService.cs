@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Connections;
+﻿using LoggingService.Models.Entities.DTO;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.Extensions.Logging.Abstractions;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -11,6 +12,13 @@ namespace LoggingService.Services
 {
     public class LogConsumerService : BackgroundService
     {
+        private readonly IServiceScopeFactory _scopeFactory;
+
+        public LogConsumerService(IServiceScopeFactory scopeFactory)
+        {
+            _scopeFactory = scopeFactory;
+        }
+
         protected override async Task ExecuteAsync(CancellationToken ct)
         {
             var factory = new ConnectionFactory() { HostName = "localhost" };
@@ -33,6 +41,17 @@ namespace LoggingService.Services
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 Console.WriteLine($" [x] Получено: {message}");
+
+                using var scope = _scopeFactory.CreateScope();
+                var logService = scope.ServiceProvider.GetRequiredService<ILogService>();
+
+                var log = JsonSerializer.Deserialize<LogDto>(body);
+
+                if (log != null)
+                {
+                    await logService.AddLogAsync(log, ct);
+                }
+
             };
             await channel.BasicConsumeAsync(queue: queueName,
                      autoAck: true,
@@ -41,30 +60,4 @@ namespace LoggingService.Services
             Console.ReadLine();
         }
     }
-    //{
-    //    private readonly IChannel _channel;
-    //    private readonly IServiceScopeFactory _scopeFactory;
-
-    //    protected override async Task ExecuteAsync(CancellationToken ct)
-    //    {
-    //        var consumer = new AsyncEventingBasicConsumer(_channel);
-
-    //        consumer.ReceivedAsync += async (_, ea) =>
-    //        {
-    //            var body = ea.Body.ToArray();
-    //            var log = JsonSerializer.Deserialize<LogEntry>(body);
-
-    //            using var scope = _scopeFactory.CreateScope();
-    //            var repository = scope.ServiceProvider.GetRequiredService<ILogRepository>();
-
-    //            // Сохраняем в БД
-    //            await repository.AddAsync(log, ct);
-
-    //            // Подтверждаем получение
-    //            await _channel.BasicAckAsync(ea.DeliveryTag, false, ct);
-    //        };
-
-    //        await _channel.BasicConsumeAsync("logs-queue", false, consumer, ct);
-    //    }
-    //}
 }

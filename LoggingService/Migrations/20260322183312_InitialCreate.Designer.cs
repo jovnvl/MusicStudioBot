@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LoggingService.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20260322143600_InitialCreate")]
+    [Migration("20260322183312_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -42,8 +42,8 @@ namespace LoggingService.Migrations
 
                     b.Property<string>("Level")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
                         .HasColumnName("level");
 
                     b.Property<string>("Message")
@@ -54,8 +54,8 @@ namespace LoggingService.Migrations
 
                     b.Property<string>("Service")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("service");
 
                     b.Property<DateTime>("Timestamp")
@@ -66,8 +66,6 @@ namespace LoggingService.Migrations
                     b.HasIndex(new[] { "EventType" }, "IDX_logs_event_type");
 
                     b.HasIndex(new[] { "Level" }, "IDX_logs_level");
-
-                    b.HasIndex(new[] { "Message" }, "IDX_logs_message");
 
                     b.HasIndex(new[] { "Service" }, "IDX_logs_service");
 
