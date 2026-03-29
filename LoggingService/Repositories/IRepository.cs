@@ -6,5 +6,6 @@ namespace LoggingService.Repositories
     public interface IRepository
     {
         public Task AddLogAsync(LogDto log, CancellationToken ct);
+        public Task<IReadOnlyList<Log>> GetLogsAsync(LogFilterDto logFilterDto, CancellationToken ct);
     }
 }

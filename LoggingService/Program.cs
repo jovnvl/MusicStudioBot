@@ -31,7 +31,9 @@ namespace LoggingService
             builder.Services.AddScoped<IRepository, PgLogsRepository>();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            builder.Services.AddSwaggerGen();
             builder.Services.AddHostedService<LogConsumerService>();
+
 
             var app = builder.Build();
 
@@ -39,6 +41,8 @@ namespace LoggingService
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();
