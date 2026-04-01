@@ -8,6 +8,7 @@ namespace RoomService.Data
     {
         public DbSet<Room> Rooms {  get; set; }
         public DbSet<CategoryRoom> CategoryRooms{ get; set; }
+        public DbSet<OutBoxMessages> OutBoxMessages { get; set; }
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
 
