@@ -4,14 +4,17 @@ using System.Diagnostics;
 
 namespace RoomService.Models.Entities
 {
-    [Table("outbox_messages")]
-    public class OutBoxMessages
+    [Table("outbound_messages")]
+    public class OutboundMessages
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
         public int Id { get; set; }
-        public DateTime Timestamp { get; set; }
+
+        [Required]
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; }
 
         [Required]
         [MaxLength(100)]
@@ -32,6 +35,18 @@ namespace RoomService.Models.Entities
         [MaxLength(500)]
         [Column("message")]
         public string Message { get; set; } = string.Empty;
+
+        [Required]
+        [Column("status")]
+        public MessageStatus Status { get; set; }
+
+        [Column("processed_at")]
+        public DateTime ProcessedAt { get; set; }
+
+        [Required]
+        [MaxLength(30)]
+        [Column("queue_name")]
+        public string QueueName { get; set; } = string.Empty;
 
     }
     

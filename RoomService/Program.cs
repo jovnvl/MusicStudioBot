@@ -35,20 +35,19 @@ namespace RoomService
 
                 builder.Services.AddScoped<IRoomsService, RoomsService>();
                 builder.Services.AddScoped<ICategoryRoomService, CategoryRoomService>();
-                //builder.Services.AddScoped<IRoomRepository, InMemoryRoomRepository>();
-                //builder.Services.AddScoped<ICategoryRoomRepository, InMemoryCategoryRoomRepository>();
+                builder.Services.AddScoped<IMessageBrokerService, RabbitService>();
+                builder.Services.AddScoped<IOutboundMessagesService, OutboundMessagesService>();
                 builder.Services.AddScoped<IRoomRepository, PgRoomRepository>();
+                builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
+                builder.Services.AddScoped<IOutboundMessagesRepository, PgOutboundMessagesRepository>();
 
-                //builder.Services.AddSingleton<IConnection>(connection);
-                //builder.Services.AddSingleton<IChannel>(channel);
                 builder.Services.AddSingleton<IMessageBroker>(sp => 
                 {
                     var rabbitTask = RabbitBroker.CreateAsync("logging_service_queue", connection, channel);
                     return rabbitTask.GetAwaiter().GetResult();
                 });
-                builder.Services.AddScoped<IMessageBrokerService, RabbitService>();
 
-                builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
+                
                 builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();

@@ -4,6 +4,7 @@ using RabbitMQ.Client;
 using RoomService.DTO;
 using RoomService.Infrastructure;
 using RoomService.Models.Entities;
+using RoomService.Repositories;
 using RoomService.Services;
 using System.Text;
 using System.Text.Json;
@@ -15,11 +16,12 @@ namespace RoomService.Controllers
     public class RoomsController : ControllerBase
     {
         private readonly IRoomsService _roomsService;
-        private readonly IMessageBrokerService _brokerService;
-        public RoomsController(IRoomsService roomService, IMessageBrokerService brokerService)
+        private readonly IOutboundMessagesService _outboundMessagesService;
+
+        public RoomsController(IRoomsService roomService, IMessageBrokerService brokerService, IOutboundMessagesService outboundMessagesService)
         {
             _roomsService = roomService;
-            _brokerService = brokerService;
+            _outboundMessagesService = outboundMessagesService;
         }
 
         // GET: api/rooms
@@ -29,7 +31,7 @@ namespace RoomService.Controllers
             try
             {
                 var rooms = await _roomsService.GetAllRoomsAsync(ct);
-                await _brokerService.SendMessageToLogAsync(LogLevel.Information, "Успешно запрошен список всех комнат", "get-rooms", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, "Успешно запрошен список всех комнат", "get-rooms", ct);
                 return Ok(rooms);
             }
             
@@ -40,7 +42,8 @@ namespace RoomService.Controllers
             
             catch (Exception ex)
             {
-                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "get-rooms", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "get-rooms", ct);
+
                 return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
@@ -55,10 +58,10 @@ namespace RoomService.Controllers
                 if (room == null)
                 {
                     var message = $"Комната с ID {id} не найдена";
-                    await _brokerService.SendMessageToLogAsync(LogLevel.Warning, message, "get-room", ct);
+                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, message, "get-room", ct);
                     return NotFound(new { Message = message });
                 }
-                await _brokerService.SendMessageToLogAsync(LogLevel.Information, $"Комната с ID {id} найдена", "get-room", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Комната с ID {id} найдена", "get-room", ct);
                 return Ok(room);
             }
             
@@ -69,7 +72,7 @@ namespace RoomService.Controllers
             
             catch (Exception ex)
             {
-                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "get-room", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "get-room", ct);
                 return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
@@ -85,11 +88,11 @@ namespace RoomService.Controllers
                 if (createdRoom == null)
                 {
                     var message = "Не удалось создать комнату";
-                    await _brokerService.SendMessageToLogAsync(LogLevel.Warning, message, "post-rooms", ct);
+                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, message, "post-rooms", ct);
                     return BadRequest(new { Message = message });
                 }
 
-                await _brokerService.SendMessageToLogAsync(LogLevel.Information, $"Создана комната с ID {createdRoom.Id}", "post-rooms", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Создана комната с ID {createdRoom.Id}", "post-rooms", ct);
                 return CreatedAtRoute("GetRoomAsync", new { id = createdRoom.Id }, createdRoom);
             }
             
@@ -100,7 +103,7 @@ namespace RoomService.Controllers
             
             catch (Exception ex)
             {
-                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "post-room", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "post-room", ct);
                 return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
@@ -121,10 +124,10 @@ namespace RoomService.Controllers
                 if (!deleted)
                 {
                     var message = $"Не удалось удалить комнату с ID {id}";
-                    await _brokerService.SendMessageToLogAsync(LogLevel.Warning, message, "delete-room", ct);
+                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, message, "delete-room", ct);
                     return BadRequest(new { Message = message });
                 }
-                await _brokerService.SendMessageToLogAsync(LogLevel.Information, $"Комната с ID {id} удалена", "delete-room", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Комната с ID {id} удалена", "delete-room", ct);
                 return Ok();
             }
 
@@ -135,7 +138,7 @@ namespace RoomService.Controllers
 
             catch (Exception ex)
             {
-                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "delete-room", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "delete-room", ct);
                 return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
@@ -151,11 +154,11 @@ namespace RoomService.Controllers
                 if (!createdRoom)
                 {
                     var message = "Не удалось обновить комнату";
-                    await _brokerService.SendMessageToLogAsync(LogLevel.Warning, message, "update-room", ct);
+                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, message, "update-room", ct);
                     return BadRequest(new { Message =  message});
                 }
 
-                await _brokerService.SendMessageToLogAsync(LogLevel.Information, $"Комната с ID {updateRoomDto.Id} обновлена", "update-room", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Комната с ID {updateRoomDto.Id} обновлена", "update-room", ct);
                 return Ok();
             }
 
@@ -166,7 +169,7 @@ namespace RoomService.Controllers
 
             catch (Exception ex)
             {
-                await _brokerService.SendMessageToLogAsync(LogLevel.Critical, ex.Message, "update-room", ct);
+                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "update-room", ct);
                 return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
