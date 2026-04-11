@@ -1,4 +1,6 @@
-﻿using RoomService.DTO;
+﻿using LoggingService.Models.Entities.DTO;
+using RoomService.DTO;
+using RoomService.Models.Entities;
 
 namespace RoomService.Services
 {
@@ -6,6 +8,8 @@ namespace RoomService.Services
     {
         public Task CreateOutboundMessageToLogAsync(LogLevel logLevel, string message, string eventType, CancellationToken ct);
         public Task UpdateOutboundMessageAsync(int Id, MessageStatus status, CancellationToken ct);
- 
+        public Task<OutboundMessages?> GetActiveOutboundMessagesAsync(CancellationToken ct);
+        public Task<List<OutboundMessages>> GetsOutboundMessagesByFilterAsync(LogFilterDto logFilterDto, CancellationToken ct);
+
     }
 }

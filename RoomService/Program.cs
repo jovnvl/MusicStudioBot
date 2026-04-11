@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
+using RoomService.BackgroundServices;
 using RoomService.Data;
 using RoomService.Infrastructure;
 using RoomService.Repositories;
@@ -40,24 +41,19 @@ namespace RoomService
                 builder.Services.AddScoped<IRoomRepository, PgRoomRepository>();
                 builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
                 builder.Services.AddScoped<IOutboundMessagesRepository, PgOutboundMessagesRepository>();
-
+                builder.Services.AddHostedService<OutboundMessagesProcessor>();
                 builder.Services.AddSingleton<IMessageBroker>(sp => 
                 {
                     var rabbitTask = RabbitBroker.CreateAsync("logging_service_queue", connection, channel);
                     return rabbitTask.GetAwaiter().GetResult();
                 });
-
                 
                 builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
-
-                // Add services to the container.
-
                 builder.Services.AddControllers();
                 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
                 builder.Services.AddOpenApi();
-
                 var app = builder.Build();
 
                 // Configure the HTTP request pipeline.

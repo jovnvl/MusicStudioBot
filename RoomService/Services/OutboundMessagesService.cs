@@ -1,4 +1,5 @@
-﻿using RoomService.DTO;
+﻿using LoggingService.Models.Entities.DTO;
+using RoomService.DTO;
 using RoomService.Infrastructure;
 using RoomService.Models.Entities;
 using RoomService.Repositories;
@@ -18,7 +19,16 @@ namespace RoomService.Services
         {
             await _messageRepository.AddOutboundMessageAsync(new LogEventDto(logLevel.ToString(), eventType, message), "logging_service_queue", ct);
         }
-     
+
+        public async Task<OutboundMessages?> GetActiveOutboundMessagesAsync(CancellationToken ct)
+        {
+            return await _messageRepository.GetActiveOtboundMessagesAsync(ct);
+        }
+
+        public async Task<List<OutboundMessages>> GetsOutboundMessagesByFilterAsync(LogFilterDto logFilterDto, CancellationToken ct)
+        {
+            return await _messageRepository.GetOutboundMessagesByFilterAsync(logFilterDto, ct);
+        }
 
         public async Task UpdateOutboundMessageAsync(int Id, MessageStatus status, CancellationToken ct)
         {
