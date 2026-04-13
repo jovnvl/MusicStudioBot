@@ -2,6 +2,6 @@
 {
     public interface IMessageBrokerService
     {
-        Task SendMessageToLogAsync(LogLevel logLevel, string message, string eventType, CancellationToken ct);
+        Task SendMessageToLogAsync(string logLevel, string message, string eventType, CancellationToken ct);
     }
 }

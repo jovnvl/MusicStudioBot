@@ -8,14 +8,14 @@ namespace RoomService.Services
     {
         private readonly IMessageBroker _messageBroker;
         
-        public RabbitService(IMessageBroker messageQueue)
+        public RabbitService(IMessageBroker messageBroker)
         {
-            _messageBroker = messageQueue;
+            _messageBroker = messageBroker;
         }
         
-        public async Task SendMessageToLogAsync(LogLevel logLevel, string message, string eventType, CancellationToken ct) 
+        public async Task SendMessageToLogAsync(string logLevel, string message, string eventType, CancellationToken ct) 
         {
-            await _messageBroker.PublishMessageAsync<LogEventDto>(new LogEventDto(logLevel.ToString(), eventType, message), "logging_service_queue", ct);
+            await _messageBroker.PublishMessageAsync<LogEventDto>(new LogEventDto(logLevel, eventType, message), "logging_service_queue", ct);
         }
     }
 }
