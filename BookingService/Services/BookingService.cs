@@ -7,28 +7,14 @@ namespace BookingService.Services
     public class BookingService : IBookingService
     {
         private readonly IBookingRepository _bookingRepository;
-        private readonly IRoomService _roomService;
-        private readonly ICategoryRoomService _categoryRoomService;
-        private readonly IAuthService _authService;
 
-        public BookingService(IBookingRepository bookingRepository, IRoomService roomService, ICategoryRoomService categoryRoomService, IAuthService authService)
+        public BookingService(IBookingRepository bookingRepository)
         {
             _bookingRepository = bookingRepository;
-            _roomService = roomService;
-            _categoryRoomService = categoryRoomService;
-            _authService = authService;
         }
 
         public async Task<Booking?> CreateBookingAsync(BookingDto createBookingDto, CancellationToken ct)
         {
-            var _roomExists = await _roomService.ExistsRoomAsync(createBookingDto.RoomId, ct);
-            if (!_roomExists)
-                return null;
-
-            var _userExists = await _authService.ExistsUserAsync(createBookingDto.UserId, ct);
-            if (!_userExists)
-                return null;
-
             var _booking = await GetBookingByDescriptionAsync(createBookingDto.Description, ct);
             if (_booking != null)
                 return null;
@@ -60,7 +46,13 @@ namespace BookingService.Services
         public async Task<List<Booking>> GetBookingsByRoomIdAsync(int roomId, CancellationToken ct)
         {
             var result = await _bookingRepository.GetAllBookingsAsync(ct);
-            return result.Where(x => x.Room.Id == roomId).ToList();
+            return result.Where(x => x.RoomId == roomId).ToList();
         }
+        public async Task<List<Booking>> GetBookingsByUserIdAsync(Guid userId, CancellationToken ct)
+        {
+            var result = await _bookingRepository.GetAllBookingsAsync(ct);
+            return result.Where(x => x.UserId == userId).ToList();
+        }
+
     }
 }

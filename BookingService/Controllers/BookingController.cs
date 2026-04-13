@@ -127,7 +127,7 @@ namespace BookingService.Controllers
                 var deleted = await _bookingService.DeleteBookingAsync(id, ct);
                 if (!deleted)
                 {
-                    return BadRequest(new { Message = "Не удалось удалить кaбанет" });
+                    return BadRequest(new { Message = "Не удалось удалить бронь на кaбанет" });
                 }
 
                 return Ok();
