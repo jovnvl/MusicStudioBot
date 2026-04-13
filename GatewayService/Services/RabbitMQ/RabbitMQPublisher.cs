@@ -25,7 +25,7 @@ namespace GatewayService.Services.RabbitMQ
 
                 await channel.QueueDeclareAsync(
                     queue: queueName,
-                    durable: true,  // сохраняется при перезапуске RabbitMQ
+                    durable: false,  // сохраняется ли при перезапуске RabbitMQ
                     exclusive: false,
                     autoDelete: false
                 );

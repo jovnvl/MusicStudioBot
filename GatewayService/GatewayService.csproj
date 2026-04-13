@@ -10,12 +10,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
-    <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
     <PackageReference Include="Telegram.Bot" Version="22.8.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Models\Events\" />
     <Folder Include="Models\Telegram\" />
     <Folder Include="Services\Http\" />
   </ItemGroup>

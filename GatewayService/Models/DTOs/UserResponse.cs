@@ -1,5 +1,4 @@
-﻿using GatewayService.Models.Enums;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace GatewayService.Models.DTOs
 {

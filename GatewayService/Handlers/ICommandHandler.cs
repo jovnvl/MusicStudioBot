@@ -15,5 +15,7 @@
         Task HandleCreateRoomCategoryCommand(long chatId, string messageText);
         Task HandleGetUsersCommand(long chatId);
         Task HandleChangeUserRoleCommand(long chatId, string messageText);
+        Task HandleCreateBookingCommand(long chatId, string messageText);
+        Task HandleGetBookingsCommand(long chatId);
     }
 }
