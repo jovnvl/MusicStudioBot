@@ -1,6 +1,8 @@
 ﻿using IdentityService.Data;
+using IdentityService.DTO;
 using IdentityService.Models.DTOs;
 using IdentityService.Models.Entities;
+using IdentityService.Services.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,11 +16,13 @@ namespace IdentityService.Services
     {
         private readonly IdentityDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IRabbitMQPublisher _rabbitMQPublisher;
 
-        public AuthService(IdentityDbContext context, IConfiguration configuration)
+        public AuthService(IdentityDbContext context, IConfiguration configuration, IRabbitMQPublisher RabbitMQPublisher)
         {
             _context = context;
             _configuration = configuration;
+            _rabbitMQPublisher = RabbitMQPublisher;
         }
 
         private static UserResponse MapToResponse(User user)
@@ -36,21 +40,29 @@ namespace IdentityService.Services
             };
         }
 
+        private async Task LogToServiceAsync(string level, string eventType, string message)
+        {
+            await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
+        }
+
         public async Task<UserResponse> ChangeRoleAsync(ChangeRoleRequest request)
         {
             var user = await _context.Users.FindAsync(request.Id);
             if (user == null)
             {
+                await LogToServiceAsync("Error", "user-not-found", "User not found");
                 throw new InvalidOperationException("Пользователь не найден.");
             }
 
             if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var requestRole))
             {
+                await LogToServiceAsync("Error", "role-request-reading-failed", "Request reading failed");
                 throw new InvalidOperationException("Ошибка чтения запроса.");
             }
             user.Role = requestRole;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+            await LogToServiceAsync("Information", "change-role", $"User {user.Username} role changed to {requestRole}");
             return MapToResponse(user);
         }
 
@@ -78,20 +90,24 @@ namespace IdentityService.Services
             
             if (user == null)
             {
+                await LogToServiceAsync("Error", "user-not-found", $"User not found");
                 throw new AuthenticationException("Пользователь не найден.");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
+                await LogToServiceAsync("Error", "incorrect-password", $"Password is incorrect");
                 throw new AuthenticationException("Неверный пароль.");
             }
 
             if (!user.IsActive)
             {
+                await LogToServiceAsync("Error", "profile-deactivated", $"User profile is inactive");
                 throw new AuthenticationException("Доступ закрыт.");
             }
 
             var token = GenerateJwtToken(user);
+            await LogToServiceAsync("Information", "login", $"Login of User {user.Username} is successfull");
             return new AuthResponse { Token = token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
         }
 
@@ -99,6 +115,7 @@ namespace IdentityService.Services
         {
             if (await _context.Users.AnyAsync(u => u.TelegramId == request.TelegramId))
             {
+                await LogToServiceAsync("Error", "user-already-registered", $"User already has a profile");
                 throw new InvalidOperationException("Пользователь уже зарегистрирован.");
             }
 
@@ -119,6 +136,7 @@ namespace IdentityService.Services
             _context.Users.Add(user); 
             await _context.SaveChangesAsync();
             var token = GenerateJwtToken(user);
+            await LogToServiceAsync("Information", "registration", $"Successfull registration");
             return new AuthResponse{Token = token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
         }
 
@@ -127,6 +145,7 @@ namespace IdentityService.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
+                await LogToServiceAsync("Error", "user-not-found", $"User not found");
                 throw new AuthenticationException("Пользователь не найден.");
             }
 
@@ -135,6 +154,7 @@ namespace IdentityService.Services
             user.LastName = request.LastName ?? user.LastName;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+            await LogToServiceAsync("Information", "update-profile", $"User profile updated");
             return MapToResponse(user); 
         }
 

@@ -1,5 +1,6 @@
 using IdentityService.Data;
 using IdentityService.Services;
+using IdentityService.Services.RabbitMQ;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -29,6 +30,7 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
