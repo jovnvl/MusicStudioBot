@@ -622,7 +622,12 @@ async function loadUsers() {
         </td>
         <td class="mono">${u.telegramId}</td>
         <td>${shortId(u.id)}</td>
-        <td><span class="badge ${u.isActive ? 'badge-green' : 'badge-red'}">${u.isActive ? 'Да' : 'Нет'}</span></td>
+        <td>
+          <button class="btn-${u.isActive ? 'danger' : 'success'} btn-sm" 
+                  onclick="toggleUserStatus('${u.id}', ${!u.isActive})">
+            ${u.isActive ? 'Деактивировать' : 'Активировать'}
+          </button>
+        </td>
       </tr>
     `).join('');
 
@@ -863,6 +868,29 @@ function selectUser(userId, username) {
   document.getElementById('book-user-id').value     = userId;
   document.getElementById('book-user-search').value = username;
   document.getElementById('user-dropdown').style.display = 'none';
+}
+
+async function toggleUserStatus(userId, newStatus) {
+    const action = newStatus ? 'активировать' : 'деактивировать';
+    if (!confirm(`Вы уверены, что хотите ${action} пользователя?`)) return;
+
+    try {
+        const res = await fetch(`${IDENTITY_URL}/api/auth/user/set_active_status`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ id: userId, isActive: newStatus })
+        });
+
+        if (!res.ok) {
+            notify(`Ошибка: не удалось ${action} пользователя`, 'error');
+            return;
+        }
+
+        notify(`Пользователь ${newStatus ? 'активирован' : 'деактивирован'}`);
+        loadUsers();
+    } catch (e) {
+        notify('Ошибка соединения', 'error');
+    }
 }
 
 document.addEventListener('click', e => {
