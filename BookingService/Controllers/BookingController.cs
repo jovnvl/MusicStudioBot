@@ -16,7 +16,7 @@ namespace BookingService.Controllers
             _bookingService = bookingService;
         }
 
-        // GET: api/bookings
+        // GET: api/booking
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsAsync(CancellationToken ct = default)
         {
