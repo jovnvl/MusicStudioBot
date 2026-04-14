@@ -133,5 +133,21 @@ namespace IdentityService.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // PUT api/auth/user/set_active_status
+        [HttpPut("user/set_active_status")]
+        [Authorize]
+        public async Task<ActionResult<UserResponse>> SetActiveStatus([FromBody] SetActiveStatusRequest request)
+        {
+            try
+            {
+                var user = await _authService.SetActiveStatusAsync(request.Id, request.IsActive);
+                return Ok(user);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

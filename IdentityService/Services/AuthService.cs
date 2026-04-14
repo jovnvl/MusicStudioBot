@@ -158,6 +158,26 @@ namespace IdentityService.Services
             return MapToResponse(user); 
         }
 
+        public async Task<UserResponse> SetActiveStatusAsync(Guid userId, bool isActive)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                await LogToServiceAsync("Error", "user-not-found", "User not found");
+                throw new InvalidOperationException("Пользователь не найден.");
+            }
+
+            user.IsActive = isActive;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var action = isActive ? "activated" : "deactivated";
+            await LogToServiceAsync("Information", $"user-{action}",
+                $"User {user.Username} (ID: {user.Id}) {action}");
+
+            return MapToResponse(user);
+        }
+
         private string GenerateJwtToken(User user)
         {
             // 1. Создаем claims (данные пользователя)

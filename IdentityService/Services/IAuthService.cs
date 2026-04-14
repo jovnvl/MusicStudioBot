@@ -11,5 +11,6 @@ namespace IdentityService.Services
         Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
         Task<IReadOnlyList<UserResponse>> GetAllUsersAsync();
         Task<UserResponse> ChangeRoleAsync(ChangeRoleRequest request);
+        Task<UserResponse> SetActiveStatusAsync(Guid userId, bool isActive);
     }
 }
