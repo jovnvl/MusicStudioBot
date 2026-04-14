@@ -81,34 +81,23 @@ namespace BookingService.Controllers
         {
             if (!ModelState.IsValid)
                 return ValidationProblem(ModelState);
-
             try
             {
                 var createdBooking = await _bookingService.CreateBookingAsync(bookingDto, ct);
-
-                if (createdBooking == null)
-                    return BadRequest(new { Message = "Не удалось создать бронь на кабинет" });
-
-                return CreatedAtRoute(
-                    "GetBookingAsync",
-                    new { id = createdBooking.Id },
-                    createdBooking);
+                return CreatedAtRoute("GetBookingAsync", new { id = createdBooking.Id }, createdBooking);
             }
-            
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
             catch (OperationCanceledException)
             {
                 return StatusCode(499);
             }
-            
             catch (Exception ex)
             {
-                // Добавить логирование ошибки
-
-                return StatusCode(500, new
-                {
-                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
-                    //Error = ex.Message    GUID ошибки в логгере
-                });
+                // TODO: Логирование
+                return StatusCode(500, new { Message = $"Внутренняя ошибка сервера: {ex}" });
             }
         }
 
