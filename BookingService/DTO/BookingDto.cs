@@ -6,10 +6,6 @@ namespace BookingService.DTO
 {
     public class BookingDto
     {
-        /*[Display(Name = "Id бронирования кабинета")]
-        [Required(ErrorMessage = "ID бронирования кабинета обязателен")]
-        public Guid Id { get; init; } = Guid.NewGuid();
-        */
         [StringLength(500,
         ErrorMessage = "Описание не должно превышать 500 символов")]
         [Display(Name = "Описание")]
@@ -18,36 +14,11 @@ namespace BookingService.DTO
         [Display(Name = "Пользователь")]
         [Required(ErrorMessage = "Кто бронирует обязателен")]
         public Guid UserId { get; init; } = Guid.Parse("284616f4-e14d-4f05-af9b-baef54d9a6eb");
-        /*public User User { get; init; } = new User()
-        {
-            Id = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
-            TelegramId = 10L,
-            Username = "Krause",
-            FirstName = "Mt.Krause",
-            LastName = "Metr",
-            Role = UserRole.Student,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            IsActive = true,
-        };
-        */
+
         [Display(Name = "Кабинет")]
         [Required(ErrorMessage = "Кабинет для бронирования обязателен")]
         public int RoomId { get; init; } = 1;
-        /*public Room Room { get; init; } = new Room()
-        {
-            Name = "Kab.134",
-            Description = "Fortepiano",
-            CreationDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            Status = RoomStatus.Available,
-            CategoryRoomId = 1,
-            CategoryRoom = new CategoryRoom()
-            {
-                Name = "Music",
-                Description ="For piano",
-            }
-        };
-        */
+       
         [Display(Name = "Дата создания")]
         public DateTime CreationDate { get; init; } = DateTime.UtcNow;
 

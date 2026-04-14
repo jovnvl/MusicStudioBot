@@ -451,7 +451,7 @@
 // ================================================================
 const IDENTITY_URL = 'https://localhost:7057';
 const ROOM_URL     = 'http://localhost:64923';
-const BOOKING_URL  = 'http://localhost:5003';
+const BOOKING_URL  = 'http://localhost:57409';
 
 // ================================================================
 // СОСТОЯНИЕ ПРИЛОЖЕНИЯ
@@ -832,7 +832,7 @@ async function loadUsersForDropdown() {
     const res = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
     allUsers = await res.json();
   } catch (e) {
-    console.error('Не удалось загрузить пользователей для dropdown');
+    console.error('Не удалось загрузить пользователей');
   }
 }
 
@@ -901,9 +901,9 @@ document.addEventListener('click', e => {
 
 async function loadBookings() {
   const tbody = document.getElementById('bookings-tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="loading">Загрузка...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="loading">Загрузка...</td></tr>';
 
-  try {
+    try {
     const res      = await fetch(`${BOOKING_URL}/api/booking`);
     const bookings = await res.json();
 
