@@ -406,8 +406,10 @@
             <input type="hidden" id="book-user-id">
           </div>
           <div class="form-group">
-            <label>Room ID</label>
-            <input type="number" id="book-room-id" value="1">
+            <label>Комната</label>
+            <select id="book-room-select">
+                <option value="">- загрузка -</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Описание</label>
@@ -459,6 +461,7 @@ const BOOKING_URL  = 'http://localhost:5003';
 let token       = null;
 let allUsers    = [];
 let allCategories = [];
+let allRooms = [];
 
 // ================================================================
 // УВЕДОМЛЕНИЕ
@@ -589,7 +592,7 @@ function showTab(name, btn) {
   btn.classList.add('active');
 
   if (name === 'rooms')    { loadCategories(); loadRooms(); }
-  if (name === 'bookings') { loadBookings(); loadUsersForDropdown(); }
+    if (name === 'bookings') { loadBookings(); loadUsersForDropdown(); loadRooms(); }
 }
 
 // ================================================================
@@ -738,6 +741,9 @@ async function loadRooms() {
     const res   = await fetch(`${ROOM_URL}/api/rooms`);
     const rooms = await res.json();
 
+    allRooms = rooms;
+    refreshRoomSelect(); 
+
     if (!rooms.length) {
       tbody.innerHTML = '<tr><td colspan="7" class="loading">Нет комнат</td></tr>';
       return;
@@ -836,6 +842,17 @@ async function loadUsersForDropdown() {
   }
 }
 
+function refreshRoomSelect() {
+    const select = document.getElementById('book-room-select');
+    if (!allRooms || !allRooms.length) {
+        select.innerHTML = '<option value="">— нет комнат —</option>';
+        return;
+    }
+    select.innerHTML = allRooms.map(r =>
+        `<option value="${r.id}">${r.name} (ID: ${r.id})</option>`
+    ).join('');
+}
+
 function showUserDropdown() {
   filterUserDropdown();
 }
@@ -932,7 +949,7 @@ async function loadBookings() {
 
 async function createBooking() {
   const userId      = document.getElementById('book-user-id').value.trim();
-  const roomId      = parseInt(document.getElementById('book-room-id').value);
+  const roomId      = parseInt(document.getElementById('book-room-select').value);
   const description = document.getElementById('book-desc').value.trim();
   const status      = parseInt(document.getElementById('book-status').value);
 
