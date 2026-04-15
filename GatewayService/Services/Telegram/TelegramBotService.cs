@@ -24,6 +24,7 @@ namespace GatewayService.Services.Telegram
         
             var message = update.Message;
             var chatId = message.Chat.Id;
+            var chatUsername = message.Chat.Username ?? chatId.ToString();
             var messageText = message.Text;
 
             _logger.LogInformation("Received message from ChatId: {ChatId}, Text: {Text}", chatId, messageText);
@@ -33,7 +34,7 @@ namespace GatewayService.Services.Telegram
             else if (messageText.StartsWith("/help"))
                 await _commandHandler.HandleHelpCommand(chatId);
             else if (messageText.StartsWith("/register"))
-                await _commandHandler.HandleRegisterCommand(chatId, messageText);
+                await _commandHandler.HandleRegisterCommand(chatId, chatUsername, messageText);
             else if (messageText.StartsWith("/login"))
                 await _commandHandler.HandleLoginCommand(chatId, messageText);
             else if (messageText.StartsWith("/myprofile"))

@@ -20,7 +20,7 @@ namespace GatewayService.Handlers
         private readonly IUserSessionService _sessionService;
         private readonly IMessageSender _messageSender;
         private readonly IRabbitMQPublisher _rabbitMQPublisher;
-        private const int RegisterCommandPartsCount = 5;
+        private const int RegisterCommandPartsCount = 4;
         private const int LoginCommandPartsCount = 2;
         private const int UpdateCommandMinPartsCount = 2;
         private const int CreateRoomCategoryCommandPartsCount = 2;
@@ -146,19 +146,19 @@ namespace GatewayService.Handlers
             await _messageSender.SendMessageAsync(chatId, helpMessage);
         }
 
-        public async Task HandleRegisterCommand(long chatId, string messageText)
+        public async Task HandleRegisterCommand(long chatId, string chatUsername, string messageText)
         {
             string[] registerCommand = messageText.Split(' ');
             if (registerCommand.Length < RegisterCommandPartsCount)
             {
                 await _messageSender.SendMessageAsync(chatId,
-                    "Неверный формат команды!\nИспользуйте: /register username password firstName lastName");
+                    "Неверный формат команды!\nИспользуйте: /register password firstName lastName");
                 return;
             }
-            string username = registerCommand[1];
-            string password = registerCommand[2];
-            string firstName = registerCommand[3];
-            string lastName = registerCommand[4];
+            string username = chatUsername;
+            string password = registerCommand[1];
+            string firstName = registerCommand[2];
+            string lastName = registerCommand[3];
             long telegramId = chatId;
 
             var registerRequest = new RegisterRequest

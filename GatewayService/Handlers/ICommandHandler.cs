@@ -4,7 +4,7 @@
     {
         Task HandleStartCommand(long chatId);
         Task HandleHelpCommand(long chatId);
-        Task HandleRegisterCommand(long chatId, string messageText);
+        Task HandleRegisterCommand(long chatId, string chatUsername, string messageText);
         Task HandleLoginCommand(long chatId, string messageText);
         Task HandleMyProfileCommand(long chatId);
         Task HandleUpdateProfileCommand(long chatId, string messageText);
