@@ -812,7 +812,6 @@ namespace GatewayService.Handlers
                 Description = "Бронирование комнаты",
                 UserId = userId,
                 RoomId = roomId,
-                CreationDate = DateTime.UtcNow,
                 Status = BookingStatus.NotConfirmed,
                 TimeBegin = timeBegin,
                 TimeEnd = timeEnd,

@@ -39,6 +39,7 @@ namespace BookingService
 using BookingService.Data;
 using BookingService.Repositories;
 using BookingService.Services;
+using BookingService.Services.RabbitMQ;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 
@@ -63,6 +64,7 @@ namespace BookingService
 
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+            builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
 
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
             builder.Services.AddEndpointsApiExplorer();
@@ -74,7 +76,15 @@ namespace BookingService
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            });
+
             var app = builder.Build();
+
+            app.UseCors();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

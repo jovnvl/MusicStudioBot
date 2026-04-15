@@ -14,19 +14,8 @@ namespace BookingService.Repositories
             _dataContext = dataContext;
         }
 
-        public async Task<Booking> AddBookingAsync(BookingDto createBookingDto, CancellationToken ct)
-        {
-            var booking = new Booking()
-            {
-                RoomId =  createBookingDto.RoomId,
-                UserId =  createBookingDto.UserId,
-                Status = createBookingDto.Status, 
-                TimeBegin = DateTime.UtcNow,
-                TimeEnd = DateTime.UtcNow.AddMinutes(60),
-                Description = createBookingDto.Description,
-                CreationDate = DateTime.UtcNow,
-                Id = Guid.NewGuid(),
-            };                        
+        public async Task<Booking> AddBookingAsync(Booking booking, CancellationToken ct)
+        {                  
             await _dataContext.Bookings.AddAsync(booking, ct);
             await _dataContext.SaveChangesAsync(ct);
             return booking;
@@ -36,6 +25,31 @@ namespace BookingService.Repositories
         {
             var _bookings = await _dataContext.Bookings.ToListAsync(ct);
             return _bookings.AsReadOnly();
+        }
+
+        public async Task<Booking?> GetByDescriptionAsync(string description, CancellationToken ct)
+        {
+            return await _dataContext.Bookings
+                .FirstOrDefaultAsync(b => b.Description == description, ct);
+        }
+
+        public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct)
+        {
+            return await _dataContext.Bookings.FindAsync(new object[] { id }, ct);
+        }
+
+        public async Task<List<Booking>> GetByRoomIdAsync(int roomId, CancellationToken ct)
+        {
+            return await _dataContext.Bookings
+                .Where(b => b.RoomId == roomId)
+                .ToListAsync(ct);
+        }
+
+        public async Task<List<Booking>> GetByUserIdAsync(Guid userId, CancellationToken ct)
+        {
+            return await _dataContext.Bookings
+                .Where(b => b.UserId == userId)
+                .ToListAsync(ct);
         }
 
         public async Task<bool> RemoveBookingAsync(Guid id, CancellationToken ct)
@@ -49,6 +63,17 @@ namespace BookingService.Repositories
             await _dataContext.SaveChangesAsync(ct);
 
             return true;
+        }
+
+        public async Task<bool> HasOverlappingBookingAsync(int roomId, DateTime timeBegin, DateTime timeEnd, CancellationToken ct)
+        {
+            return await _dataContext.Bookings.AnyAsync(
+                b => b.RoomId == roomId
+                  && b.TimeBegin < timeEnd
+                  && b.TimeEnd > timeBegin
+                  && b.Status != BookingStatus.Canceled,
+                ct
+            );
         }
     }
 }
