@@ -1,7 +1,10 @@
-﻿using IdentityService.Models.DTOs;
+﻿using IdentityService.DTO;
+using IdentityService.Models.DTOs;
 using IdentityService.Services;
+using IdentityService.Services.RabbitMQ;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Authentication;
 using System.Security.Claims;
 
 
@@ -12,10 +15,16 @@ namespace IdentityService.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IRabbitMQPublisher _rabbitMQPublisher;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IRabbitMQPublisher rabbitMQPublisher)
         {
             _authService = authService;
+            _rabbitMQPublisher = rabbitMQPublisher;
+        }
+        private async Task LogToServiceAsync(string level, string eventType, string message)
+        {
+            await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
         }
 
         // POST api/auth/register
@@ -25,10 +34,12 @@ namespace IdentityService.Controllers
             try
             {
                 var result = await _authService.RegisterAsync(request);
+                await LogToServiceAsync("Information", "registration", $"Successfull registration of user {request.Username}");
                 return Ok(result);
             }
             catch (InvalidOperationException ex)
             {
+                await LogToServiceAsync("Error", "user-already-registered", $"User {request.Username} already has a profile");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -39,11 +50,23 @@ namespace IdentityService.Controllers
         {
             try
             {
+                await LogToServiceAsync("Information", "login", $"Login of user {request.TelegramId} is successfull");
                 var result = await _authService.LoginAsync(request);
                 return Ok(result);
             }
-            catch (InvalidOperationException ex)
+            catch (NullReferenceException ex)
             {
+                await LogToServiceAsync("Error", "user-not-found", $"User {request.TelegramId} not found");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (AuthenticationException ex)
+            {
+                await LogToServiceAsync("Error", "incorrect-password", $"Password of user {request.TelegramId} is incorrect");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (AccessViolationException ex)
+            {
+                await LogToServiceAsync("Error", "profile-deactivated", $"User {request.TelegramId} profile is inactive");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -111,10 +134,12 @@ namespace IdentityService.Controllers
                     return Unauthorized();
 
                 var user = await _authService.UpdateProfileAsync(userId, request);
+                await LogToServiceAsync("Information", "update-profile", $"User {request.Username} profile updated");
                 return Ok(user);
             }
-            catch (InvalidOperationException ex)
+            catch (AuthenticationException ex)
             {
+                await LogToServiceAsync("Error", "user-not-found", $"User {request.Username} not found");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -126,10 +151,17 @@ namespace IdentityService.Controllers
             try
             {
                 var result = await _authService.ChangeRoleAsync(request);
+                await LogToServiceAsync("Information", "change-role", $"User {request.Id} role changed to {request.Role}");
                 return Ok(result);
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidDataException ex)
             {
+                await LogToServiceAsync("Error", "role-request-reading-failed", $"Change role request for user {request.Id} reading failed");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (NullReferenceException ex)
+            {
+                await LogToServiceAsync("Error", "user-not-found", $"User {request.Id} not found");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -142,10 +174,13 @@ namespace IdentityService.Controllers
             try
             {
                 var user = await _authService.SetActiveStatusAsync(request.Id, request.IsActive);
+                var action = request.IsActive ? "activated" : "deactivated";
+                await LogToServiceAsync("Information", $"user-{action}", $"User {user.Username} (ID: {user.Id}) {action}");
                 return Ok(user);
             }
-            catch (InvalidOperationException ex)
+            catch (NullReferenceException ex)
             {
+                await LogToServiceAsync("Error", "user-not-found", "User not found");
                 return BadRequest(new { message = ex.Message });
             }
         }

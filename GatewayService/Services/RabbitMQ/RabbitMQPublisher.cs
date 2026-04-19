@@ -30,7 +30,12 @@ namespace GatewayService.Services.RabbitMQ
                     autoDelete: false
                 );
 
-                var json = JsonSerializer.Serialize(message);
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+
+                var json = JsonSerializer.Serialize(message, options);
                 var body = Encoding.UTF8.GetBytes(json);
 
                 await channel.BasicPublishAsync(

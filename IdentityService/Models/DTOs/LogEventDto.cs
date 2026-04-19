@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace IdentityService.DTO
+﻿namespace IdentityService.DTO
 {
     public class LogEventDto
     {
