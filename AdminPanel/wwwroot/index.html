@@ -495,7 +495,7 @@
 // ================================================================
 const IDENTITY_URL = 'https://localhost:7057';
 const ROOM_URL     = 'https://localhost:64922';
-const BOOKING_URL  = 'http://localhost:57409';
+const BOOKING_URL  = 'https://localhost:57408';
 
 // ================================================================
 // СОСТОЯНИЕ ПРИЛОЖЕНИЯ
@@ -582,7 +582,7 @@ async function doLogin() {
     if (!username || !password) { errEl.textContent = 'Заполните все поля'; return; }
 
     try {
-    const usersRes = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
+        const usersRes = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
     if (!usersRes.ok) { errEl.textContent = 'Не удалось подключиться к IdentityService'; return; }
     const users = await usersRes.json();
 
@@ -645,7 +645,7 @@ async function loadUsers() {
     tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка...</td></tr>';
 
     try {
-    const res   = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
+        const res = await fetch(`${IDENTITY_URL}/api/auth/user/all`, { headers: authHeaders() });
     const users = await res.json();
     allUsers = users;
 
@@ -685,7 +685,7 @@ async function changeRole(userId, newRole) {
     try {
     const res = await fetch(`${IDENTITY_URL}/api/auth/user/change_role`, {
         method: 'PUT',
-        headers: jsonHeaders(),
+        headers: authHeaders(),
         body: JSON.stringify({ id: userId, role: newRole })
     });
     if (!res.ok) { notify('Ошибка изменения роли', 'error'); return; }
@@ -969,7 +969,7 @@ async function loadBookings() {
     tbody.innerHTML = '<tr><td colspan="8" class="loading">Загрузка...</td></tr>';
 
     try {
-    const res      = await fetch(`${BOOKING_URL}/api/booking`);
+        const res = await fetch(`${BOOKING_URL}/api/booking`, { headers: authHeaders() });
     const bookings = await res.json();
 
     if (!bookings.length) {
@@ -1022,7 +1022,7 @@ async function createBooking() {
     try {
     const res = await fetch(`${BOOKING_URL}/api/booking`, {
         method: 'POST',
-        headers: jsonHeaders(),
+        headers: authHeaders(),
         body: JSON.stringify(payload)
     });
     if (!res.ok) { notify('Ошибка создания бронирования', 'error'); return; }
@@ -1043,7 +1043,10 @@ async function deleteBooking(id) {
     if (!confirm(`Удалить бронирование ${id}?`)) return;
 
     try {
-    const res = await fetch(`${BOOKING_URL}/api/booking/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${BOOKING_URL}/api/booking/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders(),
+        });
     if (!res.ok) { notify('Ошибка удаления', 'error'); return; }
     notify('Бронирование удалено');
     loadBookings();

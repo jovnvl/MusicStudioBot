@@ -73,6 +73,7 @@ namespace IdentityService.Controllers
 
         // GET api/auth/user/{id}
         [HttpGet("user/{id:guid}")]
+        [Authorize]
         public async Task<ActionResult<UserResponse>> GetUserById(Guid id)
         {
             try
@@ -89,6 +90,7 @@ namespace IdentityService.Controllers
 
         // GET api/auth/user/all
         [HttpGet("user/all")]
+        //[Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetUsers()
         {
             try
@@ -105,7 +107,7 @@ namespace IdentityService.Controllers
 
         // GET api/auth/user/telegram/{telegramId}
         [HttpGet("user/telegram/{telegramId:long}")]
-
+        [Authorize]
         public async Task<ActionResult<UserResponse>> GetUserByTelegramId(long telegramId)
         {
             try
@@ -146,6 +148,7 @@ namespace IdentityService.Controllers
 
         // PUT api/auth/user/change_role
         [HttpPut("user/change_role")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult<UserResponse>> ChangeRole(ChangeRoleRequest request)
         {
             try
@@ -168,7 +171,7 @@ namespace IdentityService.Controllers
 
         // PUT api/auth/user/set_active_status
         [HttpPut("user/set_active_status")]
-        [Authorize]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult<UserResponse>> SetActiveStatus([FromBody] SetActiveStatusRequest request)
         {
             try

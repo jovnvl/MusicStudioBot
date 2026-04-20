@@ -2,6 +2,7 @@
 using BookingService.Models.Entities;
 using BookingService.Services;
 using BookingService.Services.RabbitMQ;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,7 @@ namespace BookingService.Controllers
 
         // GET: api/booking
         [HttpGet]
+        [Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsAsync(CancellationToken ct = default)
         {
             try
@@ -54,6 +56,7 @@ namespace BookingService.Controllers
 
         // GET: api/booking/<GUID>
         [HttpGet("{id:guid}", Name = "GetBookingAsync")]
+        [Authorize]
         public async Task<ActionResult<Booking>> GetBookingAsync(Guid id, CancellationToken ct = default)
         {
             try
@@ -87,6 +90,7 @@ namespace BookingService.Controllers
 
         // POST: api/bookings
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Booking>> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -118,6 +122,7 @@ namespace BookingService.Controllers
 
         // DELETE: api/bookings/<GUID>
         [HttpDelete("{id:guid}")]
+        [Authorize]
         public async Task<IActionResult> DeleteBookingAsync(Guid id, CancellationToken ct = default)
         {
             try
