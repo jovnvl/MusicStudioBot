@@ -494,7 +494,7 @@
 // КОНФИГУРАЦИЯ — URL адреса сервисов
 // ================================================================
 const IDENTITY_URL = 'https://localhost:7057';
-const ROOM_URL     = 'http://localhost:64923';
+const ROOM_URL     = 'https://localhost:64922';
 const BOOKING_URL  = 'http://localhost:57409';
 
 // ================================================================
@@ -746,7 +746,7 @@ async function createCategory() {
     try {
     const res = await fetch(`${ROOM_URL}/api/categories`, {
         method: 'POST',
-        headers: jsonHeaders(),
+        headers: authHeaders(),
         body: JSON.stringify({ name, description })
     });
     if (!res.ok) { notify('Ошибка создания категории', 'error'); return; }
@@ -763,7 +763,10 @@ async function deleteCategory(id) {
     if (!confirm(`Удалить категорию ${id}?`)) return;
 
     try {
-    const res = await fetch(`${ROOM_URL}/api/categories/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${ROOM_URL}/api/categories/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
     if (!res.ok) { notify('Нельзя удалить — есть комнаты в этой категории', 'error'); return; }
     notify('Категория удалена');
     loadCategories();
@@ -829,7 +832,7 @@ async function createRoom() {
     try {
     const res = await fetch(`${ROOM_URL}/api/rooms`, {
         method: 'POST',
-        headers: jsonHeaders(),
+        headers: authHeaders(),
         body: JSON.stringify({ name, description, categoryRoomId, status })
     });
     if (!res.ok) { notify('Ошибка создания комнаты', 'error'); return; }
@@ -846,7 +849,7 @@ async function updateRoomStatus(id, status) {
     try {
     const res = await fetch(`${ROOM_URL}/api/rooms`, {
         method: 'PUT',
-        headers: jsonHeaders(),
+        headers: authHeaders(),
         body: JSON.stringify({ id, status })
     });
     if (!res.ok) { notify('Ошибка обновления', 'error'); return; }
@@ -861,7 +864,10 @@ async function deleteRoom(id) {
     if (!confirm(`Удалить комнату ${id}?`)) return;
 
     try {
-    const res = await fetch(`${ROOM_URL}/api/rooms/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${ROOM_URL}/api/rooms/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
     if (!res.ok) { notify('Ошибка удаления', 'error'); return; }
     notify('Комната удалена');
     loadRooms();

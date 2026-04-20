@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RoomService.DTO;
 using RoomService.Models.Entities;
@@ -44,6 +45,7 @@ namespace RoomService.Controllers
 
         // POST: api/categories
         [HttpPost]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult<CategoryRoom>> CreateCategoryRoomAsync(CreateCategoryRoomDto categoryRoomDto, CancellationToken ct = default)
         {
             try
@@ -75,6 +77,7 @@ namespace RoomService.Controllers
 
         // DELETE: api/categories/5
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteRoomAsync(int id, CancellationToken ct = default)
         {
             try
