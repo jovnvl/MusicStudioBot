@@ -39,7 +39,7 @@ namespace IdentityService.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                await LogToServiceAsync("Error", "user-already-registered", $"User {request.Username} already has a profile");
+                await LogToServiceAsync("Error", "already-registered", $"User {request.Username} already has a profile");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -159,7 +159,7 @@ namespace IdentityService.Controllers
             }
             catch (InvalidDataException ex)
             {
-                await LogToServiceAsync("Error", "role-request-reading-failed", $"Change role request for user {request.Id} reading failed");
+                await LogToServiceAsync("Error", "request-reading-fail", $"Change role request for user {request.Id} reading failed");
                 return BadRequest(new { message = ex.Message });
             }
             catch (NullReferenceException ex)
