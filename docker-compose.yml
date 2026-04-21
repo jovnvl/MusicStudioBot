@@ -37,3 +37,7 @@ volumes:
   postgres_data:
   rabbitmq_data:
   redis_data:
+  
+networks:
+  musicstudio_network:
+    driver: bridge

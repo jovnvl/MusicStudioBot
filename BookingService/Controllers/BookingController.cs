@@ -38,13 +38,13 @@ namespace BookingService.Controllers
             
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync("Error", "get-bookings-operation-canceled", "Get bookings operation canceled");
+                await LogToServiceAsync("Error", "get-bookings-cancel", "Get bookings operation canceled");
                 return StatusCode(499); 
             }
             
             catch (Exception ex)
             {
-                await LogToServiceAsync("Error", "get-bookings-internal-server-error", "Get bookings internal server error");
+                await LogToServiceAsync("Error", "int-server-error", "Get bookings internal server error");
 
                 return StatusCode(500, new
                 {
@@ -77,7 +77,7 @@ namespace BookingService.Controllers
             
             catch (Exception ex)
             {
-                await LogToServiceAsync("Error", "get-booking-internal-server-error", "Get booking internal server error");
+                await LogToServiceAsync("Error", "int-server-error", "Get booking internal server error");
 
                 return StatusCode(500, new
                 {
@@ -88,14 +88,14 @@ namespace BookingService.Controllers
             }
         }
 
-        // POST: api/bookings
+        // POST: api/booking
         [HttpPost]
         [Authorize]
         public async Task<ActionResult<Booking>> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
             {
-                await LogToServiceAsync("Error", "create-booking-validation-problem", "Validation problem");
+                await LogToServiceAsync("Error", "validation-problem", "Create Booking validation problem");
                 return ValidationProblem(ModelState);
             }
             try
@@ -106,7 +106,7 @@ namespace BookingService.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                await LogToServiceAsync("Error", "create-booking-invalid-operation", "Invalid operation");
+                await LogToServiceAsync("Error", "invalid-operation", "Create booking invalid operation");
                 return BadRequest(new { Message = ex.Message });
             }
             catch (OperationCanceledException)
@@ -115,7 +115,7 @@ namespace BookingService.Controllers
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync("Error", "create-booking-internal-server-error", "Create booking internal server error");
+                await LogToServiceAsync("Error", "int-server-error", "Create booking internal server error");
                 return StatusCode(500, new { Message = $"Внутренняя ошибка сервера: {ex}" });
             }
         }
@@ -140,13 +140,13 @@ namespace BookingService.Controllers
 
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync("Error", "delete-booking-operation-canceled", "Delete booking operation canceled");
+                await LogToServiceAsync("Error", "operation-canceled", "Delete booking operation canceled");
                 return StatusCode(499);
             }
 
             catch (Exception ex)
             {
-                await LogToServiceAsync("Error", "delete-booking-internal-server-error", "Delete booking internal server error");
+                await LogToServiceAsync("Error", "int-server-error", "Delete booking internal server error");
 
                 return StatusCode(500, new
                 {

@@ -769,17 +769,17 @@ namespace GatewayService.Handlers
                 UserId = userId,
                 RoomId = roomId,
                 Status = BookingStatus.NotConfirmed,
-                TimeBegin = timeBegin,
-                TimeEnd = timeEnd,
+                TimeBegin = timeBegin.ToUniversalTime(),
+                TimeEnd = timeEnd.ToUniversalTime(),
             };
 
             try
             {
-                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.BookingServiceUrl}/api/bookings", chatId, createBookingRequest);
+                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.BookingServiceUrl}/api/booking", chatId, createBookingRequest);
                 if (response.IsSuccessStatusCode)
                 {
                     var body = await response.Content.ReadAsStringAsync();
-                    var bookingResponse = JsonSerializer.Deserialize<List<BookingResponse>>(body);
+                    var bookingResponse = JsonSerializer.Deserialize<BookingResponse>(body);
                     if (bookingResponse == null)
                     {
                         _logger.LogError("Failed to deserialize BookingResponse");
