@@ -14,11 +14,15 @@ namespace IdentityService.Services
     {
         private readonly IdentityDbContext _context;
         private readonly IConfiguration _configuration;
-
-        public AuthService(IdentityDbContext context, IConfiguration configuration)
+        private readonly IRefreshTokenService _refreshTokenService;
+        public AuthService(
+            IdentityDbContext context, 
+            IConfiguration configuration,
+            IRefreshTokenService refreshTokenService)
         {
             _context = context;
             _configuration = configuration;
+            _refreshTokenService = refreshTokenService;
         }
 
         private static UserResponse MapToResponse(User user)
@@ -92,7 +96,8 @@ namespace IdentityService.Services
             }
 
             var token = GenerateJwtToken(user);
-            return new AuthResponse { Token = token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+            return new AuthResponse { Token = token, RefreshToken = refreshToken.Token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -119,7 +124,8 @@ namespace IdentityService.Services
             _context.Users.Add(user); 
             await _context.SaveChangesAsync();
             var token = GenerateJwtToken(user);
-            return new AuthResponse{Token = token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+            return new AuthResponse{Token = token, RefreshToken = refreshToken.Token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
         }
 
         public async Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
@@ -182,6 +188,37 @@ namespace IdentityService.Services
 
             // 5. Генерируем строку токена
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<AuthResponse> RefreshTokenAsync(string refreshTokenString)
+        {
+            var refreshToken = await _refreshTokenService.GetRefreshTokenAsync(refreshTokenString);
+
+            if (refreshToken == null || refreshToken.IsExpired)
+                throw new SecurityTokenException("Недействительный refresh token");
+
+            var user = await _context.Users.FindAsync(refreshToken.UserId);
+            if (user == null || !user.IsActive)
+                throw new SecurityTokenException("Пользователь не найден");
+
+            var newAccessToken = GenerateJwtToken(user);
+            var newRefreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+
+            await _refreshTokenService.RevokeRefreshTokenAsync(refreshTokenString);
+
+            return new AuthResponse
+            {
+                Token = newAccessToken,
+                RefreshToken = newRefreshToken.Token,
+                UserId = user.Id,
+                Username = user.Username,
+                Role = user.Role.ToString()
+            };
+        }
+
+        public async Task RevokeTokenAsync(string refreshToken)
+        {
+            await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
         }
     }
 }

@@ -4,6 +4,7 @@ using IdentityService.Services;
 using IdentityService.Services.RabbitMQ;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Authentication;
 using System.Security.Claims;
 
@@ -22,6 +23,7 @@ namespace IdentityService.Controllers
             _authService = authService;
             _rabbitMQPublisher = rabbitMQPublisher;
         }
+
         private async Task LogToServiceAsync(string level, string eventType, string message)
         {
             await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
@@ -184,6 +186,41 @@ namespace IdentityService.Controllers
             catch (NullReferenceException ex)
             {
                 await LogToServiceAsync("Error", "user-not-found", "User not found");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // POST api/auth/refresh
+        [HttpPost("refresh")]
+        public async Task<ActionResult<AuthResponse>> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            try
+            {
+                var result = await _authService.RefreshTokenAsync(request.RefreshToken);
+                await LogToServiceAsync("Information", "token-refresh", "Token refreshed");
+                return Ok(result);
+            }
+            catch (SecurityTokenException ex)
+            {
+                await LogToServiceAsync("Error", "invalid-refresh-token", ex.Message);
+                return Unauthorized(new { message = ex.Message });
+            }
+        }
+
+        // POST api/auth/revoke
+        [HttpPost("revoke")]
+        [Authorize]
+        public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequest request)
+        {
+            try
+            {
+                await _authService.RevokeTokenAsync(request.RefreshToken);
+                await LogToServiceAsync("Information", "token-revoked", "Token revoked");
+                return Ok(new { message = "Token revoked" });
+            }
+            catch (Exception ex)
+            {
+                await LogToServiceAsync("Error", "revoke-failed", ex.Message);
                 return BadRequest(new { message = ex.Message });
             }
         }

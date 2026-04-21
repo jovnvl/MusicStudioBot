@@ -501,6 +501,7 @@ const BOOKING_URL  = 'https://localhost:57408';
 // СОСТОЯНИЕ ПРИЛОЖЕНИЯ
 // ================================================================
 let token       = null;
+let refreshToken = null;
 let allUsers    = [];
 let allCategories = [];
 let allRooms = [];
@@ -573,6 +574,50 @@ function bookingStatusBadge(status) {
 // АВТОРИЗАЦИЯ
 // ================================================================
 
+async function refreshAccessToken() {
+    if (!refreshToken) return false;
+
+    try {
+        const res = await fetch(`${IDENTITY_URL}/api/auth/refresh`, {
+            method: 'POST',
+            headers: jsonHeaders(),
+            body: JSON.stringify({ refreshToken })
+        });
+
+        if (!res.ok) {
+            doLogout();
+            return false;
+        }
+
+        const data = await res.json();
+        token = data.token;
+        refreshToken = data.refreshToken;
+        return true;
+    } catch (e) {
+        doLogout();
+        return false;
+    }
+}
+
+async function fetchWithAuth(url, options = {}) {
+    let response = await fetch(url, options);
+
+    if (response.status === 401 && refreshToken) {
+        console.log('Got 401, trying to refresh token...');
+        
+        const refreshed = await refreshAccessToken();
+        
+        if (refreshed) {
+            if (options.headers && options.headers.Authorization) {
+                options.headers.Authorization = `Bearer ${token}`;
+            }
+            response = await fetch(url, options);
+        }
+    }
+
+    return response;
+}
+
 async function doLogin() {
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
@@ -603,6 +648,7 @@ async function doLogin() {
 
     const data = await loginRes.json();
     token = data.token;
+    refreshToken = data.refreshToken; 
 
     document.getElementById('topbar-info').textContent = `${data.username} (${data.role})`;
     document.getElementById('login-screen').style.display = 'none';
@@ -616,7 +662,16 @@ async function doLogin() {
 }
 
 function doLogout() {
+    if (refreshToken) {
+        fetch(`${IDENTITY_URL}/api/auth/revoke`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ refreshToken })
+        }).catch(e => console.error('Failed to revoke token', e));
+    }
+
     token = null;
+    refreshToken = null;
     allUsers = [];
     allCategories = [];
     document.getElementById('app').style.display = 'none';
@@ -645,7 +700,7 @@ async function loadUsers() {
     tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка...</td></tr>';
 
     try {
-        const res = await fetch(`${IDENTITY_URL}/api/auth/user/all`, { headers: authHeaders() });
+        const res = await fetchWithAuth(`${IDENTITY_URL}/api/auth/user/all`, { headers: authHeaders() });
     const users = await res.json();
     allUsers = users;
 

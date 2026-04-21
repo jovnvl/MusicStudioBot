@@ -12,5 +12,7 @@ namespace IdentityService.Services
         Task<IReadOnlyList<UserResponse>> GetAllUsersAsync();
         Task<UserResponse> ChangeRoleAsync(ChangeRoleRequest request);
         Task<UserResponse> SetActiveStatusAsync(Guid userId, bool isActive);
+        Task<AuthResponse> RefreshTokenAsync(string refreshToken);
+        Task RevokeTokenAsync(string refreshToken);
     }
 }

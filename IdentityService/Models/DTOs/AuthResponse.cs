@@ -6,6 +6,8 @@ namespace IdentityService.Models.DTOs
     {
         [JsonPropertyName("token")]
         public string Token { get; set; } = string.Empty;
+        [JsonPropertyName("refreshToken")]
+        public string RefreshToken { get; set; } = string.Empty;
         [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
         [JsonPropertyName("username")]
