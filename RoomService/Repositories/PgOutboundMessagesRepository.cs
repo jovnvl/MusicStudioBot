@@ -15,7 +15,7 @@ namespace RoomService.Repositories
             _dataContext = dataContext;
         }
 
-        public async Task AddOutboundMessageAsync(LogEventDto createOutboundMesssageDto, string QueueName,  CancellationToken ct)
+        public async Task AddOutboundMessageAsync(LogEventDto createOutboundMesssageDto, string QueueName,  bool saveChanges, CancellationToken ct)
         {
             var outboundMessages = new OutboundMessages
             {
@@ -28,7 +28,10 @@ namespace RoomService.Repositories
                 QueueName = QueueName
             };
             await _dataContext.OutboundMessages.AddAsync(outboundMessages, ct);
-            await _dataContext.SaveChangesAsync(ct);
+            if (saveChanges)
+            {
+                await _dataContext.SaveChangesAsync(ct);
+            }
         }
 
         public async Task<OutboundMessages?> GetActiveOtboundMessagesAsync(CancellationToken ct)

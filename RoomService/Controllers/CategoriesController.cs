@@ -11,125 +11,58 @@ namespace RoomService.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryRoomService _categoryRoomsService;
-        private readonly IOutboundMessagesService _outboundMessagesService;
-        public CategoriesController(ICategoryRoomService categoryRoomService, IOutboundMessagesService outboundMessagesService)
+        public CategoriesController(ICategoryRoomService categoryRoomService)
         {
             _categoryRoomsService = categoryRoomService;
-            _outboundMessagesService = outboundMessagesService;
         }
 
         // GET: api/categories
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<CategoryRoom>>> GetAllCategoriesAsync(CancellationToken ct = default)
         {
-            try
-            {
-                var categoryRooms = await _categoryRoomsService.GetAllCategoryRoomAsync(ct);
-                
-                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, "Успешно получен список всех категорий", "get-categories", ct);
-                return Ok(categoryRooms);
-            }
-            
-            catch (OperationCanceledException)
-            {
-                return StatusCode(499); 
-            }
-            
-            catch (Exception ex)
-            {
-                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "get-categories", ct);
-                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
-            }
+            var categoryRooms = await _categoryRoomsService.GetAllCategoryRoomAsync(ct);
+            return Ok(categoryRooms);
         }
 
         // POST: api/categories
         [HttpPost]
         public async Task<ActionResult<CategoryRoom>> CreateCategoryRoomAsync(CreateCategoryRoomDto categoryRoomDto, CancellationToken ct = default)
         {
-            try
-            {
-                var createdCategory = await _categoryRoomsService.CreateCategoryRoomAsync(categoryRoomDto, ct);
+            var createdCategory = await _categoryRoomsService.CreateCategoryRoomAsync(categoryRoomDto, ct);
 
-                if (createdCategory == null)
-                {
-                    var message = "Не удалось создать категорию";
-                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, message, "add-category", ct);
-                    return BadRequest(new { Message = message });
-                }
+            if (createdCategory == null)
+            {
+                return BadRequest(new { Message = "Не удалось создать категорию" });
+            }
 
-                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Создана категория с ID {createdCategory.Id}", "add-category", ct);
-                return CreatedAtRoute("GetCategoryRoomAsync",new { id = createdCategory.Id }, createdCategory);
-            }
-            
-            catch (OperationCanceledException)
-            {
-                return StatusCode(499);
-            }
-            
-            catch (Exception ex)
-            {
-                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "add-category", ct);
-                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
-            }
+            return CreatedAtRoute("GetCategoryRoomAsync",new { id = createdCategory.Id }, createdCategory);
+          
         }
 
         // DELETE: api/categories/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteRoomAsync(int id, CancellationToken ct = default)
         {
-            try
+            var deleted = await _categoryRoomsService.DeleteCategoryRoomAsync(id, ct);
+            if (!deleted)
             {
-                var deleted = await _categoryRoomsService.DeleteCategoryRoomAsync(id, ct);
-                if (!deleted)
-                {
-                    var message = "Не удалось удалить категорию";
-                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, message, "delete-category", ct);
-                    return BadRequest(new { Message = message });
-                }
-                
-                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Удалена категория с ID {id}", "delete-category", ct);
-                return NoContent();
+                return BadRequest(new { Message = "Не удалось удалить категорию" });
             }
-
-            catch (OperationCanceledException)
-            {
-                return StatusCode(499);
-            }
-
-            catch (Exception ex)
-            {
-                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "delete-category", ct);
-                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
-            }
+            return NoContent();
         }
 
         // GET: api/categories/5
         [HttpGet("{id:int}", Name = "GetCategoryRoomAsync")]
         public async Task<ActionResult<CategoryRoom>> GetCategoryRoomAsync(int id, CancellationToken ct = default)
         {
-            try
-            {
-                var room = await _categoryRoomsService.GetCategoryRoomByIdAsync(id, ct);
-                if (room == null)
-                {
-                    var message = $"Категория с ID {id} не найдена";
-                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, message, "get-category", ct);
-                    return NotFound(new { Message = message });
-                }
-                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Получена категория с ID {id}", "get-category", ct);
-                return Ok(room);
-            }
 
-            catch (OperationCanceledException)
+            var room = await _categoryRoomsService.GetCategoryRoomByIdAsync(id, ct);
+            if (room == null)
             {
-                return StatusCode(499);
+                return NotFound(new { Message = $"Категория с ID {id} не найдена" });
             }
+            return Ok(room);
 
-            catch (Exception ex)
-            {
-                await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "get-category", ct);
-                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
-            }
         }
     }
 }

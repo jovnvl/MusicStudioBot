@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using RoomService.Data;
 using RoomService.DTO;
 using RoomService.Models.Entities;
@@ -14,14 +15,17 @@ namespace RoomService.Repositories
             _dataContext = dataContext;
         }
 
-        public async Task<CategoryRoom> AddGategoryRoomAsync(CreateCategoryRoomDto createCategoryRoomDto, CancellationToken ct)
+        public async Task<CategoryRoom> AddGategoryRoomAsync(CreateCategoryRoomDto createCategoryRoomDto, bool saveChanges, CancellationToken ct)
         {
             var categoryRoom = new CategoryRoom {
                 Name = createCategoryRoomDto.Name, 
                 Description = createCategoryRoomDto.Description
                 };
             await _dataContext.CategoryRooms.AddAsync(categoryRoom, ct);
-            await _dataContext.SaveChangesAsync(ct);
+            if (saveChanges)
+            {
+                await _dataContext.SaveChangesAsync(ct);
+            }
             return categoryRoom;
         }
 
@@ -31,7 +35,7 @@ namespace RoomService.Repositories
             return _categoryRooms.AsReadOnly();
         }
 
-        public async Task<bool> RemoveCategoryRoomAsync(int id, CancellationToken ct)
+        public async Task<bool> RemoveCategoryRoomAsync(int id, bool savechanges, CancellationToken ct)
         {
             var categoryRoom = await _dataContext.CategoryRooms.FindAsync(id, ct);
 
@@ -39,7 +43,10 @@ namespace RoomService.Repositories
                 return false;
 
             _dataContext.CategoryRooms.Remove(categoryRoom);
-            await _dataContext.SaveChangesAsync(ct);
+            if (savechanges)
+            {
+                await _dataContext.SaveChangesAsync(ct);
+            }
 
             return true;
         }

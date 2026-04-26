@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using RoomService.Data;
 using RoomService.DTO;
 using RoomService.Models.Entities;
@@ -14,7 +15,7 @@ namespace RoomService.Repositories
             _dataContext = dataContext;
         }
 
-        public async Task<Room> AddRoomAsync(CreateRoomDto createRoomDto, CancellationToken ct)
+        public async Task<Room> AddRoomAsync(CreateRoomDto createRoomDto, bool savechanges, CancellationToken ct)
         {
             var room = new Room
             {
@@ -26,7 +27,10 @@ namespace RoomService.Repositories
                 Status = createRoomDto.Status
             };
             await _dataContext.Rooms.AddAsync(room, ct);
-            await _dataContext.SaveChangesAsync(ct);
+            if (savechanges)
+            {
+                await _dataContext.SaveChangesAsync(ct);
+            }
             return room;
         }
 
@@ -42,7 +46,7 @@ namespace RoomService.Repositories
             return room;
         }
 
-        public async Task<bool> RemoveRoomAsync(int id, CancellationToken ct)
+        public async Task<bool> RemoveRoomAsync(int id, bool saveChanges, CancellationToken ct)
         {
             var room = await GetRoomByIdAsync(id, ct);
 

@@ -15,9 +15,9 @@ namespace RoomService.Services
             _messageRepository = messageRepository;
         }
 
-        public async Task CreateOutboundMessageToLogAsync(LogLevel logLevel, string message, string eventType, CancellationToken ct)
+        public async Task CreateOutboundMessageToLogAsync(LogLevel logLevel, string message, string eventType, bool saveChanges, CancellationToken ct)
         {
-            await _messageRepository.AddOutboundMessageAsync(new LogEventDto(logLevel.ToString(), eventType, message), "logging_service_queue", ct);
+            await _messageRepository.AddOutboundMessageAsync(new LogEventDto(logLevel.ToString(), eventType, message), "logging_service_queue", saveChanges, ct);
         }
 
         public async Task<OutboundMessages?> GetActiveOutboundMessagesAsync(CancellationToken ct)

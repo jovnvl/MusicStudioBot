@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using RoomService.BackgroundServices;
 using RoomService.Data;
+using RoomService.Exceptions;
 using RoomService.Infrastructure;
 using RoomService.Repositories;
 using RoomService.Services;
@@ -47,7 +48,7 @@ namespace RoomService
                     var rabbitTask = RabbitBroker.CreateAsync("logging_service_queue", connection, channel);
                     return rabbitTask.GetAwaiter().GetResult();
                 });
-                
+
                 builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
@@ -62,6 +63,7 @@ namespace RoomService
                 });
 
                 var app = builder.Build();
+                app.UseMiddleware<GlobalExceptionMiddleware>();
 
                 app.UseCors();
 
