@@ -27,7 +27,7 @@ namespace RoomService.Models.Entities
         public string Level { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(20)]
+        [MaxLength(50)]
         [Column("event_type")]
         public string EventType { get; set; } = string.Empty;
 

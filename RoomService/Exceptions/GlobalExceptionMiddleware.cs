@@ -26,25 +26,17 @@ namespace RoomService.Exceptions
             }
             catch (Exception ex)
             {
-                // ✅ Получаем сервис через HttpContext (Scoped)
                 var outboundService = context.RequestServices.GetRequiredService<IOutboundMessagesService>();
-
-                // ✅ Определяем, какой метод был вызван
                 var endpoint = context.GetEndpoint()?.DisplayName ?? "Unknown";
                 var httpMethod = context.Request.Method;
                 var path = context.Request.Path;
-
-                // ✅ Формируем event type
                 var eventType = $"{httpMethod}_{path.ToString().Replace("/", "_")}".ToLower();
-
-                // ✅ Отправляем сообщение
+                
                 await outboundService.CreateOutboundMessageToLogAsync(
                     LogLevel.Critical,
                     $"[{httpMethod}] {path}: {ex.Message}",
                     eventType, true ,
                     CancellationToken.None);
-
-                //await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Critical, ex.Message, "post-room", ct);
 
                 _logger.LogError(ex, "Unhandled exception on {Method} {Path}", httpMethod, path);
 

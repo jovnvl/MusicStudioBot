@@ -26,7 +26,6 @@ namespace LoggingService.Services
             using var channel = await connection.CreateChannelAsync();
 
             string queueName = "logging_service_queue";
-            // Объявляем ту же очередь (на всякий случай)
             await channel.QueueDeclareAsync(queue: queueName,
                                  durable: false,
                                  exclusive: false,
@@ -51,7 +50,6 @@ namespace LoggingService.Services
                 {
                     await logService.AddLogAsync(log, ct);
                 }
-
             };
             await channel.BasicConsumeAsync(queue: queueName,
                      autoAck: true,

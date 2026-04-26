@@ -20,7 +20,7 @@ namespace LoggingService.Models.Entities.DTO
         public string Level { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(20)]
+        [MaxLength(50)]
         public string EventType { get; set; } = string.Empty;
 
         [Required]
