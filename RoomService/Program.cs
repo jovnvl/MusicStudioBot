@@ -1,6 +1,8 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RabbitMQ.Client;
 using RoomService.BackgroundServices;
 using RoomService.Data;
@@ -8,6 +10,7 @@ using RoomService.Exceptions;
 using RoomService.Infrastructure;
 using RoomService.Repositories;
 using RoomService.Services;
+using System.Text;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace RoomService
@@ -23,6 +26,29 @@ namespace RoomService
                 var channel = await connection.CreateChannelAsync();
 
                 var builder = WebApplication.CreateBuilder(args);
+
+                // ===== JWT AUTHENTICATION =====
+                builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+                            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+                            IssuerSigningKey = new SymmetricSecurityKey(
+                                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!))
+                        };
+                    });
+                // ===== JWT AUTHENTICATION =====
+
+                builder.Services.AddAuthorization();
+
+                builder.Services.AddControllers();
+
                 builder.Configuration.AddEnvironmentVariables();
 
                 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -66,6 +92,9 @@ namespace RoomService
                 app.UseMiddleware<GlobalExceptionMiddleware>();
 
                 app.UseCors();
+
+                app.UseAuthentication(); 
+                app.UseAuthorization();
 
                 // Configure the HTTP request pipeline.
                 if (app.Environment.IsDevelopment())

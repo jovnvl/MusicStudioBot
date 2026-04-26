@@ -9,6 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Telegram.Bot.Types;
 
 namespace GatewayService.Handlers
 {
@@ -89,9 +90,14 @@ namespace GatewayService.Handlers
             await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
         }
 
-        private async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string endpoint, object request)
+        private async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string endpoint, long chatId, object? request = null)
         {
             var httpClient = _httpClientFactory.CreateClient();
+            var token = _sessionService.GetToken(chatId);
+            if (!string.IsNullOrEmpty(token))
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }         
             StringContent? content = null;
             if (request != null && (method == HttpMethod.Post || method == HttpMethod.Put || method == HttpMethod.Patch))
             {
@@ -142,7 +148,9 @@ namespace GatewayService.Handlers
 /create_room - Создать комнату (формат: /create_room name | category_id | description)
 /create_room_category - Создать категорию (формат: /create_room_category name | description)
 /get_room - Получить комнату (формат: /get_room id)
-/update_room_status - Обновить статус (формат: /update_room_status id status)";
+/update_room_status - Обновить статус (формат: /update_room_status id status)
+/create_booking - Создать бронирование (формат: /create_booking userId | roomId | timeBegin | timeEnd)
+/get_bookings - Получить информацию о бронированиях";
             await _messageSender.SendMessageAsync(chatId, helpMessage);
         }
 
@@ -172,7 +180,7 @@ namespace GatewayService.Handlers
 
             try
             {
-                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.IdentityServiceUrl}/api/auth/register", registerRequest);
+                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.IdentityServiceUrl}/api/auth/register", chatId, registerRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -181,7 +189,7 @@ namespace GatewayService.Handlers
                     if (authResponse == null)
                     {
                         _logger.LogError("Failed to deserialize AuthResponse");
-                        await LogToServiceAsync("Error", "auth-response-deserialize-failed", "Failed to deserialize AuthResponse");
+                        await LogToServiceAsync("Error", "auth-response-fail", "Failed to deserialize AuthResponse");
                         return;
                     }
                     _logger.LogInformation("Registration successful. New user id: {UserId}", authResponse.UserId);
@@ -199,7 +207,7 @@ namespace GatewayService.Handlers
             {
                 _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-identity-failed", "HTTP request to IdentityService failed");
+                await LogToServiceAsync("Error", "http-request-fail", "HTTP request to IdentityService failed");
             }
         }
 
@@ -212,23 +220,16 @@ namespace GatewayService.Handlers
                     "Неверный формат команды!\nИспользуйте: /login 'password'");
                 return;
             }
-            string password = loginCommand[1];
-
-            var httpClient = _httpClientFactory.CreateClient();
-            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
 
             var loginRequest = new LoginRequest
             {
-                Password = password,
+                Password = loginCommand[1],
                 TelegramId = chatId,
             };
 
-            var json = JsonSerializer.Serialize(loginRequest);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
             try
             {
-                var response = await httpClient.PostAsync($"{identityServiceUrl}/api/auth/login", content);
+                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.IdentityServiceUrl}/api/auth/login", chatId, loginRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -237,7 +238,7 @@ namespace GatewayService.Handlers
                     if (authResponse == null)
                     {
                         _logger.LogError("Failed to deserialize AuthResponse");
-                        await LogToServiceAsync("Error", "auth-response-deserialize-failed", "Failed to deserialize AuthResponse");
+                        await LogToServiceAsync("Error", "auth-response-fail", "Failed to deserialize AuthResponse");
                         return;
                     }
                     _logger.LogInformation("Login successful. User token: {UserId}", authResponse.UserId);
@@ -256,24 +257,18 @@ namespace GatewayService.Handlers
             {
                 _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-identity-failed", "HTTP request to IdentityService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
             }
         }
 
         public async Task HandleMyProfileCommand(long chatId)
         {
-            var token = _sessionService.GetToken(chatId);
-            if (string.IsNullOrEmpty(token))
-            {
-                await _messageSender.SendMessageAsync(chatId, "Вы не авторизованы. Используйте /login");
+            if (!await IsPermitted(chatId, UserRole.Student))
                 return;
-            }
-            var httpClient = _httpClientFactory.CreateClient();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
+
             try
             {
-                var response = await httpClient.GetAsync($"{identityServiceUrl}/api/auth/user/telegram/{chatId}");
+                var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/telegram/{chatId}", chatId);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -282,7 +277,7 @@ namespace GatewayService.Handlers
                     if (userResponse == null)
                     {
                         _logger.LogError("Failed to deserialize UserResponse");
-                        await LogToServiceAsync("Error", "user-response-deserialize-failed", "Failed to deserialize UserResponse");
+                        await LogToServiceAsync("Error", "user-response-fail", "Failed to deserialize UserResponse");
                         return;
                     }
                     _logger.LogInformation("Successful receipt of user information. User: {Id}, {Username}", userResponse.Id, userResponse.Username);
@@ -293,25 +288,22 @@ namespace GatewayService.Handlers
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "get-user-info-failed", $"Receipt of user information failed: {errorMessage}");
+                    await LogToServiceAsync("Error", "get-user-info-fail", $"Receipt of user information failed: {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-identity-failed", "HTTP request to IdentityService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
             }
         }
 
         public async Task HandleUpdateProfileCommand(long chatId, string messageText)
         {
-            var token = _sessionService.GetToken(chatId);
-            if (string.IsNullOrEmpty(token))
-            {
-                await _messageSender.SendMessageAsync(chatId, "Вы не авторизованы. Используйте /login");
+
+            if (!await IsPermitted(chatId, UserRole.Student))
                 return;
-            }
 
             string[] updateCommand = messageText.Split(' ');
             if (updateCommand.Length < UpdateCommandMinPartsCount)
@@ -338,17 +330,10 @@ namespace GatewayService.Handlers
                 return;
             }
 
-            var httpClient = _httpClientFactory.CreateClient();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);  
-            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
-
-            var json = JsonSerializer.Serialize(updateProfileRequest);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             try
             {
-                var response = await httpClient.PutAsync($"{identityServiceUrl}/api/auth/user/update_profile", content);
-
+                var response = await SendRequestAsync(HttpMethod.Put, $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/update_profile", chatId, updateProfileRequest);
                 if (response.IsSuccessStatusCode)
                 {
                     var body = await response.Content.ReadAsStringAsync();
@@ -356,37 +341,36 @@ namespace GatewayService.Handlers
                     if (userResponse == null)
                     {
                         _logger.LogError("Failed to deserialize UserResponse");
-                        await LogToServiceAsync("Error", "user-response-deserialize-failed", "Failed to deserialize UserResponse");
+                        await LogToServiceAsync("Error", "user-response-fail", "Failed to deserialize UserResponse");
                         return;
                     }
                     _logger.LogInformation("Successful update of user information. User: {Id}, {Username}", userResponse.Id, userResponse.Username);
-                    await LogToServiceAsync("Information", "user-info-update", $"Successful update of user information. User: {userResponse.Id}, {userResponse.Username}");
+                    await LogToServiceAsync("Information", "user-update", $"Successful update of user information. User: {userResponse.Id}, {userResponse.Username}");
                     await _messageSender.SendMessageAsync(chatId, $"Id: {userResponse.Id}\nЛогин: {userResponse.Username}\nИмя: {userResponse.FirstName}\nФамилия: {userResponse.LastName}");
                 }
                 else
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "user-info-update-failed", $"Update of user information failed: {errorMessage}");
+                    await LogToServiceAsync("Error", "user-update-fail", $"Update of user information failed: {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-identity-failed", "HTTP request to IdentityService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
             }
         }
 
         public async Task HandleGetRoomsCommand(long chatId)
         {
-            if (!await IsPermitted(chatId, UserRole.Moderator))
-                return;
-            var httpClient = _httpClientFactory.CreateClient();
-            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
+            //if (!await IsPermitted(chatId, UserRole.Moderator))
+            //    return;
+
             try
             {
-                var response = await httpClient.GetAsync($"{roomServiceUrl}/api/rooms");
+                var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.RoomServiceUrl}/api/rooms", chatId);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -395,7 +379,7 @@ namespace GatewayService.Handlers
                     if (rooms == null || rooms.Count == 0)
                     {
                         _logger.LogError("Failed to deserialize RoomResponse");
-                        await LogToServiceAsync("Error", "room-response-deserialize-failed", "Failed to deserialize RoomResponse");
+                        await LogToServiceAsync("Error", "room-response-fail", "Failed to deserialize RoomResponse");
                         await _messageSender.SendMessageAsync(chatId, "Комнат пока нет");
                         return;
                     }
@@ -415,14 +399,14 @@ namespace GatewayService.Handlers
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "get-rooms-failed", $"Receipt of rooms information failed : {errorMessage}");
+                    await LogToServiceAsync("Error", "get-rooms-fail", $"Receipt of rooms information failed : {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to RoomService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-room-failed", "HTTP request to RoomService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to RoomService failed");
             }
         }
 
@@ -441,9 +425,6 @@ namespace GatewayService.Handlers
             string name = createRoomCommand[0].Substring(createRoomCommand[0].IndexOf(' ') + 1).Trim();
             string description = createRoomCommand[2].Trim();
 
-            var httpClient = _httpClientFactory.CreateClient();
-            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
-
             var createRoomRequest = new CreateRoomRequest
             {
                 Name = name,
@@ -453,12 +434,9 @@ namespace GatewayService.Handlers
                 Status = 0,
             };
 
-            var json = JsonSerializer.Serialize(createRoomRequest);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
             try
             {
-                var response = await httpClient.PostAsync($"{roomServiceUrl}/api/rooms", content);
+                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.RoomServiceUrl}/api/rooms", chatId, createRoomRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -467,7 +445,7 @@ namespace GatewayService.Handlers
                     if (roomResponse == null)
                     {
                         _logger.LogError("Failed to deserialize RoomResponse");
-                        await LogToServiceAsync("Error", "room-response-deserialize-failed", "Failed to deserialize RoomResponse");
+                        await LogToServiceAsync("Error", "room-response-fail", "Failed to deserialize RoomResponse");
                         return;
                     }
                     _logger.LogInformation("Added new room. Room:{Name}, {CategoryRoomId}", roomResponse.Name, roomResponse.CategoryRoomId);
@@ -478,14 +456,14 @@ namespace GatewayService.Handlers
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "create-room-failed", $"Receipt of rooms information failed : {errorMessage}");
+                    await LogToServiceAsync("Error", "create-room-fail", $"Receipt of rooms information failed : {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to RoomService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-room-failed", "HTTP request to RoomService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to RoomService failed");
             }
         }
 
@@ -507,16 +485,9 @@ namespace GatewayService.Handlers
                 Status = status,
             };
 
-            var httpClient = _httpClientFactory.CreateClient();
-            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
-
-            var json = JsonSerializer.Serialize(updateRoomRequest);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
             try
             {
-                var response = await httpClient.PutAsync($"{roomServiceUrl}/api/rooms", content);
-
+                var response = await SendRequestAsync(HttpMethod.Put, $"{_servicesSettings.RoomServiceUrl}/api/rooms", chatId, updateRoomRequest);
                 if (response.IsSuccessStatusCode)
                 {
                     _logger.LogInformation("Successful update of room information.");
@@ -528,14 +499,14 @@ namespace GatewayService.Handlers
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "update-room-failed", $"Update of room information failed : {errorMessage}");
+                    await LogToServiceAsync("Error", "update-room-fail", $"Update of room information failed : {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to RoomService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-room-failed", "HTTP request to RoomService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to RoomService failed");
             }
         }
 
@@ -553,21 +524,15 @@ namespace GatewayService.Handlers
             string name = createRoomCategoryCommand[0].Substring(createRoomCategoryCommand[0].IndexOf(' ') + 1).Trim();
             string description = createRoomCategoryCommand[1].Trim();
 
-            var httpClient = _httpClientFactory.CreateClient();
-            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
-
             var createRoomCategoryRequest = new CreateRoomCategoryRequest
             {
                 Name = name,
                 Description = description,
             };
 
-            var json = JsonSerializer.Serialize(createRoomCategoryRequest);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
             try
             {
-                var response = await httpClient.PostAsync($"{roomServiceUrl}/api/categories", content);
+                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.RoomServiceUrl}/api/categories", chatId, createRoomCategoryRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -576,25 +541,25 @@ namespace GatewayService.Handlers
                     if (roomCategoryResponse == null)
                     {
                         _logger.LogError("Failed to deserialize RoomCategoryResponse");
-                        await LogToServiceAsync("Error", "room-category-response-deserialize-failed", "Failed to deserialize RoomCategoryResponse");
+                        await LogToServiceAsync("Error", "room-categ-resp-fail", "Failed to deserialize RoomCategoryResponse");
                         return;
                     }
                     _logger.LogInformation("Added new room category. Room Category:{Id}, {Name}",roomCategoryResponse.Id,roomCategoryResponse.Name);
-                    await LogToServiceAsync("Information", "create-room-category", $"Added new room category. Room Category: {roomCategoryResponse.Id}, {roomCategoryResponse.Name}");
+                    await LogToServiceAsync("Information", "create-category", $"Added new room category. Room Category: {roomCategoryResponse.Id}, {roomCategoryResponse.Name}");
                     await _messageSender.SendMessageAsync(chatId, "Категория добавлена");
                 }
                 else
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "create-room-category-failed", $"Failed to add new room category: {errorMessage}");
+                    await LogToServiceAsync("Error", "create-category-fail", $"Failed to add new room category: {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to RoomService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-room-failed", "HTTP request to RoomService failed");
+                await LogToServiceAsync("Error", "request-failed", "HTTP request to RoomService failed");
             }
         }
 
@@ -610,12 +575,9 @@ namespace GatewayService.Handlers
                 return;
             }
 
-            var httpClient = _httpClientFactory.CreateClient();
-            var roomServiceUrl = _servicesSettings.RoomServiceUrl;
             try
             {
-                var response = await httpClient.GetAsync($"{roomServiceUrl}/api/rooms/{id}");
-
+                var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.RoomServiceUrl}/api/rooms/{id}", chatId);
                 if (response.IsSuccessStatusCode)
                 {
                     var body = await response.Content.ReadAsStringAsync();
@@ -623,7 +585,7 @@ namespace GatewayService.Handlers
                     if (roomResponse == null)
                     {
                         _logger.LogError("Failed to deserialize RoomResponse");
-                        await LogToServiceAsync("Error", "room-response-deserialize-failed", "Failed to deserialize RoomResponse");
+                        await LogToServiceAsync("Error", "room-response-fail", "Failed to deserialize RoomResponse");
                         await _messageSender.SendMessageAsync(chatId, "Такой комнаты нет");
                         return;
                     }
@@ -638,14 +600,14 @@ namespace GatewayService.Handlers
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "get-room-failed", $"Failed to get room info: {errorMessage}");
+                    await LogToServiceAsync("Error", "get-room-fail", $"Failed to get room info: {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to RoomService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-room-failed", "HTTP request to RoomService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to RoomService failed");
             }
         }
 
@@ -653,12 +615,9 @@ namespace GatewayService.Handlers
         {
             if (!await IsPermitted(chatId, UserRole.Moderator))
                 return;
-            var httpClient = _httpClientFactory.CreateClient();
-            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
             try
             {
-                var response = await httpClient.GetAsync($"{identityServiceUrl}/api/auth/user/all");
-
+                var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/all", chatId);
                 if (response.IsSuccessStatusCode)
                 {
                     var body = await response.Content.ReadAsStringAsync();
@@ -666,7 +625,7 @@ namespace GatewayService.Handlers
                     if (users == null || users.Count == 0)
                     {
                         _logger.LogError("Failed to deserialize UserResponse");
-                        await LogToServiceAsync("Error", "user-response-deserialize-failed", "Failed to deserialize UserResponse");
+                        await LogToServiceAsync("Error", "user-response-fail", "Failed to deserialize UserResponse");
                         await _messageSender.SendMessageAsync(chatId, "Пользователей пока нет");
                         return;
                     }
@@ -685,14 +644,14 @@ namespace GatewayService.Handlers
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "get-users-failed", $"Failed to get users info: {errorMessage}");
+                    await LogToServiceAsync("Error", "get-users-fail", $"Failed to get users info: {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-identity-failed", "HTTP request to IdentityService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
             }
         }
 
@@ -717,21 +676,15 @@ namespace GatewayService.Handlers
 
             string role = changeUserRoleCommand[2];
 
-            var httpClient = _httpClientFactory.CreateClient();
-            var identityServiceUrl = _servicesSettings.IdentityServiceUrl;
-
             var changeRoleRequest = new ChangeRoleRequest
             {
                 Id = id,
                 Role = role,
             };
 
-            var json = JsonSerializer.Serialize(changeRoleRequest);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
             try
             {
-                var response = await httpClient.PutAsync($"{identityServiceUrl}/api/auth/user/change_role", content);
-
+                var response = await SendRequestAsync(HttpMethod.Put, $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/change_role", chatId, changeRoleRequest);
                 if (response.IsSuccessStatusCode)
                 {
                     var body = await response.Content.ReadAsStringAsync();
@@ -739,12 +692,12 @@ namespace GatewayService.Handlers
                     if (userResponse == null)
                     {
                         _logger.LogError("Failed to deserialize UserResponse");
-                        await LogToServiceAsync("Error", "user-response-deserialize-failed", "Failed to deserialize UserResponse");
+                        await LogToServiceAsync("Error", "user-response-fail", "Failed to deserialize UserResponse");
                         await _messageSender.SendMessageAsync(chatId, "Такого пользователя нет");
                         return;
                     }
                     _logger.LogInformation("User {Id} role successfully changed to {Role}.", userResponse.Id, userResponse.Role);
-                    await LogToServiceAsync("Information", "change-user-role", $"User {userResponse.Id} role successfully changed to {userResponse.Role}.");
+                    await LogToServiceAsync("Information", "change-role", $"User {userResponse.Id} role successfully changed to {userResponse.Role}.");
                     var message = "Роль пользователя изменена";
                     await _messageSender.SendMessageAsync(chatId, message);
                 }
@@ -752,14 +705,14 @@ namespace GatewayService.Handlers
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "change-user-role-failed", $"Failed to change user role: {errorMessage}");
+                    await LogToServiceAsync("Error", "change-role-fail", $"Failed to change user role: {errorMessage}");
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-to-identity-failed", "HTTP request to IdentityService failed");
+                await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
             }
         }
 
@@ -771,7 +724,7 @@ namespace GatewayService.Handlers
             if (createBookingCommand.Length < CreateBookingCommandPartsCount)
             {
                 await _messageSender.SendMessageAsync(chatId,
-                    "Неверный формат команды!\nИспользуйте: /new_booking userId | roomId | timeBegin | timeEnd");
+                    "Неверный формат команды!\nИспользуйте: /create_booking userId | roomId | timeBegin | timeEnd");
                 return;
             }
             string userIdString = createBookingCommand[0].Substring(createBookingCommand[0].IndexOf(' ') + 1).Trim();
@@ -803,9 +756,12 @@ namespace GatewayService.Handlers
                     "Неверный формат времени окончания!\nИспользуйте: dd.MM.yyyy HH:mm:ss");
                 return;
             }
-
-            var httpClient = _httpClientFactory.CreateClient();
-            var bookingServiceUrl = _servicesSettings.BookingServiceUrl;
+            if (timeBegin > timeEnd)
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "Время начала больше времени окончания!");
+                return;
+            }
 
             var createBookingRequest = new CreateBookingRequest
             {
@@ -813,22 +769,18 @@ namespace GatewayService.Handlers
                 UserId = userId,
                 RoomId = roomId,
                 Status = BookingStatus.NotConfirmed,
-                TimeBegin = timeBegin,
-                TimeEnd = timeEnd,
+                TimeBegin = timeBegin.ToUniversalTime(),
+                TimeEnd = timeEnd.ToUniversalTime(),
             };
-
-            var json = JsonSerializer.Serialize(createBookingRequest);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             try
             {
-                var response = await httpClient.PostAsync($"{bookingServiceUrl}/api/bookings", content);
-
+                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.BookingServiceUrl}/api/booking", chatId, createBookingRequest);
                 if (response.IsSuccessStatusCode)
                 {
                     var body = await response.Content.ReadAsStringAsync();
-                    var roomCategoryResponse = JsonSerializer.Deserialize<BookingResponse>(body);
-                    if (roomCategoryResponse == null)
+                    var bookingResponse = JsonSerializer.Deserialize<BookingResponse>(body);
+                    if (bookingResponse == null)
                     {
                         _logger.LogError("Failed to deserialize BookingResponse");
                         return;
@@ -852,7 +804,36 @@ namespace GatewayService.Handlers
 
         public async Task HandleGetBookingsCommand(long chatId)
         {
-            throw new NotImplementedException();
+            if (!await IsPermitted(chatId, UserRole.Moderator))
+                return;
+            try
+            {
+                var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.BookingServiceUrl}/api/booking", chatId);
+                var body = await response.Content.ReadAsStringAsync();
+                var bookings = JsonSerializer.Deserialize<List<BookingResponse>>(body);
+                if (bookings == null || bookings.Count == 0)
+                {
+                    _logger.LogError("Failed to deserialize BookingResponse");
+                    await LogToServiceAsync("Error", "book-response-fail", "Failed to deserialize UserResponse");
+                    await _messageSender.SendMessageAsync(chatId, "Пользователей пока нет");
+                    return;
+                }
+                _logger.LogInformation("Successful receipt of bookings information.");
+                await LogToServiceAsync("Information", "get-bookings", "Successful receipt of bookings information.");
+                var message = "Список бронирований:\n\n";
+                foreach (var booking in bookings)
+                {
+
+                    message += $"* Id пользователя {booking.UserId}, id комнаты:{booking.RoomId}, описание: {booking.Description})\n";
+                    message += $"   └ {booking.TimeBegin} - {booking.TimeEnd}\n\n";
+                }
+                await _messageSender.SendMessageAsync(chatId, message);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to BookingService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
         }
     }
 }

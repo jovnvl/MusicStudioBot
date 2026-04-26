@@ -1,8 +1,6 @@
 ﻿using IdentityService.Data;
-using IdentityService.DTO;
 using IdentityService.Models.DTOs;
 using IdentityService.Models.Entities;
-using IdentityService.Services.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,13 +14,15 @@ namespace IdentityService.Services
     {
         private readonly IdentityDbContext _context;
         private readonly IConfiguration _configuration;
-        private readonly IRabbitMQPublisher _rabbitMQPublisher;
-
-        public AuthService(IdentityDbContext context, IConfiguration configuration, IRabbitMQPublisher RabbitMQPublisher)
+        private readonly IRefreshTokenService _refreshTokenService;
+        public AuthService(
+            IdentityDbContext context, 
+            IConfiguration configuration,
+            IRefreshTokenService refreshTokenService)
         {
             _context = context;
             _configuration = configuration;
-            _rabbitMQPublisher = RabbitMQPublisher;
+            _refreshTokenService = refreshTokenService;
         }
 
         private static UserResponse MapToResponse(User user)
@@ -40,29 +40,21 @@ namespace IdentityService.Services
             };
         }
 
-        private async Task LogToServiceAsync(string level, string eventType, string message)
-        {
-            await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
-        }
-
         public async Task<UserResponse> ChangeRoleAsync(ChangeRoleRequest request)
         {
             var user = await _context.Users.FindAsync(request.Id);
             if (user == null)
             {
-                await LogToServiceAsync("Error", "user-not-found", "User not found");
-                throw new InvalidOperationException("Пользователь не найден.");
+                throw new NullReferenceException("Пользователь не найден.");
             }
 
             if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var requestRole))
             {
-                await LogToServiceAsync("Error", "role-request-reading-failed", "Request reading failed");
-                throw new InvalidOperationException("Ошибка чтения запроса.");
+                throw new InvalidDataException("Ошибка чтения запроса.");
             }
             user.Role = requestRole;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-            await LogToServiceAsync("Information", "change-role", $"User {user.Username} role changed to {requestRole}");
             return MapToResponse(user);
         }
 
@@ -90,32 +82,28 @@ namespace IdentityService.Services
             
             if (user == null)
             {
-                await LogToServiceAsync("Error", "user-not-found", $"User not found");
-                throw new AuthenticationException("Пользователь не найден.");
+                throw new NullReferenceException("Пользователь не найден.");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
-                await LogToServiceAsync("Error", "incorrect-password", $"Password is incorrect");
                 throw new AuthenticationException("Неверный пароль.");
             }
 
             if (!user.IsActive)
-            {
-                await LogToServiceAsync("Error", "profile-deactivated", $"User profile is inactive");
-                throw new AuthenticationException("Доступ закрыт.");
+            {           
+                throw new AccessViolationException("Доступ закрыт.");
             }
 
             var token = GenerateJwtToken(user);
-            await LogToServiceAsync("Information", "login", $"Login of User {user.Username} is successfull");
-            return new AuthResponse { Token = token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+            return new AuthResponse { Token = token, RefreshToken = refreshToken.Token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
         {
             if (await _context.Users.AnyAsync(u => u.TelegramId == request.TelegramId))
             {
-                await LogToServiceAsync("Error", "user-already-registered", $"User already has a profile");
                 throw new InvalidOperationException("Пользователь уже зарегистрирован.");
             }
 
@@ -136,16 +124,15 @@ namespace IdentityService.Services
             _context.Users.Add(user); 
             await _context.SaveChangesAsync();
             var token = GenerateJwtToken(user);
-            await LogToServiceAsync("Information", "registration", $"Successfull registration");
-            return new AuthResponse{Token = token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+            return new AuthResponse{Token = token, RefreshToken = refreshToken.Token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
         }
 
         public async Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
-            {
-                await LogToServiceAsync("Error", "user-not-found", $"User not found");
+            { 
                 throw new AuthenticationException("Пользователь не найден.");
             }
 
@@ -154,7 +141,6 @@ namespace IdentityService.Services
             user.LastName = request.LastName ?? user.LastName;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-            await LogToServiceAsync("Information", "update-profile", $"User profile updated");
             return MapToResponse(user); 
         }
 
@@ -163,18 +149,12 @@ namespace IdentityService.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
-                await LogToServiceAsync("Error", "user-not-found", "User not found");
-                throw new InvalidOperationException("Пользователь не найден.");
+                throw new NullReferenceException("Пользователь не найден.");
             }
 
             user.IsActive = isActive;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-
-            var action = isActive ? "activated" : "deactivated";
-            await LogToServiceAsync("Information", $"user-{action}",
-                $"User {user.Username} (ID: {user.Id}) {action}");
-
             return MapToResponse(user);
         }
 
@@ -208,6 +188,37 @@ namespace IdentityService.Services
 
             // 5. Генерируем строку токена
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<AuthResponse> RefreshTokenAsync(string refreshTokenString)
+        {
+            var refreshToken = await _refreshTokenService.GetRefreshTokenAsync(refreshTokenString);
+
+            if (refreshToken == null || refreshToken.IsExpired)
+                throw new SecurityTokenException("Недействительный refresh token");
+
+            var user = await _context.Users.FindAsync(refreshToken.UserId);
+            if (user == null || !user.IsActive)
+                throw new SecurityTokenException("Пользователь не найден");
+
+            var newAccessToken = GenerateJwtToken(user);
+            var newRefreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+
+            await _refreshTokenService.RevokeRefreshTokenAsync(refreshTokenString);
+
+            return new AuthResponse
+            {
+                Token = newAccessToken,
+                RefreshToken = newRefreshToken.Token,
+                UserId = user.Id,
+                Username = user.Username,
+                Role = user.Role.ToString()
+            };
+        }
+
+        public async Task RevokeTokenAsync(string refreshToken)
+        {
+            await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
         }
     }
 }
