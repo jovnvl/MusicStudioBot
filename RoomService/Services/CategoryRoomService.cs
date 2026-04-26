@@ -118,8 +118,6 @@ namespace RoomService.Services
         {
             var result = await _categoryRoomRepository.GetAllCategoryRoomsAsync(ct);
             return result.Where(x => x.Name == name).FirstOrDefault();
-            throw new NotImplementedException(); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
         }
     }
 }
