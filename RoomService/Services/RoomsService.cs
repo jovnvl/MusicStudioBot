@@ -115,7 +115,7 @@ namespace RoomService.Services
             await using var transaction = await _dataContext.Database.BeginTransactionAsync(ct);
             try
             {
-                var isUpdated = await _roomRepository.UpdateRoomAsync(updateRoomDto, ct);
+                var isUpdated = await _roomRepository.UpdateRoomAsync(updateRoomDto, false, ct);
                 if (isUpdated)
                 {
                     await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Комната с ID {updateRoomDto.Id} обновлена", "update-room", false, ct);

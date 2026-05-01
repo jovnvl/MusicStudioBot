@@ -54,12 +54,15 @@ namespace RoomService.Repositories
                 return false;
 
             _dataContext.Rooms.Remove(room);
-            await _dataContext.SaveChangesAsync(ct);
+            if (saveChanges)
+            {
+                await _dataContext.SaveChangesAsync(ct);
+            }
 
             return true;
         }
 
-        public async Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct)
+        public async Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, bool saveChanges, CancellationToken ct)
         {
             var room = await GetRoomByIdAsync(updateRoomDto.Id, ct);
 
@@ -67,7 +70,10 @@ namespace RoomService.Repositories
                 return false;
 
             room.Status = updateRoomDto.Status;
-            await _dataContext.SaveChangesAsync(ct);
+            if (saveChanges)
+            {
+                await _dataContext.SaveChangesAsync(ct);
+            }
 
             return true;
         }

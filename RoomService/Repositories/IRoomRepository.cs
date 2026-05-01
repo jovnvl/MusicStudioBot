@@ -10,6 +10,6 @@ namespace RoomService.Repositories
         Task<Room?> GetRoomByIdAsync(int Id, CancellationToken ct);
         Task<Room> AddRoomAsync(CreateRoomDto createRoomDto, bool savechanges, CancellationToken ct);
         Task<bool> RemoveRoomAsync(int id, bool saveChanges, CancellationToken ct);
-        Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, CancellationToken ct);
+        Task<bool> UpdateRoomAsync(UpdateRoomDto updateRoomDto, bool saveChanges, CancellationToken ct);
     }
 }

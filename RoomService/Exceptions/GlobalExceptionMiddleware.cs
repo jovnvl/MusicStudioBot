@@ -26,17 +26,20 @@ namespace RoomService.Exceptions
             }
             catch (Exception ex)
             {
-                var outboundService = context.RequestServices.GetRequiredService<IOutboundMessagesService>();
                 var endpoint = context.GetEndpoint()?.DisplayName ?? "Unknown";
                 var httpMethod = context.Request.Method;
                 var path = context.Request.Path;
                 var eventType = $"{httpMethod}_{path.ToString().Replace("/", "_")}".ToLower();
-                
-                await outboundService.CreateOutboundMessageToLogAsync(
+
+                using (var scope = context.RequestServices.CreateScope()) 
+                {
+                    var outboundService = scope.ServiceProvider.GetRequiredService<IOutboundMessagesService>();
+                    await outboundService.CreateOutboundMessageToLogAsync(
                     LogLevel.Critical,
                     $"[{httpMethod}] {path}: {ex.Message}",
-                    eventType, true ,
+                    eventType, true,
                     CancellationToken.None);
+                }
 
                 _logger.LogError(ex, "Unhandled exception on {Method} {Path}", httpMethod, path);
 
