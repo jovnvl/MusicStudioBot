@@ -34,7 +34,7 @@ namespace RoomService.Repositories
             }
         }
 
-        public async Task<OutboundMessages?> GetActiveOtboundMessagesAsync(CancellationToken ct)
+        public async Task<OutboundMessages?> GetActiveOutboundMessagesAsync(CancellationToken ct)
         {
             return await _dataContext.OutboundMessages.Where(x => x.Status == MessageStatus.Active)
                     .OrderBy(x => x.CreatedAt)

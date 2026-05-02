@@ -45,12 +45,6 @@ namespace RoomService.Exceptions
 
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await context.Response.WriteAsJsonAsync(new { Message = ex.Message });
-
-
-
-
-
-
             }
         }
     }

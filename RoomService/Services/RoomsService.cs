@@ -124,6 +124,7 @@ namespace RoomService.Services
                 {
                     await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, "Не удалось обновить комнату", "update-room", false, ct);
                 }
+
                 await _dataContext.SaveChangesAsync();
                 await transaction.CommitAsync(ct);
 

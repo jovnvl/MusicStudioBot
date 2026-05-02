@@ -23,8 +23,15 @@ namespace RoomService.BackgroundServices
                     var outboundMessage = await outboundMessagesService.GetActiveOutboundMessagesAsync(ct);
                     if (outboundMessage != null)
                     {
-                        await messageBrokerService.SendMessageToLogAsync(outboundMessage.Level, outboundMessage.Message, outboundMessage.EventType, ct);
-                        await outboundMessagesService.UpdateOutboundMessageAsync(outboundMessage.Id, MessageStatus.Done, ct);
+                        try
+                        {
+                            await messageBrokerService.SendMessageToLogAsync(outboundMessage.Level, outboundMessage.Message, outboundMessage.EventType, ct);
+                            await outboundMessagesService.UpdateOutboundMessageAsync(outboundMessage.Id, MessageStatus.Done, ct);
+                        }
+                        catch
+                        {
+                            throw;
+                        }
                     }
                 }
 
