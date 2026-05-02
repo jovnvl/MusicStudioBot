@@ -9,5 +9,6 @@
     <Project Path="IdentityService/IdentityService.csproj" Id="792c384a-024f-4284-97df-fa24dc6da6c3" />
     <Project Path="LoggingService/LoggingService.csproj" Id="37636dc1-67e3-4417-b47a-34d58cf91cdb" />
     <Project Path="RoomService/RoomService.csproj" Id="420613ee-c8bf-423e-a619-6728593e0a2c" />
+    <Project Path="StatisticService/StatisticService.csproj" Id="9e01ca55-4dc0-4650-899f-5904a42fcdf2" />
   </Folder>
 </Solution>
