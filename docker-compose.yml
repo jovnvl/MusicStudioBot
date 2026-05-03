@@ -33,10 +33,27 @@ services:
     networks:
       - musicstudio_network
 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: musicstudio_grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - musicstudio_network
+    depends_on:
+      - redis
+
 volumes:
   postgres_data:
   rabbitmq_data:
   redis_data:
+  grafana_data:
   
 networks:
   musicstudio_network:
