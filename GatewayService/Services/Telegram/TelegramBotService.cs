@@ -8,20 +8,20 @@ namespace GatewayService.Services.Telegram
     public class TelegramBotService : ITelegramBotService
     {
         private readonly ILogger<TelegramBotService> _logger;
-        private readonly ICommandHandler _commandHandler;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly IMessageSender _messageSender;
 
-        public TelegramBotService(IOptions<TelegramSettings> telegramSettings, ILogger<TelegramBotService> logger, ICommandHandler commandHandler, IMessageSender messageSender)
+        public TelegramBotService(IOptions<TelegramSettings> telegramSettings, ILogger<TelegramBotService> logger, IMessageSender messageSender, IServiceScopeFactory scopeFactory)
         {
             _logger = logger;
-            _commandHandler = commandHandler;
             _messageSender = messageSender;
+            _scopeFactory = scopeFactory;
         }
         public async Task HandleUpdateAsync(Update update)
         {
             if (update == null || update.Message == null || update.Message.Text == null)
                 return;
-        
+
             var message = update.Message;
             var chatId = message.Chat.Id;
             var chatUsername = message.Chat.Username ?? chatId.ToString();
@@ -29,38 +29,91 @@ namespace GatewayService.Services.Telegram
 
             _logger.LogInformation("Received message from ChatId: {ChatId}, Text: {Text}", chatId, messageText);
 
-            if (messageText.StartsWith("/start"))
-                await _commandHandler.HandleStartCommand(chatId);
-            else if (messageText.StartsWith("/help"))
-                await _commandHandler.HandleHelpCommand(chatId);
-            else if (messageText.StartsWith("/register"))
-                await _commandHandler.HandleRegisterCommand(chatId, chatUsername, messageText);
-            else if (messageText.StartsWith("/login"))
-                await _commandHandler.HandleLoginCommand(chatId, messageText);
-            else if (messageText.StartsWith("/myprofile"))
-                await _commandHandler.HandleMyProfileCommand(chatId);
-            else if (messageText.StartsWith("/update_profile"))
-                await _commandHandler.HandleUpdateProfileCommand(chatId, messageText);
-            else if (messageText.StartsWith("/users"))
-                await _commandHandler.HandleGetUsersCommand(chatId);
-            else if (messageText.StartsWith("/change_role"))
-                await _commandHandler.HandleChangeUserRoleCommand(chatId, messageText);
-            else if (messageText.StartsWith("/rooms"))
-                await _commandHandler.HandleGetRoomsCommand(chatId);
-            else if (messageText.StartsWith("/create_room_category"))
-                await _commandHandler.HandleCreateRoomCategoryCommand(chatId, messageText);
-            else if (messageText.StartsWith("/create_room"))
-                await _commandHandler.HandleCreateRoomCommand(chatId, messageText);
-            else if (messageText.StartsWith("/update_room_status"))
-                await _commandHandler.HandleUpdateRoomCommand(chatId, messageText);
-            else if (messageText.StartsWith("/get_room"))
-                await _commandHandler.HandleGetRoomCommand(chatId, messageText);
-            else if (messageText.StartsWith("/create_booking"))
-                await _commandHandler.HandleCreateBookingCommand(chatId, messageText);
-            else if (messageText.StartsWith("/get_bookings"))
-                await _commandHandler.HandleGetBookingsCommand(chatId);
-            else
-                await _messageSender.SendMessageAsync(chatId, "Неизвестная команда. Используйте /help");
+            using var scope = _scopeFactory.CreateScope();
+            try
+            {
+                if (messageText.StartsWith("/start"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
+                    await handler.HandleStartCommand(chatId);
+                }
+                else if (messageText.StartsWith("/help"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
+                    await handler.HandleHelpCommand(chatId);
+                }
+                else if (messageText.StartsWith("/register"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
+                    await handler.HandleRegisterCommand(chatId, chatUsername, messageText);
+                }
+                else if (messageText.StartsWith("/login"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
+                    await handler.HandleLoginCommand(chatId, messageText);
+                }
+                else if (messageText.StartsWith("/myprofile"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
+                    await handler.HandleMyProfileCommand(chatId);
+                }
+                else if (messageText.StartsWith("/update_profile"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
+                    await handler.HandleUpdateProfileCommand(chatId, messageText);
+                }
+                else if (messageText.StartsWith("/users"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
+                    await handler.HandleGetUsersCommand(chatId);
+                }
+                else if (messageText.StartsWith("/change_role"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
+                    await handler.HandleChangeUserRoleCommand(chatId, messageText);
+                }
+                else if (messageText.StartsWith("/rooms"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                    await handler.HandleGetRoomsCommand(chatId);
+                }
+                else if (messageText.StartsWith("/create_room_category"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                    await handler.HandleCreateRoomCategoryCommand(chatId, messageText);
+                }
+                else if (messageText.StartsWith("/create_room"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                    await handler.HandleCreateRoomCommand(chatId, messageText);
+                }
+                else if (messageText.StartsWith("/update_room_status"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                    await handler.HandleUpdateRoomCommand(chatId, messageText);
+                }
+                else if (messageText.StartsWith("/get_room"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                    await handler.HandleGetRoomCommand(chatId, messageText);
+                }
+                else if (messageText.StartsWith("/create_booking"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                    await handler.HandleCreateBookingCommand(chatId, messageText);
+                }
+                else if (messageText.StartsWith("/get_bookings"))
+                {
+                    var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                    await handler.HandleGetBookingsCommand(chatId);
+                }
+                else
+                    await _messageSender.SendMessageAsync(chatId, "Неизвестная команда. Используйте /help");
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error handling update");
+            }
         }
     }
 }
