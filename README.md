@@ -32,5 +32,5 @@
 
 База Данных - DB:
   таблица с информацией о кабинетах и категориях м.б. заведена как статическая
- <img width="741" height="617" alt="image" src="https://github.com/user-attachments/assets/a63ec4ad-a1e6-42ec-9e16-5499ffa5cd47" />
+<img width="918" height="775" alt="image" src="https://github.com/user-attachments/assets/c89c6e45-4c60-488b-8cd3-b026f1c37a58" />
 

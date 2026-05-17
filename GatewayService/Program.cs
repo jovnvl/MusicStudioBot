@@ -15,9 +15,13 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<IUserSessionService, UserSessionService>();
 builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
 builder.Services.AddSingleton<IMessageSender, MessageSenderService>();
-builder.Services.AddSingleton<ICommandHandler, CommandHandler>();
 builder.Services.AddHostedService<TelegramPollingService>();
 builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
+
+builder.Services.AddScoped<SystemCommandHandler>();
+builder.Services.AddScoped<IdentityCommandHandler>();
+builder.Services.AddScoped<RoomCommandHandler>();
+builder.Services.AddScoped<BookingCommandHandler>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
