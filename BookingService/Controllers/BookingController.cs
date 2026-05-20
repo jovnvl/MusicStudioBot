@@ -25,6 +25,11 @@ namespace BookingService.Controllers
             await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
         }
 
+        private async Task StatisticToServiceAsync(string eventType)
+        {
+            await _rabbitMQPublisher.PublishAsync("statistic_service_queue", new { EventType = $"{eventType}"});
+        }
+
         // GET: api/booking
         [HttpGet]
         [Authorize(Roles = "Moderator,Administrator")]
@@ -102,6 +107,7 @@ namespace BookingService.Controllers
             {
                 var createdBooking = await _bookingService.CreateBookingAsync(bookingDto, ct);
                 await LogToServiceAsync("Information", "create-booking", $"New booking {createdBooking.Id} created");
+                await StatisticToServiceAsync("CreatedBooking");
                 return CreatedAtRoute("GetBookingAsync", new { id = createdBooking.Id }, createdBooking);
             }
             catch (InvalidOperationException ex)
@@ -135,6 +141,7 @@ namespace BookingService.Controllers
                 }
 
                 await LogToServiceAsync("Information", "delete-booking", $"Booking {id} was deleted");
+                await StatisticToServiceAsync("DeletedBooking");
                 return Ok();
             }
 

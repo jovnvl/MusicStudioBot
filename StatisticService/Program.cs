@@ -1,4 +1,5 @@
 
+using LoggingService.Services;
 using StackExchange.Redis;
 using StatisticService.Services;
 
@@ -14,12 +15,13 @@ namespace StatisticService
             builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
             ConnectionMultiplexer.Connect("localhost:6379"));
 
-            builder.Services.AddScoped<IStatisticService, StatisticServices>();
+            builder.Services.AddScoped<IStatisticService, RedisService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddHostedService<ConsumerService>();
 
             var app = builder.Build();
 
