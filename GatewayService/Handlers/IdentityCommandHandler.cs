@@ -59,9 +59,16 @@ namespace GatewayService.Handlers
                         await LogToServiceAsync("Error", "auth-response-fail", "Failed to deserialize AuthResponse");
                         return;
                     }
+
+                    await _sessionService.SaveTokenAsync(
+                        chatId,
+                        authResponse.Token,
+                        authResponse.RefreshToken
+                    );
+
                     _logger.LogInformation("Registration successful. New user id: {UserId}", authResponse.UserId);
                     await LogToServiceAsync("Information", "user-registered", $"Registration successful. New user id: {authResponse.UserId}");
-                    await _messageSender.SendMessageAsync(chatId, "Успешная регистрация! Теперь вы можете использовать /login");
+                    await _messageSender.SendMessageAsync(chatId, "Успешная регистрация!");
                 }
                 else
                 {
@@ -75,56 +82,6 @@ namespace GatewayService.Handlers
                 _logger.LogError(ex, "HTTP request to IdentityService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
                 await LogToServiceAsync("Error", "http-request-fail", "HTTP request to IdentityService failed");
-            }
-        }
-
-        public async Task HandleLoginCommand(long chatId, string messageText)
-        {
-            string[] loginCommand = messageText.Split(' ');
-            if (loginCommand.Length < LoginCommandPartsCount)
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Неверный формат команды!\nИспользуйте: /login 'password'");
-                return;
-            }
-
-            var loginRequest = new LoginRequest
-            {
-                Password = loginCommand[1],
-                TelegramId = chatId,
-            };
-
-            try
-            {
-                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.IdentityServiceUrl}/api/auth/login", chatId, loginRequest);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var body = await response.Content.ReadAsStringAsync();
-                    var authResponse = JsonSerializer.Deserialize<AuthResponse>(body);
-                    if (authResponse == null)
-                    {
-                        _logger.LogError("Failed to deserialize AuthResponse");
-                        await LogToServiceAsync("Error", "auth-response-fail", "Failed to deserialize AuthResponse");
-                        return;
-                    }
-                    _logger.LogInformation("Login successful. User token: {UserId}", authResponse.UserId);
-                    await LogToServiceAsync("Information", "login-successful", $"Login successful. User id: {authResponse.UserId}");
-                    _sessionService.SaveToken(chatId, authResponse.Token);
-                    await _messageSender.SendMessageAsync(chatId, "Успешный вход.");
-                }
-                else
-                {
-                    var errorMessage = await response.Content.ReadAsStringAsync();
-                    await _messageSender.SendMessageAsync(chatId, $"Ошибка входа: {errorMessage}");
-                    await LogToServiceAsync("Error", "login-failed", $"Login failed: {errorMessage}");
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request to IdentityService failed");
-                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
             }
         }
 

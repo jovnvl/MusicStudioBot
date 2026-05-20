@@ -26,7 +26,6 @@ namespace GatewayService.Handlers
             string helpMessage = @"Доступные команды:
 /start - Начать работу
 /register - Регистрация (формат: /register username password firstname lastname)
-/login - Вход (формат: /login password)
 /help - Список всех команд
 /myprofile - Получить данные профиля
 /update_profile - Изменить профиль (формат: /update_profile [username] [firstname] [lastname])

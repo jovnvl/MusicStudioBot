@@ -50,13 +50,13 @@ namespace GatewayService.Handlers
 
         protected async Task<bool> IsPermitted(long chatId, UserRole role)
         {
-            var token = _sessionService.GetToken(chatId);
-            if (string.IsNullOrEmpty(token))
+            var token = await _sessionService.GetTokensAsync(chatId);
+            if (string.IsNullOrEmpty(token.accessToken))
             {
                 await _messageSender.SendMessageAsync(chatId, "Вы не авторизованы.");
                 return false;
             }
-            if (!HasRole(token, role))
+            if (!HasRole(token.accessToken, role))
             {
                 await _messageSender.SendMessageAsync(chatId, "Недостаточно прав.");
                 return false;
@@ -81,10 +81,10 @@ namespace GatewayService.Handlers
         protected async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string endpoint, long chatId, object? request = null)
         {
             var httpClient = _httpClientFactory.CreateClient();
-            var token = _sessionService.GetToken(chatId);
-            if (!string.IsNullOrEmpty(token))
+            var token = await _sessionService.GetTokensAsync(chatId);
+            if (!string.IsNullOrEmpty(token.accessToken))
             {
-                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.accessToken);
             }         
             StringContent? content = null;
             if (request != null && (method == HttpMethod.Post || method == HttpMethod.Put || method == HttpMethod.Patch))

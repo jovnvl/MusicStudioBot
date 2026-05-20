@@ -1,5 +1,6 @@
 ﻿using GatewayService.Configuration;
 using GatewayService.Handlers;
+using GatewayService.Middleware;
 using Microsoft.Extensions.Options;
 using Telegram.Bot.Types;
 
@@ -19,17 +20,35 @@ namespace GatewayService.Services.Telegram
         }
         public async Task HandleUpdateAsync(Update update)
         {
-            if (update == null || update.Message == null || update.Message.Text == null)
+            if (update?.Message?.Text == null)
                 return;
 
-            var message = update.Message;
-            var chatId = message.Chat.Id;
-            var chatUsername = message.Chat.Username ?? chatId.ToString();
-            var messageText = message.Text;
-
+            var chatId = update.Message.Chat.Id;
+            var messageText = update.Message.Text;
+            var chatUsername = update.Message.Chat.Username ?? chatId.ToString();
+            
             _logger.LogInformation("Received message from ChatId: {ChatId}, Text: {Text}", chatId, messageText);
 
             using var scope = _scopeFactory.CreateScope();
+
+            // Исключаем команды, которые не требуют авторизации
+            var publicCommands = new[] { "/start", "/help", "/register" };
+            var isPublicCommand = publicCommands.Any(cmd => messageText.StartsWith(cmd));
+
+            // Проверяем авторизацию для всех остальных команд
+            if (!isPublicCommand)
+            {
+                var authMiddleware = scope.ServiceProvider.GetRequiredService<TelegramAuthMiddleware>();
+                var isAuthenticated = await authMiddleware.EnsureAuthenticatedAsync(chatId);
+
+                if (!isAuthenticated)
+                {
+                    await _messageSender.SendMessageAsync(chatId,
+                        "Вы не зарегистрированы. Используйте /register для создания аккаунта.");
+                    return;
+                }
+            }
+
             try
             {
                 if (messageText.StartsWith("/start"))
@@ -46,11 +65,6 @@ namespace GatewayService.Services.Telegram
                 {
                     var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
                     await handler.HandleRegisterCommand(chatId, chatUsername, messageText);
-                }
-                else if (messageText.StartsWith("/login"))
-                {
-                    var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
-                    await handler.HandleLoginCommand(chatId, messageText);
                 }
                 else if (messageText.StartsWith("/myprofile"))
                 {

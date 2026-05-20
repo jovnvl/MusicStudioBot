@@ -194,12 +194,24 @@ namespace IdentityService.Services
         {
             var refreshToken = await _refreshTokenService.GetRefreshTokenAsync(refreshTokenString);
 
-            if (refreshToken == null || refreshToken.IsExpired)
-                throw new SecurityTokenException("Недействительный refresh token");
+            if (refreshToken == null)
+            {
+                throw new NullReferenceException("Refresh token не найден");
+            }
+            if (refreshToken.IsExpired)
+            { 
+                throw new SecurityTokenException("Недействительный refresh token"); 
+            }
 
             var user = await _context.Users.FindAsync(refreshToken.UserId);
-            if (user == null || !user.IsActive)
-                throw new SecurityTokenException("Пользователь не найден");
+            if (user == null)
+            {
+                throw new NullReferenceException("Пользователь не найден");
+            }
+            if (!user.IsActive)
+            {
+                throw new AccessViolationException("Доступ закрыт.");
+            }
 
             var newAccessToken = GenerateJwtToken(user);
             var newRefreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
@@ -219,6 +231,32 @@ namespace IdentityService.Services
         public async Task RevokeTokenAsync(string refreshToken)
         {
             await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
+        }
+
+        public async Task<AuthResponse> TelegramLoginAsync(long telegramId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.TelegramId == telegramId);
+            
+            if (user == null)
+            {
+                throw new NullReferenceException("Пользователь не найден");
+            }
+            if (!user.IsActive)
+            {
+                throw new AccessViolationException("Доступ закрыт.");
+            }
+
+            var token = GenerateJwtToken(user);
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+
+            return new AuthResponse
+            {
+                Token = token,
+                RefreshToken = refreshToken.Token,
+                UserId = user.Id,
+                Username = user.Username,
+                Role = user.Role.ToString()
+            };
         }
     }
 }

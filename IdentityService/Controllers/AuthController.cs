@@ -73,6 +73,28 @@ namespace IdentityService.Controllers
             }
         }
 
+        // POST api/auth/telegram-login
+        [HttpPost("telegram-login")]
+        public async Task<ActionResult<AuthResponse>> TelegramLogin([FromBody] TelegramLoginRequest request)
+        {
+            try
+            {
+                var result = await _authService.TelegramLoginAsync(request.TelegramId);
+                await LogToServiceAsync("Information", "telegram-login", $"Telegram login successful for user {request.TelegramId}");
+                return Ok(result);
+            }
+            catch (NullReferenceException ex)
+            {
+                await LogToServiceAsync("Error", "user-not-found", $"User {request.TelegramId} not found");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (AccessViolationException ex)
+            {
+                await LogToServiceAsync("Error", "profile-deactivated", $"User {request.TelegramId} profile is inactive");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // GET api/auth/user/{id}
         [HttpGet("user/{id:guid}")]
         [Authorize]
@@ -203,6 +225,16 @@ namespace IdentityService.Controllers
             catch (SecurityTokenException ex)
             {
                 await LogToServiceAsync("Error", "invalid-refresh-token", ex.Message);
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (NullReferenceException ex)
+            {
+                await LogToServiceAsync("Error", "null-reference-exception", ex.Message);
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (AccessViolationException ex)
+            {
+                await LogToServiceAsync("Error", "access-violation", ex.Message);
                 return Unauthorized(new { message = ex.Message });
             }
         }

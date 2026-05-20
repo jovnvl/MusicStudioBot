@@ -2,8 +2,9 @@
 {
     public interface IUserSessionService
     {
-        void SaveToken(long telegramId, string token);
-        string? GetToken(long telegramId);
-        void RemoveToken(long telegramId);
+        Task SaveTokenAsync(long telegramId, string accessToken, string refreshToken);
+        Task<(string? accessToken, string? refreshToken)> GetTokensAsync(long telegramId);
+        Task RemoveTokenAsync(long telegramId);
+        Task<bool> IsTokenValidAsync(string token);
     }
 }

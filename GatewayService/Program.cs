@@ -1,8 +1,10 @@
 using GatewayService.Configuration;
 using GatewayService.Handlers;
+using GatewayService.Middleware;
 using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
 using GatewayService.Services.Telegram;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,12 @@ builder.Services.Configure<ServicesSettings>(builder.Configuration.GetSection("S
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = builder.Configuration.GetConnectionString("Redis");
+    return ConnectionMultiplexer.Connect(configuration!);
+});
 
 builder.Services.AddSingleton<IUserSessionService, UserSessionService>();
 builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
@@ -22,6 +30,7 @@ builder.Services.AddScoped<SystemCommandHandler>();
 builder.Services.AddScoped<IdentityCommandHandler>();
 builder.Services.AddScoped<RoomCommandHandler>();
 builder.Services.AddScoped<BookingCommandHandler>();
+builder.Services.AddScoped<TelegramAuthMiddleware>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

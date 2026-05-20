@@ -14,5 +14,6 @@ namespace IdentityService.Services
         Task<UserResponse> SetActiveStatusAsync(Guid userId, bool isActive);
         Task<AuthResponse> RefreshTokenAsync(string refreshToken);
         Task RevokeTokenAsync(string refreshToken);
+        Task<AuthResponse> TelegramLoginAsync(long telegramId);
     }
 }
