@@ -6,6 +6,9 @@ namespace BookingService.DTO
 {
     public class BookingDto
     {
+        [Display(Name = "Идентификатор")]
+        public Guid Id { get; init; }
+
         [StringLength(500,
         ErrorMessage = "Описание не должно превышать 500 символов")]
         [Display(Name = "Описание")]

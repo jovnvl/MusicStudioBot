@@ -106,9 +106,9 @@ namespace BookingService.Controllers
             try
             {
                 var createdBooking = await _bookingService.CreateBookingAsync(bookingDto, ct);
-                await LogToServiceAsync("Information", "create-booking", $"New booking {createdBooking.Id} created");
+                await LogToServiceAsync("Information", "create-booking", $"New booking {createdBooking?.Id} created");
                 await StatisticToServiceAsync("CreatedBooking");
-                return CreatedAtRoute("GetBookingAsync", new { id = createdBooking.Id }, createdBooking);
+                return CreatedAtRoute("GetBookingAsync", new { id = createdBooking?.Id }, createdBooking);
             }
             catch (InvalidOperationException ex)
             {
@@ -124,6 +124,21 @@ namespace BookingService.Controllers
                 await LogToServiceAsync("Error", "int-server-error", "Create booking internal server error");
                 return StatusCode(500, new { Message = $"Внутренняя ошибка сервера: {ex}" });
             }
+        }
+
+        // UPDATE: api/bookings/<GUID>
+        //[HttpPut("{id:guid}")]
+        [HttpPut]
+        [Authorize]
+        public async Task<ActionResult<Booking>> UpdateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
+        {
+            var createdBooking = await _bookingService.UpdateBookingAsync(bookingDto, ct);
+
+            if (!createdBooking)
+            {
+                return BadRequest(new { Message = "Не удалось обновить бронирование" });
+            }
+            return Ok();
         }
 
         // DELETE: api/bookings/<GUID>
