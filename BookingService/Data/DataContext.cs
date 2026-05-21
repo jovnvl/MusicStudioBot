@@ -7,6 +7,7 @@ namespace BookingService.Data
     public class DataContext : DbContext
     {
         public DbSet<Booking> Bookings { get; set; }
+        public DbSet<OutboundMessages> OutboundMessages { get; set; }
 
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 

@@ -51,6 +51,11 @@ namespace BookingService.Repositories
                 .Where(b => b.UserId == userId)
                 .ToListAsync(ct);
         }
+        public async Task<Booking?> GetBookingByIdAsync(Guid Id, CancellationToken ct)
+        {
+            var booking = await _dataContext.Bookings.FindAsync(Id, ct);
+            return booking;
+        }
 
         public async Task<bool> RemoveBookingAsync(Guid id, CancellationToken ct)
         {
@@ -61,6 +66,22 @@ namespace BookingService.Repositories
 
             _dataContext.Bookings.Remove(_booking);
             await _dataContext.SaveChangesAsync(ct);
+
+            return true;
+        }
+
+        public async Task<bool> UpdateBookingAsync(BookingDto bookingDto, bool saveChanges, CancellationToken ct)
+        {
+            var booking = await GetBookingByIdAsync(bookingDto.Id, ct);
+
+            if (booking == null)
+                return false;
+
+            booking.Status = bookingDto.Status;
+            if (saveChanges)
+            {
+                await _dataContext.SaveChangesAsync(ct);
+            }
 
             return true;
         }
