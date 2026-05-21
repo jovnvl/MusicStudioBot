@@ -52,6 +52,8 @@ namespace BookingService
 
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+            builder.Services.AddScoped<IOutboundMessagesService, OutboundMessagesService>();
+            builder.Services.AddScoped<IOutboundMessagesRepository, OutboundMessagesRepository>();
             builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
 
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
