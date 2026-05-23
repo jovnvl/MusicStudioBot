@@ -19,13 +19,13 @@ namespace BookingService.BackgroundServices
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var outboundMessagesService = scope.ServiceProvider.GetRequiredService<IOutboundMessagesService>();
-                    var messageBrokerService = scope.ServiceProvider.GetRequiredService<IMessageBrokerService>();
+                    //var messageBrokerService = scope.ServiceProvider.GetRequiredService<IMessageBrokerService>();
                     var outboundMessage = await outboundMessagesService.GetActiveOutboundMessagesAsync(ct);
                     if (outboundMessage != null)
                     {
                         try
                         {
-                            await messageBrokerService.SendMessageToLogAsync(outboundMessage.Level, outboundMessage.Message, outboundMessage.EventType, ct);
+                            //await messageBrokerService.SendMessageToLogAsync(outboundMessage.Level, outboundMessage.Message, outboundMessage.EventType, ct);
                             await outboundMessagesService.UpdateOutboundMessageAsync(outboundMessage.Id, MessageStatus.Done, ct);
                         }
                         catch

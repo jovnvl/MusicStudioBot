@@ -56,7 +56,7 @@ namespace BookingService
 
             builder.Services.AddScoped<IOutboundMessagesService, OutboundMessagesService>();
             builder.Services.AddScoped<IOutboundMessagesRepository, OutboundMessagesRepository>();
-            builder.Services.AddHostedService<OutboundMessagesProcessor>();
+            //builder.Services.AddHostedService<OutboundMessagesProcessor>();
 
             builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
 
