@@ -1,7 +1,6 @@
 
-using LoggingService.Services;
-using StackExchange.Redis;
 using StatisticService.Services;
+using StackExchange.Redis;
 
 namespace StatisticService
 {

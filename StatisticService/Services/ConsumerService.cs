@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
-namespace LoggingService.Services
+namespace StatisticService.Services
 {
     public class ConsumerService : BackgroundService
     {
