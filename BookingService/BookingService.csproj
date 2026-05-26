@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20260521201412_AddOutboundMessages.cs" />
+    <Compile Remove="Migrations\20260521201412_AddOutboundMessages.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\.dockerignore" Link=".dockerignore">
       <DependentUpon>$(DockerDefaultDockerfile)</DependentUpon>
     </None>
@@ -29,10 +34,6 @@
     <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.7" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\LoggingService\LoggingService.csproj" />
   </ItemGroup>
 
 </Project>

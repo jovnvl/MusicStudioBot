@@ -78,6 +78,11 @@ namespace BookingService.Repositories
                 return false;
 
             booking.Status = bookingDto.Status;
+            booking.RoomId = bookingDto.RoomId;
+            booking.UserId = bookingDto.UserId;
+            booking.CreationDate = bookingDto.CreationDate;
+            booking.TimeBegin = bookingDto.TimeBegin;
+            booking.TimeEnd = bookingDto.TimeEnd;
             if (saveChanges)
             {
                 await _dataContext.SaveChangesAsync(ct);

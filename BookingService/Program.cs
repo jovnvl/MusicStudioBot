@@ -1,4 +1,3 @@
-using BookingService.BackgroundServices;
 using BookingService.Data;
 using BookingService.Repositories;
 using BookingService.Services;
@@ -54,10 +53,6 @@ namespace BookingService
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
-            builder.Services.AddScoped<IOutboundMessagesService, OutboundMessagesService>();
-            builder.Services.AddScoped<IOutboundMessagesRepository, OutboundMessagesRepository>();
-            //builder.Services.AddHostedService<OutboundMessagesProcessor>();
-
             builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
 
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
@@ -89,11 +84,6 @@ namespace BookingService
                 app.MapOpenApi();
                 app.UseSwagger();
                 app.UseSwaggerUI();
-
-                //app.UseSwaggerUI(options =>
-                //{
-                //    options.SwaggerEndpoint("/openapi/v1.json", "BookingService API v1");
-                //});
             }
 
             app.UseHttpsRedirection();

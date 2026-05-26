@@ -92,11 +92,5 @@ namespace BookingService.Services.RabbitMQ
                 _logger.LogError(ex, "Failed to publish message to RabbitMQ queue {QueueName}", queueName);
             }
         }
-
-        public async Task SendMessageToLogAsync<T>(string logLevel, T message, string eventType, CancellationToken ct)
-        {
-            //await _messageBroker.PublishMessageAsync<LogEventDto>(new LogEventDto(logLevel, eventType, message), "logging_service_queue", ct);
-            //await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
-        }
     }
 }

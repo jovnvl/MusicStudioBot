@@ -9,36 +9,34 @@ namespace BookingService.Services
     public class BookingService : IBookingService
     {
         private readonly IBookingRepository _bookingRepository;
-        private readonly IOutboundMessagesService _outboundMessagesService;
         private readonly DataContext _context;
 
-        public BookingService(IBookingRepository bookingRepository, IOutboundMessagesService outboundMessagesService, DataContext context)
+        public BookingService(IBookingRepository bookingRepository, DataContext context)
         {
             _bookingRepository = bookingRepository;
-            _outboundMessagesService = outboundMessagesService;
             _context = context;
         }
 
-        public async Task<Booking?> CreateBookingAsync(BookingDto createBookingDto, CancellationToken ct)
+        public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct)
         {
-            var timeBegin = createBookingDto.TimeBegin ?? DateTime.UtcNow;
-            var timeEnd = createBookingDto.TimeEnd ?? timeBegin.AddMinutes(45);
+            var timeBegin = bookingDto.TimeBegin ?? DateTime.UtcNow;
+            var timeEnd = bookingDto.TimeEnd ?? timeBegin.AddMinutes(45);
 
             // Проверка пересечения бронирований
-            if (await _bookingRepository.HasOverlappingBookingAsync(createBookingDto.RoomId, timeBegin, timeEnd, ct))
+            if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, timeBegin, timeEnd, ct))
             {
-                throw new InvalidOperationException($"Кабинет {createBookingDto.RoomId} уже забронирован в данный период времени");
+                throw new InvalidOperationException($"Кабинет {bookingDto.RoomId} уже забронирован в данный период времени");
             }
 
             var booking = new Booking
             {
                 Id = Guid.NewGuid(),
-                RoomId = createBookingDto.RoomId,
-                UserId = createBookingDto.UserId,
-                Status = createBookingDto.Status,
+                RoomId = bookingDto.RoomId,
+                UserId = bookingDto.UserId,
+                Status = bookingDto.Status,
                 TimeBegin = timeBegin,
                 TimeEnd = timeEnd,
-                Description = createBookingDto.Description,
+                Description = bookingDto.Description,
                 CreationDate = DateTime.UtcNow
             };
 
@@ -51,14 +49,6 @@ namespace BookingService.Services
             try
             {
                 var isUpdated = await _bookingRepository.UpdateBookingAsync(bookingDto, false, ct);
-                if (isUpdated)
-                {
-                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Information, $"Бронирование с ID {bookingDto.Id} обновлена", "update-booking", false, ct);
-                }
-                else
-                {
-                    await _outboundMessagesService.CreateOutboundMessageToLogAsync(LogLevel.Warning, "Не удалось обновить бронирование", "update-booking", false, ct);
-                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync(ct);
