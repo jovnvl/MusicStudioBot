@@ -32,7 +32,7 @@ namespace BookingService.Controllers
 
         // GET: api/booking
         [HttpGet]
-        [Authorize(Roles = "Moderator,Administrator")]
+        //[Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsAsync(CancellationToken ct = default)
         {
             try
@@ -59,9 +59,93 @@ namespace BookingService.Controllers
             }
         }
 
+        // GET: api/booking
+        [HttpGet("user/{userId:guid}", Name = "GetBookingsByUserIdAsync")]
+        //[Authorize(Roles = "Moderator,Administrator")]
+        public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByUserIdAsync(Guid userId, CancellationToken ct = default)
+        {
+            try
+            {
+                var bookings = await _bookingService.GetBookingsByUserIdAsync(userId, ct);
+                return Ok(bookings);
+            }
+
+            catch (OperationCanceledException)
+            {
+                await LogToServiceAsync("Error", "get-bookings-by-userid-cancel", "Get bookings by userId operation canceled");
+                return StatusCode(499);
+            }
+
+            catch (Exception ex)
+            {
+                await LogToServiceAsync("Error", "int-server-error", "Get bookings by userId internal server error");
+
+                return StatusCode(500, new
+                {
+                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                });
+            }
+        }
+
+        // GET: api/booking
+        [HttpGet("room/{roomId:int}", Name = "GetBookingsByRoomIdAsync")]
+        //[Authorize(Roles = "Moderator,Administrator")]
+        public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByRoomIdAsync(int roomId, CancellationToken ct = default)
+        {
+            try
+            {
+                var bookings = await _bookingService.GetBookingsByRoomIdAsync(roomId, ct);
+                return Ok(bookings);
+            }
+
+            catch (OperationCanceledException)
+            {
+                await LogToServiceAsync("Error", "get-bookings-by-roomId-cancel", "Get bookings by roomId operation canceled");
+                return StatusCode(499);
+            }
+
+            catch (Exception ex)
+            {
+                await LogToServiceAsync("Error", "int-server-error", "Get bookings by roomId internal server error");
+
+                return StatusCode(500, new
+                {
+                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                });
+            }
+        }
+
+        // GET: api/booking
+        [HttpGet("booking/{description}", Name = "GetBookingsByDescriptionAsync")]
+        //[Authorize(Roles = "Moderator,Administrator")]
+        public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByDescriptionAsync(string? description, CancellationToken ct = default)
+        {
+            try
+            {
+                var bookings = await _bookingService.GetBookingsByDescriptionAsync(description, ct);
+                return Ok(bookings);
+            }
+
+            catch (OperationCanceledException)
+            {
+                await LogToServiceAsync("Error", "get-bookings-by-description-cancel", "Get bookings by description operation canceled");
+                return StatusCode(499);
+            }
+
+            catch (Exception ex)
+            {
+                await LogToServiceAsync("Error", "int-server-error", "Get bookings by description internal server error");
+
+                return StatusCode(500, new
+                {
+                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                });
+            }
+        }
+
         // GET: api/booking/<GUID>
-        [HttpGet("{id:guid}", Name = "GetBookingAsync")]
-        [Authorize]
+        [HttpGet("booking/{id:guid}", Name = "GetBookingAsync")]
+        //[Authorize]
         public async Task<ActionResult<Booking>> GetBookingAsync(Guid id, CancellationToken ct = default)
         {
             try
@@ -95,7 +179,7 @@ namespace BookingService.Controllers
 
         // POST: api/booking
         [HttpPost]
-        [Authorize]
+        //[Authorize]
         public async Task<ActionResult<Booking>> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -128,7 +212,7 @@ namespace BookingService.Controllers
 
         // UPDATE: api/bookings/<GUID>
         [HttpPut]
-        [Authorize]
+        //[Authorize]
         public async Task<ActionResult<Booking>> UpdateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
             try
@@ -163,8 +247,8 @@ namespace BookingService.Controllers
         }
 
         // DELETE: api/bookings/<GUID>
-        [HttpDelete("{id:guid}")]
-        [Authorize]
+        [HttpDelete("booking/{id:guid}")]
+        //[Authorize]
         public async Task<IActionResult> DeleteBookingAsync(Guid id, CancellationToken ct = default)
         {
             try

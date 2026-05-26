@@ -86,6 +86,10 @@ namespace BookingService.Services
         {
             return await _bookingRepository.GetByUserIdAsync(userId, ct);
         }
+        public async Task<List<Booking>> GetBookingsByDescriptionAsync(string? description, CancellationToken ct)
+        {
+            return await _bookingRepository.GetByDescriptionAsync(description, ct);
+        }
 
     }
 }

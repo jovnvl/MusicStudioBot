@@ -27,10 +27,10 @@ namespace BookingService.Repositories
             return _bookings.AsReadOnly();
         }
 
-        public async Task<Booking?> GetByDescriptionAsync(string description, CancellationToken ct)
+        public async Task<List<Booking>> GetByDescriptionAsync(string? description, CancellationToken ct)
         {
             return await _dataContext.Bookings
-                .FirstOrDefaultAsync(b => b.Description == description, ct);
+                .Where(b => b.Description.Contains(description)).ToListAsync(ct);
         }
 
         public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct)
@@ -83,6 +83,7 @@ namespace BookingService.Repositories
             booking.CreationDate = bookingDto.CreationDate;
             booking.TimeBegin = bookingDto.TimeBegin;
             booking.TimeEnd = bookingDto.TimeEnd;
+            booking.Description = bookingDto.Description;
             if (saveChanges)
             {
                 await _dataContext.SaveChangesAsync(ct);
