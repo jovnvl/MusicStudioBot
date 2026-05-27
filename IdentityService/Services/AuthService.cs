@@ -171,9 +171,17 @@ namespace IdentityService.Services
 
             // 2. Получаем SecretKey из конфигурации и создаем ключ
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]!));
+            if (key == null)
+            {
+                throw new NullReferenceException("Не удалось получить Secretkey");
+            }
 
             // 3. Создаем подпись (алгоритм HMAC-SHA256)
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            if (credentials == null)
+            {
+                throw new NullReferenceException("Не удалось создать подпись (алгоритм HMAC-SHA256)");
+            }
 
             // 4. Настраиваем токен
             var token = new JwtSecurityToken(

@@ -1,8 +1,10 @@
 ﻿using GatewayService.Configuration;
+using GatewayService.Models.Conversation;
 using GatewayService.Models.DTOs;
 using GatewayService.Models.Enums;
 using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
+using GatewayService.Services.Telegram;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -11,14 +13,23 @@ namespace GatewayService.Handlers
     public class IdentityCommandHandler : CommandHandler
     {
         private readonly ServicesSettings _servicesSettings;
+        private readonly IConversationStateService _conversationService;
         private const int RegisterCommandPartsCount = 4;
         private const int LoginCommandPartsCount = 2;
         private const int UpdateCommandMinPartsCount = 2;
         private const int ChangeUserRoleCommandPartsCount = 3;
 
-        public IdentityCommandHandler(IHttpClientFactory httpClientFactory, ILogger<CommandHandler> logger, IUserSessionService sessionService, IMessageSender messageSender, IRabbitMQPublisher rabbitMQPublisher, IOptions<ServicesSettings> servicesSettings) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
+        public IdentityCommandHandler(
+            IHttpClientFactory httpClientFactory, 
+            ILogger<CommandHandler> logger, 
+            IUserSessionService sessionService, 
+            IMessageSender messageSender, 
+            IRabbitMQPublisher rabbitMQPublisher, 
+            IOptions<ServicesSettings> servicesSettings,
+            IConversationStateService conversationService) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
         {
             _servicesSettings = servicesSettings.Value;
+            _conversationService = conversationService;
         }
 
         public async Task HandleRegisterCommand(long chatId, string chatUsername, string messageText)
@@ -84,7 +95,7 @@ namespace GatewayService.Handlers
                 await LogToServiceAsync("Error", "http-request-fail", "HTTP request to IdentityService failed");
             }
         }
-
+        
         public async Task HandleMyProfileCommand(long chatId)
         {
             if (!await IsPermitted(chatId, UserRole.Student))
@@ -186,108 +197,152 @@ namespace GatewayService.Handlers
                 await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
             }
         }
-        public async Task HandleGetUsersCommand(long chatId)
-        {
-            if (!await IsPermitted(chatId, UserRole.Moderator))
-                return;
-            try
-            {
-                var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/all", chatId);
-                if (response.IsSuccessStatusCode)
-                {
-                    var body = await response.Content.ReadAsStringAsync();
-                    var users = JsonSerializer.Deserialize<List<UserResponse>>(body);
-                    if (users == null || users.Count == 0)
-                    {
-                        _logger.LogError("Failed to deserialize UserResponse");
-                        await LogToServiceAsync("Error", "user-response-fail", "Failed to deserialize UserResponse");
-                        await _messageSender.SendMessageAsync(chatId, "Пользователей пока нет");
-                        return;
-                    }
-                    _logger.LogInformation("Successful receipt of users information.");
-                    await LogToServiceAsync("Information", "get-users", "Successful receipt of users information.");
-                    var message = "Список пользователей:\n\n";
-                    foreach (var user in users)
-                    {
 
-                        message += $"* {user.Username} (id:{user.Id}, role: {user.Role})\n";
-                        message += $"   └ {user.LastName} {user.FirstName}\n\n";
-                    }
-                    await _messageSender.SendMessageAsync(chatId, message);
-                }
-                else
-                {
-                    var errorMessage = await response.Content.ReadAsStringAsync();
-                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "get-users-fail", $"Failed to get users info: {errorMessage}");
-                }
-            }
-            catch (HttpRequestException ex)
+        public async Task HandleRegistrationPasswordInput(long chatId, string password, UserConversationData conversation)
+        {
+            if (password.Length < 4)
             {
-                _logger.LogError(ex, "HTTP request to IdentityService failed");
-                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
+                await _messageSender.SendMessageAsync(chatId,
+                    "❌ Пароль должен содержать минимум 4 символа. Попробуйте снова:");
+                return;
             }
+
+            conversation.SetValue("password", password);
+            conversation.State = ConversationState.AwaitingRegistrationFirstName;
+
+            await _messageSender.SendMessageAsync(chatId,
+                "Введите ваше имя:",
+                replyMarkup: KeyboardHelper.GetCancelKeyboard());
         }
 
-        public async Task HandleChangeUserRoleCommand(long chatId, string messageText)
+        public async Task HandleRegistrationFirstNameInput(long chatId, string firstName, UserConversationData conversation)
         {
-            if (!await IsPermitted(chatId, UserRole.Administrator))
-                return;
-            string[] changeUserRoleCommand = messageText.Split(' ');
-            if (changeUserRoleCommand.Length < ChangeUserRoleCommandPartsCount)
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Неверный формат команды!\nИспользуйте: /change_user_role id role");
-                return;
-            }
+            conversation.SetValue("firstName", firstName);
+            conversation.State = ConversationState.AwaitingRegistrationLastName;
 
-            if (!Guid.TryParse(changeUserRoleCommand[1], out Guid id))
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Неверный id.");
-                return;
-            }
+            await _messageSender.SendMessageAsync(chatId,
+                "Введите вашу фамилию:",
+                replyMarkup: KeyboardHelper.GetCancelKeyboard());
+        }
 
-            string role = changeUserRoleCommand[2];
+        public async Task HandleRegistrationLastNameInput(long chatId, string lastName, UserConversationData conversation)
+        {
+            var password = conversation.GetValue<string>("password");
+            var firstName = conversation.GetValue<string>("firstName");
 
-            var changeRoleRequest = new ChangeRoleRequest
+            var registerRequest = new RegisterRequest
             {
-                Id = id,
-                Role = role,
+                Username = chatId.ToString(), // Используем chatId как username
+                Password = password!,
+                FirstName = firstName,
+                LastName = lastName,
+                TelegramId = chatId
             };
 
             try
             {
-                var response = await SendRequestAsync(HttpMethod.Put, $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/change_role", chatId, changeRoleRequest);
+                var response = await SendRequestAsync(HttpMethod.Post,
+                    $"{_servicesSettings.IdentityServiceUrl}/api/auth/register",
+                    chatId,
+                    registerRequest);
+
                 if (response.IsSuccessStatusCode)
                 {
                     var body = await response.Content.ReadAsStringAsync();
-                    var userResponse = JsonSerializer.Deserialize<UserResponse>(body);
-                    if (userResponse == null)
+                    var authResponse = JsonSerializer.Deserialize<AuthResponse>(body);
+
+                    if (authResponse != null)
                     {
-                        _logger.LogError("Failed to deserialize UserResponse");
-                        await LogToServiceAsync("Error", "user-response-fail", "Failed to deserialize UserResponse");
-                        await _messageSender.SendMessageAsync(chatId, "Такого пользователя нет");
-                        return;
+                        await _sessionService.SaveTokenAsync(
+                            chatId,
+                            authResponse.Token,
+                            authResponse.RefreshToken
+                        );
                     }
-                    _logger.LogInformation("User {Id} role successfully changed to {Role}.", userResponse.Id, userResponse.Role);
-                    await LogToServiceAsync("Information", "change-role", $"User {userResponse.Id} role successfully changed to {userResponse.Role}.");
-                    var message = "Роль пользователя изменена";
-                    await _messageSender.SendMessageAsync(chatId, message);
+
+                    await _messageSender.SendMessageAsync(chatId,
+                        "✅ Регистрация успешна!\n\nТеперь используйте /login password для входа.");
+                    await LogToServiceAsync("Information", "user-registered",
+                        $"New user registered: {chatId}");
                 }
                 else
                 {
                     var errorMessage = await response.Content.ReadAsStringAsync();
-                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                    await LogToServiceAsync("Error", "change-role-fail", $"Failed to change user role: {errorMessage}");
+                    await _messageSender.SendMessageAsync(chatId,
+                        $"❌ Ошибка регистрации: {errorMessage}");
                 }
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                _logger.LogError(ex, "HTTP request to IdentityService failed");
-                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-                await LogToServiceAsync("Error", "request-fail", "HTTP request to IdentityService failed");
+                _logger.LogError(ex, "Registration failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером.");
+            }
+            finally
+            {
+                conversation.Clear();
+            }
+        }
+
+        public async Task HandleUpdateProfileInput(long chatId, string input, UserConversationData conversation)
+        {
+            if (!await IsPermitted(chatId, UserRole.Student))
+            {
+                conversation.Clear();
+                return;
+            }
+
+            var parts = input.Split(' ');
+            if (parts.Length < 3)
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "❌ Неверный формат!\n\nИспользуйте: username firstname lastname\nПример: new_user - NewLastName");
+                return;
+            }
+
+            var updateProfileRequest = new UpdateProfileRequest
+            {
+                Username = parts[0] != "-" ? parts[0] : null,
+                FirstName = parts[1] != "-" ? parts[1] : null,
+                LastName = parts[2] != "-" ? parts[2] : null
+            };
+
+            if (updateProfileRequest.Username == null &&
+                updateProfileRequest.FirstName == null &&
+                updateProfileRequest.LastName == null)
+            {
+                await _messageSender.SendMessageAsync(chatId,
+                    "❌ Укажите хотя бы один параметр для обновления!");
+                return;
+            }
+
+            try
+            {
+                var response = await SendRequestAsync(HttpMethod.Put,
+                    $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/update_profile",
+                    chatId,
+                    updateProfileRequest);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "✅ Профиль обновлен!");
+                    await LogToServiceAsync("Information", "profile-updated",
+                        $"Profile updated for chatId: {chatId}");
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId,
+                        $"❌ Ошибка: {errorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Profile update failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером.");
+            }
+            finally
+            {
+                conversation.Clear();
             }
         }
     }

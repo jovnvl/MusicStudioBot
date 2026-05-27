@@ -21,9 +21,12 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 });
 
 builder.Services.AddSingleton<IUserSessionService, UserSessionService>();
+builder.Services.AddSingleton<IConversationStateService, ConversationStateService>();
+
 builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
 builder.Services.AddSingleton<IMessageSender, MessageSenderService>();
 builder.Services.AddHostedService<TelegramPollingService>();
+
 builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
 
 builder.Services.AddScoped<SystemCommandHandler>();
