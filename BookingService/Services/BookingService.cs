@@ -9,12 +9,10 @@ namespace BookingService.Services
     public class BookingService : IBookingService
     {
         private readonly IBookingRepository _bookingRepository;
-        private readonly DataContext _context;
 
-        public BookingService(IBookingRepository bookingRepository, DataContext context)
+        public BookingService(IBookingRepository bookingRepository)
         {
             _bookingRepository = bookingRepository;
-            _context = context;
         }
 
         public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct)
@@ -45,22 +43,7 @@ namespace BookingService.Services
 
         public async Task<bool> UpdateBookingAsync(BookingDto bookingDto, CancellationToken ct)
         {
-            await using var transaction = await _context.Database.BeginTransactionAsync(ct);
-            try
-            {
-                var isUpdated = await _bookingRepository.UpdateBookingAsync(bookingDto, false, ct);
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync(ct);
-
-                return isUpdated;
-            }
-            catch
-            {
-                await transaction.RollbackAsync(ct);
-                throw;
-            }
-
+                return await _bookingRepository.UpdateBookingAsync(bookingDto, true, ct);
         }
 
         public async Task<bool> DeleteBookingAsync(Guid id, CancellationToken ct)

@@ -3,5 +3,5 @@
     NotConfirmed,
     Canceled,
     Booked,
-    Сompleted
+    Completed
 }

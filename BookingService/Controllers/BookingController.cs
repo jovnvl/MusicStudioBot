@@ -20,14 +20,14 @@ namespace BookingService.Controllers
             _rabbitMQPublisher = rabbitMQPublisher;
         }
 
-        private async Task LogToServiceAsync(string level, string eventType, string message)
+        private async Task LogToServiceAsync(string level, string eventType, string message, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
+            await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message), ct);
         }
 
-        private async Task StatisticToServiceAsync(string eventType)
+        private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync("statistic_service_queue", new { EventType = $"{eventType}"});
+            await _rabbitMQPublisher.PublishAsync("statistic_service_queue", new { EventType = $"{eventType}"}, ct);
         }
 
         // GET: api/booking

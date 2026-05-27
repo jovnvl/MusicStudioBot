@@ -29,8 +29,12 @@ namespace BookingService.Repositories
 
         public async Task<List<Booking>> GetByDescriptionAsync(string? description, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(description))
+                return new List<Booking>();
+
             return await _dataContext.Bookings
-                .Where(b => b.Description.Contains(description)).ToListAsync(ct);
+                .Where(b => b.Description != null && b.Description.Contains(description))
+                .ToListAsync(ct);
         }
 
         public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct)

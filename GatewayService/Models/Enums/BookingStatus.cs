@@ -5,6 +5,6 @@
         NotConfirmed = 0,
         Canceled = 1,
         Booked = 2,
-        Сompleted = 3,
+        Completed = 3,
     }
 }

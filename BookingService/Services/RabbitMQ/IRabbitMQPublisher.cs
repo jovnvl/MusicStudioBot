@@ -2,8 +2,6 @@
 {
     public interface IRabbitMQPublisher
     {
-        Task PublishAsync<T>(string queueName, T message);
-
-        Task PublishMessageAsync<T>(T sendObject, string queueName, CancellationToken ct);
+        Task PublishAsync<T>(string queueName, T message, CancellationToken ct);
     }
 }
