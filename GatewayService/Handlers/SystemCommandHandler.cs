@@ -1,43 +1,53 @@
 ﻿using GatewayService.Configuration;
 using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
+using GatewayService.Services.Telegram;
 using Microsoft.Extensions.Options;
 
 namespace GatewayService.Handlers
 {
     public class SystemCommandHandler : CommandHandler
     {
-        public SystemCommandHandler(IHttpClientFactory httpClientFactory, ILogger<CommandHandler> logger, IUserSessionService sessionService, IMessageSender messageSender, IRabbitMQPublisher rabbitMQPublisher) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
+        public SystemCommandHandler(
+            IHttpClientFactory httpClientFactory, 
+            ILogger<CommandHandler> logger, 
+            IUserSessionService sessionService, 
+            IMessageSender messageSender, 
+            IRabbitMQPublisher rabbitMQPublisher) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
         {
         }
 
         public async Task HandleStartCommand(long chatId)
         {
-            string welcomeMessage = @"
-Приветствуем в Music Studio Bot! 🎵
-   
-Этот бот поможет вам забронировать комнату для репетиций
-            ";
-            await _messageSender.SendMessageAsync(chatId, welcomeMessage);
+            var (accessToken, _) = await _sessionService.GetTokensAsync(chatId);
+            var isAuthenticated = !string.IsNullOrEmpty(accessToken) &&
+                                  await _sessionService.IsTokenValidAsync(accessToken);
+
+            string? userRole = null;
+
+            if (isAuthenticated)
+            {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(accessToken);
+                userRole = jwtToken.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
+            }
+
+            string welcomeMessage = isAuthenticated
+                ? "🎵 Music Studio Bot\n\nВыберите действие из меню:"
+                : "🎵 Приветствуем в Music Studio Bot!\n\nЭтот бот поможет вам забронировать комнату для репетиций.\n\n⚠️ Для начала работы необходимо зарегистрироваться.";
+
+            var keyboard = KeyboardHelper.GetMainMenu(isAuthenticated, userRole);
+            await _messageSender.SendMessageAsync(chatId, welcomeMessage, replyMarkup: keyboard);
         }
 
         public async Task HandleHelpCommand(long chatId)
         {
             string helpMessage = @"Доступные команды:
 /start - Начать работу
-/register - Регистрация (формат: /register username password firstname lastname)
 /help - Список всех команд
 /myprofile - Получить данные профиля
-/update_profile - Изменить профиль (формат: /update_profile [username] [firstname] [lastname])
-/users - Получить список пользователей
-/change_role - Изменить роль пользователя (формат: /change_role id role)
 /rooms - Получить информацию о комнатах
-/create_room - Создать комнату (формат: /create_room name | category_id | description)
-/create_room_category - Создать категорию (формат: /create_room_category name | description)
-/get_room - Получить комнату (формат: /get_room id)
-/update_room_status - Обновить статус (формат: /update_room_status id status)
-/create_booking - Создать бронирование (формат: /create_booking userId | roomId | timeBegin | timeEnd)
-/get_bookings - Получить информацию о бронированиях";
+/bookings - Получить информацию о бронированиях";
             await _messageSender.SendMessageAsync(chatId, helpMessage);
         }
     }

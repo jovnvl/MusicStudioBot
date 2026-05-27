@@ -1,7 +1,9 @@
-﻿namespace GatewayService.Services
+﻿using Telegram.Bot.Types.ReplyMarkups;
+
+namespace GatewayService.Services
 {
     public interface IMessageSender
     {
-        Task SendMessageAsync(long chatId, string text);
+        Task SendMessageAsync(long chatId, string text, ReplyMarkup? replyMarkup = null);
     }
 }
