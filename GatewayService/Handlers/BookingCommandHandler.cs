@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic;
 using System.Security.Claims;
 using System.Text.Json;
+using Telegram.Bot.Types;
 
 namespace GatewayService.Handlers
 {
@@ -30,6 +31,59 @@ namespace GatewayService.Handlers
         {
             _servicesSettings = servicesSettings.Value;
             _conversationService = conversationService;
+        }
+
+        private string ComposeBookingStringAsync(
+            BookingResponse booking,
+            Dictionary<Guid, string> userNames,
+            Dictionary<int, string> roomNames)
+        {
+                var userName = userNames.TryGetValue(booking.UserId, out var uName) ? uName : "Неизвестный";
+                var roomName = roomNames.TryGetValue(booking.RoomId, out var rName) ? rName : "Неизвестно";
+                var message = $"🟢 Бронь {roomName} на имя {userName}\n   └ комментарий: {booking.Description}\n";
+                message += $"   └ {booking.TimeBegin?.ToString("dd.MM.yyyy")} {booking.TimeBegin?.ToString("HH:mm")} - {booking.TimeEnd?.ToString("HH:mm")}\n\n";
+
+            return message;
+        }
+
+        private async Task<Dictionary<Guid, string>> GetUserNamesAsync(IEnumerable<Guid> userIds, long chatId)
+        {
+            var userNames = new Dictionary<Guid, string>();
+
+            foreach (var userId in userIds)
+            {
+                var userResponse = await SendRequestAsync(HttpMethod.Get,
+                    $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/{userId}", chatId);
+
+                if (userResponse.IsSuccessStatusCode)
+                {
+                    var userBody = await userResponse.Content.ReadAsStringAsync();
+                    var user = JsonSerializer.Deserialize<UserResponse>(userBody);
+                    if (user != null)
+                        userNames[userId] = $"{user.FirstName} {user.LastName} ({user.Username})";
+                }
+            }
+            return userNames;
+        }
+
+        private async Task<Dictionary<int, string>> GetRoomNamesAsync(IEnumerable<int> roomIds, long chatId)
+        {
+            var roomNames = new Dictionary<int, string>();
+
+            foreach (var roomId in roomIds)
+            {
+                var roomResponse = await SendRequestAsync(HttpMethod.Get,
+                    $"{_servicesSettings.RoomServiceUrl}/api/rooms/{roomId}", chatId);
+
+                if (roomResponse.IsSuccessStatusCode)
+                {
+                    var roomBody = await roomResponse.Content.ReadAsStringAsync();
+                    var room = JsonSerializer.Deserialize<RoomResponse>(roomBody);
+                    if (room != null)
+                        roomNames[roomId] = $"{room.Name}";
+                }
+            }
+            return roomNames;
         }
 
         public async Task HandleCreateBookingCommand(long chatId, string messageText)
@@ -250,6 +304,7 @@ namespace GatewayService.Handlers
                 var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.BookingServiceUrl}/api/booking", chatId);
                 var body = await response.Content.ReadAsStringAsync();
                 var bookings = JsonSerializer.Deserialize<List<BookingResponse>>(body);
+
                 if (bookings == null || bookings.Count == 0)
                 {
                     _logger.LogError("Failed to deserialize BookingResponse");
@@ -257,15 +312,19 @@ namespace GatewayService.Handlers
                     await _messageSender.SendMessageAsync(chatId, "Бронирований пока нет");
                     return;
                 }
+
                 _logger.LogInformation("Successful receipt of bookings information.");
                 await LogToServiceAsync("Information", "get-bookings", "Successful receipt of bookings information.");
+
+                var userNames = await GetUserNamesAsync(bookings.Select(b => b.UserId).Distinct(), chatId);
+                var roomNames = await GetRoomNamesAsync(bookings.Select(b => b.RoomId).Distinct(), chatId);
+
                 var message = "Список бронирований:\n\n";
                 foreach (var booking in bookings)
                 {
-
-                    message += $"* Id пользователя {booking.UserId}, id комнаты:{booking.RoomId}, описание: {booking.Description})\n";
-                    message += $"   └ {booking.TimeBegin} - {booking.TimeEnd}\n\n";
+                    message += ComposeBookingStringAsync(booking, userNames, roomNames);
                 }
+
                 await _messageSender.SendMessageAsync(chatId, message);
             }
             catch (HttpRequestException ex)
