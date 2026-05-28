@@ -211,7 +211,12 @@ namespace GatewayService.Services.Telegram
                         await bookingsHandler.HandleGetMyBookingsCommand(chatId);
                         break;
                     }
-
+                case "⚙️ Показать все бронирования":
+                    {
+                        var bookingsHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                        await bookingsHandler.HandleGetBookingsCommand(chatId);
+                        break;
+                    }
                 //case "Сменить статус бронирования":
                 //   { 
                 //        var bookingStatusHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
