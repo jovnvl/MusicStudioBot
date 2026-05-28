@@ -1098,7 +1098,7 @@ async function deleteBooking(id) {
     if (!confirm(`Удалить бронирование ${id}?`)) return;
 
     try {
-        const res = await fetch(`${BOOKING_URL}/api/booking/${id}`, {
+        const res = await fetch(`${BOOKING_URL}/api/Booking/booking/${id}`, {
             method: 'DELETE',
             headers: authHeaders(),
         });

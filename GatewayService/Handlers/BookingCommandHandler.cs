@@ -8,6 +8,7 @@ using GatewayService.Services.RabbitMQ;
 using GatewayService.Services.Telegram;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
 using Telegram.Bot.Types;
@@ -302,6 +303,49 @@ namespace GatewayService.Handlers
             try
             {
                 var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.BookingServiceUrl}/api/booking", chatId);
+                var body = await response.Content.ReadAsStringAsync();
+                var bookings = JsonSerializer.Deserialize<List<BookingResponse>>(body);
+
+                if (bookings == null || bookings.Count == 0)
+                {
+                    _logger.LogError("Failed to deserialize BookingResponse");
+                    await LogToServiceAsync("Error", "book-response-fail", "Failed to deserialize BookingResponse");
+                    await _messageSender.SendMessageAsync(chatId, "Бронирований пока нет");
+                    return;
+                }
+
+                _logger.LogInformation("Successful receipt of bookings information.");
+                await LogToServiceAsync("Information", "get-bookings", "Successful receipt of bookings information.");
+
+                var userNames = await GetUserNamesAsync(bookings.Select(b => b.UserId).Distinct(), chatId);
+                var roomNames = await GetRoomNamesAsync(bookings.Select(b => b.RoomId).Distinct(), chatId);
+
+                var message = "Список бронирований:\n\n";
+                foreach (var booking in bookings)
+                {
+                    message += ComposeBookingStringAsync(booking, userNames, roomNames);
+                }
+
+                await _messageSender.SendMessageAsync(chatId, message);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to BookingService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+            }
+        }
+
+        public async Task HandleGetMyBookingsCommand(long chatId)
+        {
+            if (!await IsPermitted(chatId, UserRole.Student))
+                return;
+            try
+            {
+                var token = await _sessionService.GetTokensAsync(chatId);
+                var claims = new JwtSecurityTokenHandler().ReadJwtToken(token.accessToken).Claims;
+                var tokenId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var response = await SendRequestAsync(HttpMethod.Get, $"{_servicesSettings.BookingServiceUrl}/api/booking/user/{tokenId}", chatId);
                 var body = await response.Content.ReadAsStringAsync();
                 var bookings = JsonSerializer.Deserialize<List<BookingResponse>>(body);
 
