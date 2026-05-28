@@ -208,7 +208,7 @@ namespace GatewayService.Services.Telegram
                 case "📋 Мои бронирования":
                     {
                         var bookingsHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
-                        await bookingsHandler.HandleGetBookingsCommand(chatId);
+                        await bookingsHandler.HandleGetMyBookingsCommand(chatId);
                         break;
                     }
 
