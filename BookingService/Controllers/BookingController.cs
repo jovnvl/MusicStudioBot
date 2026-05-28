@@ -247,7 +247,7 @@ namespace BookingService.Controllers
         }
 
         // DELETE: api/bookings/<GUID>
-        [HttpDelete("booking/{id:guid}")]
+        [HttpDelete("{id:guid}")]
         //[Authorize]
         public async Task<IActionResult> DeleteBookingAsync(Guid id, CancellationToken ct = default)
         {
