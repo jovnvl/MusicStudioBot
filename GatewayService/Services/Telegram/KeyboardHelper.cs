@@ -41,11 +41,22 @@ namespace GatewayService.Services.Telegram
                 {
                     keyboardButtonsLine2.Add(new KeyboardButton("Сменить статус бронирования"));
                     keyboardButtonsLine3.Add(new KeyboardButton("Сменить статус комнаты"));
+                    List<KeyboardButton> keyboardButtonsLine4 = new List<KeyboardButton>
+                    {
+                        new KeyboardButton("⚙️ Показать все бронирования"),
+                    };
+                    buttons.Add(keyboardButtonsLine1);
+                    buttons.Add(keyboardButtonsLine2);
+                    buttons.Add(keyboardButtonsLine3);
+                    buttons.Add(keyboardButtonsLine4);
                 }
-
-                buttons.Add(keyboardButtonsLine1);
-                buttons.Add(keyboardButtonsLine2);
-                buttons.Add(keyboardButtonsLine3);
+                else
+                {
+                    buttons.Add(keyboardButtonsLine1);
+                    buttons.Add(keyboardButtonsLine2);
+                    buttons.Add(keyboardButtonsLine3);
+                }
+                
             }
 
             return new ReplyKeyboardMarkup(buttons)
