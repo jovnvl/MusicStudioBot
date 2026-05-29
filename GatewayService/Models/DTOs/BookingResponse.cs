@@ -23,10 +23,7 @@ namespace GatewayService.Models.DTOs
         public DateTime CreationDate { get; set; } = DateTime.UtcNow;
         [JsonPropertyName("status")]
         public BookingStatus? Status { get; set; } = BookingStatus.NotConfirmed;
-        [JsonPropertyName("timeBegin")]
-        public DateTime? TimeBegin { get; set; }
-        [JsonPropertyName("timeEnd")]
-        public DateTime? TimeEnd { get; set; }
+        public BookingPeriod? Period { get; set; } = new BookingPeriod(DateTime.UtcNow, DateTime.UtcNow);
         [JsonPropertyName("description")]
         public string? Description { get; set; }
     }

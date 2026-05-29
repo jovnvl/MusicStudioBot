@@ -90,7 +90,7 @@ namespace GatewayService.Services.Telegram
                 .Where(b => b.Status == BookingStatus.Booked || b.Status == BookingStatus.NotConfirmed)
                 .Select(b => new List<InlineKeyboardButton>
                 {
-                    InlineKeyboardButton.WithCallbackData($"Пользователь: {b.UserId} Комната: {b.RoomId} Время: {b.TimeBegin} - {b.TimeEnd}", $"booking_{b.Id}")
+                    InlineKeyboardButton.WithCallbackData($"Пользователь: {b.UserId} Комната: {b.RoomId} Время: {b.Period?.TimeBegin} - {b.Period?.TimeEnd}", $"booking_{b.Id}")
                 })
                 .ToList();
             buttons.Add(new List<InlineKeyboardButton>
