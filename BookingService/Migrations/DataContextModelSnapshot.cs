@@ -53,7 +53,7 @@ namespace BookingService.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Bookings");
+                    b.ToTable("Bookings", (string)null);
                 });
 #pragma warning restore 612, 618
         }

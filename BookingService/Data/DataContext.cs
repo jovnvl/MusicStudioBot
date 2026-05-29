@@ -9,6 +9,16 @@ namespace BookingService.Data
         public DbSet<Booking> Bookings { get; set; }
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
-
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Booking>(b =>
+            {
+                b.OwnsOne(x => x.Period, p =>
+                {
+                    p.Property(x => x.TimeBegin).HasColumnName("TimeBegin");
+                    p.Property(x => x.TimeEnd).HasColumnName("TimeEnd");
+                });
+            });
+        }
     }
 }
