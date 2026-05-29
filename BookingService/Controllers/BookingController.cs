@@ -190,7 +190,7 @@ namespace BookingService.Controllers
             try
             {
                 var createdBooking = await _bookingService.CreateBookingAsync(bookingDto, ct);
-                await LogToServiceAsync("Information", "create-booking", $"New booking {createdBooking?.Id} created");
+                await LogToServiceAsync("Information", "create-booking", $"New booking {createdBooking?.Id} on {createdBooking?.Period?.TimeBegin}-{createdBooking?.Period?.TimeEnd} created");
                 await StatisticToServiceAsync("CreatedBooking");
                 return CreatedAtRoute("GetBookingAsync", new { id = createdBooking?.Id }, createdBooking);
             }

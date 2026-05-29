@@ -12,7 +12,7 @@ namespace BookingService.Repositories
         Task<List<Booking>> GetByUserIdAsync(Guid userId, CancellationToken ct);
         Task<Booking> AddBookingAsync(Booking booking, CancellationToken ct);
         Task<bool> RemoveBookingAsync(Guid id, CancellationToken ct);
-        Task<bool> HasOverlappingBookingAsync(int roomId, DateTime timeBegin, DateTime timeEnd, CancellationToken ct);
+        Task<bool> HasOverlappingBookingAsync(int roomId, BookingPeriod? bookingPeriod, CancellationToken ct);
         Task<bool> UpdateBookingAsync(BookingDto bookingDto, bool saveChanges, CancellationToken ct);
     }
 }

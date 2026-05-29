@@ -85,8 +85,7 @@ namespace BookingService.Repositories
             booking.RoomId = bookingDto.RoomId;
             booking.UserId = bookingDto.UserId;
             booking.CreationDate = bookingDto.CreationDate;
-            booking.TimeBegin = bookingDto.TimeBegin;
-            booking.TimeEnd = bookingDto.TimeEnd;
+            booking.Period = BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd);
             booking.Description = bookingDto.Description;
             if (saveChanges)
             {
@@ -96,12 +95,13 @@ namespace BookingService.Repositories
             return true;
         }
 
-        public async Task<bool> HasOverlappingBookingAsync(int roomId, DateTime timeBegin, DateTime timeEnd, CancellationToken ct)
+        public async Task<bool> HasOverlappingBookingAsync(int roomId, BookingPeriod? bookingPeriod, CancellationToken ct)
         {
             return await _dataContext.Bookings.AnyAsync(
                 b => b.RoomId == roomId
-                  && b.TimeBegin < timeEnd
-                  && b.TimeEnd > timeBegin
+                  && (b.Period != null && bookingPeriod != null
+                      && b.Period.TimeBegin < bookingPeriod.TimeBegin
+                      && b.Period.TimeEnd > bookingPeriod.TimeEnd)
                   && b.Status != BookingStatus.Canceled,
                 ct
             );

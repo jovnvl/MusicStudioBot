@@ -16,12 +16,9 @@ namespace BookingService.Services
         }
 
         public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct)
-        {
-            var timeBegin = bookingDto.TimeBegin ?? DateTime.UtcNow;
-            var timeEnd = bookingDto.TimeEnd ?? timeBegin.AddMinutes(45);
-
+        {           
             // Проверка пересечения бронирований
-            if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, timeBegin, timeEnd, ct))
+            if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd), ct))
             {
                 throw new InvalidOperationException($"Кабинет {bookingDto.RoomId} уже забронирован в данный период времени");
             }
@@ -32,8 +29,7 @@ namespace BookingService.Services
                 RoomId = bookingDto.RoomId,
                 UserId = bookingDto.UserId,
                 Status = bookingDto.Status,
-                TimeBegin = timeBegin,
-                TimeEnd = timeEnd,
+                Period = BookingPeriod.Create( bookingDto.TimeBegin, bookingDto.TimeEnd),
                 Description = bookingDto.Description,
                 CreationDate = DateTime.UtcNow
             };

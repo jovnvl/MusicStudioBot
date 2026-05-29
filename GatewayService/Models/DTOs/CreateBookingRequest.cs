@@ -1,4 +1,5 @@
-﻿using GatewayService.Models.Enums;
+﻿using GatewayService.Models.DTOs;
+using GatewayService.Models.Enums;
 
 namespace GatewayService.DTO
 
@@ -10,8 +11,6 @@ namespace GatewayService.DTO
         public Guid UserId { get; set; }
         public int RoomId { get; set; }
         public BookingStatus Status { get; set; }
-        public DateTime? TimeBegin { get; set; }
-        public DateTime? TimeEnd { get; set; }
-
+        public BookingPeriod? Period { get; set; }
     }
 }
