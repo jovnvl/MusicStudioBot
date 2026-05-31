@@ -100,8 +100,8 @@ namespace BookingService.Repositories
             return await _dataContext.Bookings.AnyAsync(
                 b => b.RoomId == roomId
                   && (b.Period != null && bookingPeriod != null
-                      && b.Period.TimeBegin < bookingPeriod.TimeBegin
-                      && b.Period.TimeEnd > bookingPeriod.TimeEnd)
+                      && b.Period.TimeBegin < bookingPeriod.TimeEnd
+                      && b.Period.TimeEnd > bookingPeriod.TimeBegin)
                   && b.Status != BookingStatus.Canceled,
                 ct
             );
