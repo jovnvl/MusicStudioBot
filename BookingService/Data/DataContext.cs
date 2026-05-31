@@ -18,6 +18,7 @@ namespace BookingService.Data
                     p.Property(x => x.TimeBegin).HasColumnName("TimeBegin");
                     p.Property(x => x.TimeEnd).HasColumnName("TimeEnd");
                 });
+                //b.Navigation(x => x.Period).IsRequired(); если не null
             });
         }
     }

@@ -3,17 +3,14 @@ namespace BookingService.Models.Entities
 {
     public sealed class BookingPeriod
     {
-        public DateTime? TimeBegin { get; }
-        public DateTime? TimeEnd { get; }
-        public BookingPeriod()
-        { 
-            TimeBegin = DateTime.UtcNow;
-            TimeEnd = DateTime.UtcNow.AddMinutes(45);
-        }
+        public DateTime? TimeBegin { get; private set; }
+        public DateTime? TimeEnd { get; private set; }
+        public BookingPeriod() { }
         public BookingPeriod(DateTime? start, DateTime? end)
         {
-            if (end < start)
-                end = start.Value.AddMinutes(45);
+            //временно отключим проверку
+            //if (end < start) 
+            //    throw new ArgumentException("TimeEnd must be greater than TimeBegin");
 
             TimeBegin = start;
             TimeEnd = end;

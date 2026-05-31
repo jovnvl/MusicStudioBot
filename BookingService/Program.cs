@@ -36,8 +36,6 @@ namespace BookingService
 
             builder.Services.AddAuthorization();
 
-            builder.Services.AddControllers();
-
             builder.Configuration.AddEnvironmentVariables();
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -87,7 +85,6 @@ namespace BookingService
             }
 
             app.UseHttpsRedirection();
-            app.UseAuthorization();
             app.MapControllers();
 
             //app.MapGet("/", () => "BookingService API is running. Use /swagger for API documentation.");

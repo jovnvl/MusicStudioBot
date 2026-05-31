@@ -38,9 +38,20 @@ namespace BookingService.Controllers
             try
             {
                 var bookings = await _bookingService.GetAllBookingsAsync(ct);
+                /*foreach (var b in bookings)
+                {
+                    Console.WriteLine(
+                        $"{b.Id} | {b.Period?.TimeBegin} | {b.Period?.TimeEnd}");
+                }*/
+
+                /*return Ok(new
+                {
+                    Count = bookings.Count,
+                    First = bookings.FirstOrDefault()
+                });*/
                 return Ok(bookings);
             }
-            
+
             catch (OperationCanceledException)
             {
                 await LogToServiceAsync("Error", "get-bookings-cancel", "Get bookings operation canceled");
