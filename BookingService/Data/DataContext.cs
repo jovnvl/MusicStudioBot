@@ -13,12 +13,15 @@ namespace BookingService.Data
         {
             modelBuilder.Entity<Booking>(b =>
             {
+                //1. json не десериализует!
                 b.OwnsOne(x => x.Period, p =>
                 {
                     p.Property(x => x.TimeBegin).HasColumnName("TimeBegin");
                     p.Property(x => x.TimeEnd).HasColumnName("TimeEnd");
                 });
-                //b.Navigation(x => x.Period).IsRequired(); если не null
+
+                b.Navigation(x => x.Period)
+                    .IsRequired();
             });
         }
     }
