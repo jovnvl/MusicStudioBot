@@ -24,6 +24,7 @@ namespace BookingService.Repositories
         public async Task<IReadOnlyList<Booking>> GetAllBookingsAsync(CancellationToken ct)
         {
             var _bookings = await _dataContext.Bookings.ToListAsync(ct);
+            /*
             var bookings = await _dataContext.Bookings
                 .AsNoTracking()
                 .Select(x => new
@@ -33,7 +34,7 @@ namespace BookingService.Repositories
                     End = x.Period!.TimeEnd
                 })
                 .ToListAsync();
-            /*
+            
             foreach (var b in bookings)
             {
                 Console.WriteLine(
@@ -41,16 +42,6 @@ namespace BookingService.Repositories
                 $"{b.Begin} | " +
                 $"{b.End}"
                 );
-            }*/            
-
-            /*
-            foreach (var b in _bookings)
-            {
-                Console.WriteLine(
-                $"{b.Id} | " +
-                $"{b.Period?.TimeBegin} | " +
-                $"{b.Period?.TimeEnd} | " +
-                $"{b.Period?.GetHashCode()}");
             }*/
             return _bookings.AsReadOnly();
         }
