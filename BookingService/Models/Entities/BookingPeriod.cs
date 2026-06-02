@@ -3,15 +3,11 @@ namespace BookingService.Models.Entities
 {
     public sealed class BookingPeriod
     {
-        public DateTime? TimeBegin { get; private set; }
-        public DateTime? TimeEnd { get; private set; }
-        public BookingPeriod() { }
+        public DateTime? TimeBegin { get; set; }
+        public DateTime? TimeEnd { get; set; }
+        private BookingPeriod() { }
         public BookingPeriod(DateTime? start, DateTime? end)
         {
-            //временно отключим проверку
-            //if (end < start) 
-            //    throw new ArgumentException("TimeEnd must be greater than TimeBegin");
-
             TimeBegin = start;
             TimeEnd = end;
         }

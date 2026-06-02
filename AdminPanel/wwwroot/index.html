@@ -1039,8 +1039,8 @@ async function loadBookings() {
         <td>${b.roomId}</td>
         <td>${bookingStatusBadge(b.status)}</td>
         <td>${b.description || '—'}</td>
-        <td class="mono">${formatDate(b.timeBegin)}</td>
-        <td class="mono">${formatDate(b.timeEnd)}</td>
+        <td class="mono">${formatDate(b.period.timeBegin)}</td>
+        <td class="mono">${formatDate(b.period.timeEnd)}</td>
         <td><button class="btn-danger btn-sm" onclick="deleteBooking('${b.id}')">Удалить</button></td>
         </tr>
     `).join('');
@@ -1098,7 +1098,7 @@ async function deleteBooking(id) {
     if (!confirm(`Удалить бронирование ${id}?`)) return;
 
     try {
-        const res = await fetch(`${BOOKING_URL}/api/Booking/booking/${id}`, {
+        const res = await fetch(`${BOOKING_URL}/api/Booking/${id}`, {
             method: 'DELETE',
             headers: authHeaders(),
         });

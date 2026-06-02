@@ -16,7 +16,7 @@ namespace BookingService.Models.Entities
 
         public DateTime CreationDate { get; set; } = DateTime.UtcNow;
         public BookingStatus? Status { get; set; } = BookingStatus.NotConfirmed;
-        public BookingPeriod? Period { get; set; }
+        public BookingPeriod Period { get; set; } = new(DateTime.UtcNow, DateTime.UtcNow);
         public string? Description { get; set; }       
     }
 }

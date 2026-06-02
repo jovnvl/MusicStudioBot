@@ -31,9 +31,9 @@ namespace BookingService.DTO
         public BookingStatus Status { get; init; } = BookingStatus.Booked;
 
         [Display(Name = "Дата и время начала бронирования")]
-        public DateTime? TimeBegin { get; init; } = DateTime.UtcNow;
+        public DateTime? TimeBegin { get; set; } = DateTime.UtcNow;
         [Display(Name = "Дата и время окончания бронирования")]
-        public DateTime? TimeEnd { get; init; } = DateTime.UtcNow.AddMinutes(45);
+        public DateTime? TimeEnd { get; set; } = DateTime.UtcNow.AddMinutes(45);
 
     }
 }

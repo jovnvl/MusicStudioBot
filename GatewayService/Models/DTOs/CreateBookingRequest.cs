@@ -1,5 +1,6 @@
 ﻿using GatewayService.Models.DTOs;
 using GatewayService.Models.Enums;
+using System.Text.Json.Serialization;
 
 namespace GatewayService.DTO
 
@@ -11,6 +12,7 @@ namespace GatewayService.DTO
         public Guid UserId { get; set; }
         public int RoomId { get; set; }
         public BookingStatus Status { get; set; }
-        public BookingPeriod? Period { get; set; }
+        [JsonPropertyName("period")]
+        public BookingPeriod Period { get; set; } = new();
     }
 }
