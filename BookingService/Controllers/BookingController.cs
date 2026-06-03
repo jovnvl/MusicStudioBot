@@ -14,21 +14,9 @@ namespace BookingService.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
-        private readonly IRabbitMQPublisher _rabbitMQPublisher;
-        public BookingController(IBookingService bookingService, IRabbitMQPublisher rabbitMQPublisher)
+        public BookingController(IBookingService bookingService)
         {
             _bookingService = bookingService;
-            _rabbitMQPublisher = rabbitMQPublisher;
-        }
-
-        private async Task LogToServiceAsync(string level, string eventType, string message, CancellationToken ct = default)
-        {
-            await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(level, eventType, message), ct);
-        }
-
-        private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
-        {
-            await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}"}, ct);
         }
 
         // GET: api/booking
@@ -39,30 +27,14 @@ namespace BookingService.Controllers
             try
             {
                 var bookings = await _bookingService.GetAllBookingsAsync(ct);
-                /*foreach (var b in bookings)
-                {
-                    Console.WriteLine(
-                        $"{b.Id} | {b.Period?.TimeBegin} | {b.Period?.TimeEnd}");
-                }*/
-
-                /*return Ok(new
-                {
-                    Count = bookings.Count,
-                    First = bookings.FirstOrDefault()
-                });*/
                 return Ok(bookings);
             }
-
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-bookings-cancel", "Get bookings operation canceled");
                 return StatusCode(499); 
-            }
-            
+            }            
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Get bookings internal server error");
-
                 return StatusCode(500, new
                 {
                     Message = $"Внутренняя ошибка сервера\n{ex.Message}",
@@ -80,17 +52,12 @@ namespace BookingService.Controllers
                 var bookings = await _bookingService.GetBookingsByUserIdAsync(userId, ct);
                 return Ok(bookings);
             }
-
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-bookings-by-userid-cancel", "Get bookings by userId operation canceled");
                 return StatusCode(499);
             }
-
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Get bookings by userId internal server error");
-
                 return StatusCode(500, new
                 {
                     Message = $"Внутренняя ошибка сервера\n{ex.Message}",
@@ -108,17 +75,12 @@ namespace BookingService.Controllers
                 var bookings = await _bookingService.GetBookingsByRoomIdAsync(roomId, ct);
                 return Ok(bookings);
             }
-
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-bookings-by-roomId-cancel", "Get bookings by roomId operation canceled");
                 return StatusCode(499);
             }
-
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Get bookings by roomId internal server error");
-
                 return StatusCode(500, new
                 {
                     Message = $"Внутренняя ошибка сервера\n{ex.Message}",
@@ -136,17 +98,12 @@ namespace BookingService.Controllers
                 var bookings = await _bookingService.GetBookingsByDescriptionAsync(description, ct);
                 return Ok(bookings);
             }
-
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-bookings-by-description-cancel", "Get bookings by description operation canceled");
                 return StatusCode(499);
             }
-
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Get bookings by description internal server error");
-
                 return StatusCode(500, new
                 {
                     Message = $"Внутренняя ошибка сервера\n{ex.Message}",
@@ -164,26 +121,20 @@ namespace BookingService.Controllers
                 var booking = await _bookingService.GetBookingByIdAsync(id, ct);
                 if (booking == null)
                 {
-                    await LogToServiceAsync(Constants.ERROR, "booking-not-found", $"Booking with ID {id} not found");
                     return NotFound(new { Message = $"Бронь с ID {id} не найдена" });
                 }
                 return Ok(booking);
-            }
-            
+            }            
             catch (OperationCanceledException)
             {
                 return StatusCode(499);
-            }
-            
+            }            
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Get booking internal server error");
-
                 return StatusCode(500, new
                 {
                     Message = $"Внутренняя ошибка сервера\n{ex.Message}",
                 });
-
             }
         }
         
@@ -225,25 +176,19 @@ namespace BookingService.Controllers
                 var updatedBooking = await _bookingService.UpdateBookingAsync(bookingDto, ct);
 
                 if (!updatedBooking)
-                {
-                    await LogToServiceAsync(Constants.ERROR, "update-booking-error", "Booking was not updated");
-                    return BadRequest(new { Message = "Не удалось обновить бронирование" });
-
-                }
-                await LogToServiceAsync("Information", "update-booking", $"Booking {bookingDto.Id} was updated");
-                await StatisticToServiceAsync("UpdatedBooking");
-
+                    return BadRequest(new { Message = $"Не удалось обновить бронь {bookingDto.Id}" });
                 return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
             }
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "operation-canceled", "Update booking operation canceled");
                 return StatusCode(499);
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Update booking internal server error");
-
                 return StatusCode(500, new
                 {
                     Message = $"Внутренняя ошибка сервера\n{ex.Message}",
@@ -260,24 +205,19 @@ namespace BookingService.Controllers
             {
                 var deleted = await _bookingService.DeleteBookingAsync(id, ct);
                 if (!deleted)
-                {
-                    await LogToServiceAsync(Constants.ERROR, "delete-booking-error", "Booking was not deleted");
-                    return BadRequest(new { Message = "Не удалось удалить бронь на кaбинет" });
-                }
-
-                await LogToServiceAsync("Information", "delete-booking", $"Booking {id} was deleted");
-                await StatisticToServiceAsync("DeletedBooking");
+                    return BadRequest(new { Message = $"Не удалось удалить бронь {id} на кaбинет" });
                 return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
             }
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "operation-canceled", "Delete booking operation canceled");
                 return StatusCode(499);
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Delete booking internal server error");
-
                 return StatusCode(500, new
                 {
                     Message = $"Внутренняя ошибка сервера\n{ex.Message}",
