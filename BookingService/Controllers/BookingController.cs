@@ -187,27 +187,23 @@ namespace BookingService.Controllers
 
             }
         }
-
-        // POST: api/booking
+        
         [HttpPost]
         //[Authorize]
-        public async Task<ActionResult<Booking>> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
+        public async Task<ActionResult<Booking>> CreateBookingAsync([FromBody] BookingDto dto, CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
-                await LogToServiceAsync("Error", "validation-problem", "Create Booking validation problem");
+                //await LogToServiceAsync("Error", "validation-problem", "Create Booking validation problem");
                 return ValidationProblem(ModelState);
             }
             try
             {
-                var createdBooking = await _bookingService.CreateBookingAsync(bookingDto, ct);
-                await LogToServiceAsync("Information", "create-booking", $"New booking {createdBooking?.Id} on {createdBooking?.Period?.TimeBegin}-{createdBooking?.Period?.TimeEnd} created");
-                await StatisticToServiceAsync("CreatedBooking");
-                return CreatedAtRoute("GetBookingAsync", new { id = createdBooking?.Id }, createdBooking);
+                var booking = await _bookingService.CreateBookingAsync(dto, ct);
+                return CreatedAtRoute("GetBookingAsync", new { id = booking?.Id }, booking);
             }
             catch (InvalidOperationException ex)
             {
-                await LogToServiceAsync("Error", "invalid-operation", "Create booking invalid operation");
                 return BadRequest(new { Message = ex.Message });
             }
             catch (OperationCanceledException)
@@ -216,7 +212,6 @@ namespace BookingService.Controllers
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync("Error", "int-server-error", "Create booking internal server error");
                 return StatusCode(500, new { Message = $"Внутренняя ошибка сервера: {ex}" });
             }
         }

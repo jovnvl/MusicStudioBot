@@ -41,8 +41,10 @@ namespace GatewayService.Handlers
         {
                 var userName = userNames.TryGetValue(booking.UserId, out var uName) ? uName : "Неизвестный";
                 var roomName = roomNames.TryGetValue(booking.RoomId, out var rName) ? rName : "Неизвестно";
-                var message = $"🟢 Бронь {roomName} на имя {userName}\n   └ комментарий: {booking.Description}\n";
-                message += $"   └ {booking.Period?.TimeBegin?.ToString("dd.MM.yyyy")} {booking.Period?.TimeBegin?.ToString("HH:mm")} - {booking.Period?.TimeEnd?.ToString("HH:mm")}\n\n";
+                var message = $"🟢 {booking.Period?.TimeBegin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")} - {booking.Period?.TimeEnd?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")} {userName}\n";
+                message += $"   ├ {roomName}\n";
+                message += $"   └ комментарий: {booking.Description}\n\n";
+
 
             return message;
         }
@@ -140,7 +142,8 @@ namespace GatewayService.Handlers
                 UserId = userId,
                 RoomId = roomId,
                 Status = BookingStatus.NotConfirmed,
-                Period = new BookingPeriod(timeBegin.ToUniversalTime(), timeEnd.ToUniversalTime())
+                TimeBegin = timeBegin.ToUniversalTime(),
+                TimeEnd = timeBegin.ToUniversalTime()
             };
 
             try
@@ -545,7 +548,8 @@ namespace GatewayService.Handlers
                 UserId = userId,
                 RoomId = roomId,
                 Status = BookingStatus.NotConfirmed,
-                Period = new BookingPeriod(timeBegin.ToUniversalTime(), timeEnd.ToUniversalTime())
+                TimeBegin = timeBegin.ToUniversalTime(),
+                TimeEnd =   timeEnd.ToUniversalTime()
             };
 
             try

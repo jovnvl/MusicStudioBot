@@ -12,7 +12,7 @@ namespace GatewayService.DTO
         public Guid UserId { get; set; }
         public int RoomId { get; set; }
         public BookingStatus Status { get; set; }
-        [JsonPropertyName("period")]
-        public BookingPeriod Period { get; set; } = new();
+        public DateTime? TimeBegin { get; set; }
+        public DateTime? TimeEnd { get; set; }
     }
 }

@@ -6,34 +6,24 @@ namespace BookingService.DTO
 {
     public class BookingDto
     {
-        [Display(Name = "Идентификатор")]
-        public Guid Id { get; init; }
+        public Guid Id { get; set; }
 
-        [StringLength(500,
-        ErrorMessage = "Описание не должно превышать 500 символов")]
-        [Display(Name = "Описание")]
-        public string Description { get; init; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
-        [Display(Name = "Пользователь")]
         [Required(ErrorMessage = "Кто бронирует обязателен")]
-        public Guid UserId { get; init; } = Guid.Parse("284616f4-e14d-4f05-af9b-baef54d9a6eb");
+        public Guid UserId { get; set; }
 
-        [Display(Name = "Кабинет")]
         [Required(ErrorMessage = "Кабинет для бронирования обязателен")]
-        public int RoomId { get; init; } = 1;
+        public int RoomId { get; set; }
        
-        [Display(Name = "Дата создания")]
-        public DateTime CreationDate { get; init; } = DateTime.UtcNow;
+        public DateTime CreationDate { get; set; } = DateTime.UtcNow;
 
         [Range(0, 4,
             ErrorMessage = "Статус бронирования кабинета должен быть от 0 до 3 (0-не подтвержден, 1-отменен, 2-забронирован, 3-завершен)")]
-        [Display(Name = "Статус бронирования")]
-        public BookingStatus Status { get; init; } = BookingStatus.Booked;
+        public BookingStatus Status { get; set; } = BookingStatus.Booked;
 
-        [Display(Name = "Дата и время начала бронирования")]
-        public DateTime? TimeBegin { get; set; } = DateTime.UtcNow;
-        [Display(Name = "Дата и время окончания бронирования")]
-        public DateTime? TimeEnd { get; set; } = DateTime.UtcNow.AddMinutes(45);
+        public DateTime? TimeBegin { get; set; } //= DateTime.UtcNow;
+        public DateTime? TimeEnd { get; set; } //= DateTime.UtcNow.AddMinutes(45);
 
     }
 }
