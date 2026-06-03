@@ -72,9 +72,9 @@ namespace BookingService.Services
         {
             try
             {
-                var _booking = _bookingRepository.UpdateBookingAsync(bookingDto, true, ct = default);
+                var _booking = await _bookingRepository.UpdateBookingAsync(bookingDto, true, ct = default);
 
-                if (!_booking.Result)
+                if (!_booking)
                 {
                     await LogToServiceAsync(Constants.ERROR, "update-booking-error", "Booking was not updated");
                     throw new InvalidOperationException($"Не удалось обновить бронь {bookingDto.Id}");
@@ -82,7 +82,7 @@ namespace BookingService.Services
                 }
                 await LogToServiceAsync("Information", "update-booking", $"Booking {bookingDto.Id} was updated");
                 await StatisticToServiceAsync("UpdatedBooking");
-                return _booking.Result;
+                return _booking;
             }
             catch (OperationCanceledException)
             {
@@ -100,8 +100,8 @@ namespace BookingService.Services
         {
             try
             {
-                var _deleted = _bookingRepository.RemoveBookingAsync(id, ct = default);
-                if (!_deleted.Result)
+                var _deleted = await _bookingRepository.RemoveBookingAsync(id, ct = default);
+                if (!_deleted)
                 {
                     await LogToServiceAsync(Constants.ERROR, "delete-booking-error", "Booking was not deleted");
                     throw new InvalidOperationException($"Не удалось удалить бронь {id} на кaбинет");
@@ -109,7 +109,7 @@ namespace BookingService.Services
 
                 await LogToServiceAsync("Information", "delete-booking", $"Booking {id} was deleted");
                 await StatisticToServiceAsync("DeletedBooking");
-                return _deleted.Result;
+                return _deleted;
             }
             catch (OperationCanceledException)
             {
@@ -127,13 +127,13 @@ namespace BookingService.Services
         {
             try
             {
-                var bookings = _bookingRepository.GetAllBookingsAsync(ct = default);
+                var bookings = await _bookingRepository.GetAllBookingsAsync(ct = default);
                 /*foreach (var b in bookings)
                 {
                     Console.WriteLine(
                         $"{b.Id} | {b.Period?.TimeBegin} | {b.Period?.TimeEnd}");
                 }*/
-                return bookings.Result;
+                return bookings;
             }
 
             catch (OperationCanceledException)
@@ -177,8 +177,8 @@ namespace BookingService.Services
         {
             try
             {
-                var bookings = _bookingRepository.GetByRoomIdAsync(roomId, ct = default);
-                return bookings.Result;
+                var bookings = await _bookingRepository.GetByRoomIdAsync(roomId, ct = default);
+                return bookings;
             }
             catch (OperationCanceledException)
             {
@@ -195,8 +195,8 @@ namespace BookingService.Services
         {
             try
             {
-                var bookings = _bookingRepository.GetByUserIdAsync(userId, ct = default);
-                return bookings.Result;
+                var bookings = await _bookingRepository.GetByUserIdAsync(userId, ct = default);
+                return bookings;
             }
 
             catch (OperationCanceledException)
