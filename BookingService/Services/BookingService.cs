@@ -3,6 +3,7 @@ using BookingService.DTO;
 using BookingService.Models.Entities;
 using BookingService.Repositories;
 using BookingService.Services.RabbitMQ;
+using BookingService.Common;
 
 namespace BookingService.Services
 {
@@ -53,7 +54,7 @@ namespace BookingService.Services
             }
             catch (InvalidOperationException ex)
             {
-                await LogToServiceAsync("Error", "invalid-operation", $"ERROR Create booking: {ex.Message}");
+                await LogToServiceAsync(Constants.ERROR, "invalid-operation", $"ERROR Create booking: {ex.Message}");
                 throw;
             }
             catch (OperationCanceledException)
@@ -62,7 +63,7 @@ namespace BookingService.Services
             }
             catch (Exception)
             {
-                await LogToServiceAsync("Error", "int-server-error", "Create booking internal server error");
+                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Create booking internal server error");
                 throw;
             }
         }
@@ -102,12 +103,12 @@ namespace BookingService.Services
 
         private async Task LogToServiceAsync(string level, string eventType, string message, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message), ct = default);
+            await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(level, eventType, message), ct = default);
         }
 
         private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync("statistic_service_queue", new { EventType = $"{eventType}" }, ct = default);
+            await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}" }, ct = default);
         }
     }
 }

@@ -2,6 +2,7 @@
 using BookingService.Data;
 using BookingService.DTO;
 using BookingService.Models.Entities;
+using BookingService.Models.Mapping;
 
 namespace BookingService.Repositories
 {
@@ -95,21 +96,14 @@ namespace BookingService.Repositories
 
         public async Task<bool> UpdateBookingAsync(BookingDto bookingDto, bool saveChanges, CancellationToken ct)
         {
-            var booking = await GetBookingByIdAsync(bookingDto.Id, ct);
+            var _booking = await GetBookingByIdAsync(bookingDto.Id, ct);
 
-            if (booking == null)
+            if (_booking == null)
                 return false;
 
-            booking.Status = bookingDto.Status;
-            booking.RoomId = bookingDto.RoomId;
-            booking.UserId = bookingDto.UserId;
-            booking.CreationDate = bookingDto.CreationDate;
-            booking.Period = BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd);
-            booking.Description = bookingDto.Description;
+            _booking = BookingMapping.ToEntity(bookingDto);
             if (saveChanges)
-            {
                 await _dataContext.SaveChangesAsync(ct);
-            }
 
             return true;
         }

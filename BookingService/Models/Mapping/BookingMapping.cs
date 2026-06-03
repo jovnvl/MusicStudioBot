@@ -23,7 +23,7 @@ namespace BookingService.Models.Mapping
             CreationDate = dto.CreationDate,
             UserId = dto.UserId,
             RoomId = dto.RoomId,
-            Period = new BookingPeriod(dto.TimeBegin, dto.TimeEnd),
+            Period = BookingPeriod.Create(dto.TimeBegin, dto.TimeEnd),
             Status = dto.Status,
             Description = dto.Description
         };

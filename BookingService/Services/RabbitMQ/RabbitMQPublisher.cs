@@ -9,7 +9,6 @@ namespace BookingService.Services.RabbitMQ
     public class RabbitMQPublisher : IRabbitMQPublisher
     {
         private readonly ILogger<RabbitMQPublisher> _logger;
-        //private readonly IRabbitMQPublisher _messageBroker;
         private readonly string _hostName;
 
         public RabbitMQPublisher(ILogger<RabbitMQPublisher> logger, IConfiguration configuration)
