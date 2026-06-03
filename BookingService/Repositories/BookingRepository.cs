@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using BookingService.Data;
+﻿using BookingService.Data;
 using BookingService.DTO;
 using BookingService.Models.Entities;
 using BookingService.Models.Mapping;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookingService.Repositories
 {
@@ -75,11 +75,6 @@ namespace BookingService.Repositories
                 .Where(b => b.UserId == userId)
                 .ToListAsync(ct);
         }
-        public async Task<Booking?> GetBookingByIdAsync(Guid Id, CancellationToken ct)
-        {
-            var booking = await _dataContext.Bookings.FindAsync(Id, ct);
-            return booking;
-        }
 
         public async Task<bool> RemoveBookingAsync(Guid id, CancellationToken ct)
         {
@@ -96,12 +91,19 @@ namespace BookingService.Repositories
 
         public async Task<bool> UpdateBookingAsync(BookingDto bookingDto, bool saveChanges, CancellationToken ct)
         {
-            var _booking = await GetBookingByIdAsync(bookingDto.Id, ct);
+            var _booking = await GetByIdAsync(bookingDto.Id, ct);
 
             if (_booking == null)
                 return false;
 
-            _booking = BookingMapping.ToEntity(bookingDto);
+            //_booking = BookingMapping.ToEntity(bookingDto);
+            _booking.CreationDate = bookingDto.CreationDate;
+            _booking.UserId = bookingDto.UserId;
+            _booking.RoomId = bookingDto.RoomId;
+            _booking.Period = BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd);
+            _booking.Status = bookingDto.Status;
+            _booking.Description = bookingDto.Description;
+
             if (saveChanges)
                 await _dataContext.SaveChangesAsync(ct);
 

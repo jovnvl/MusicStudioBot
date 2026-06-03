@@ -33,11 +33,11 @@ namespace BookingService.Controllers
             {
                 return StatusCode(499); 
             }            
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new
                 {
-                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                    Message = $"Внутренняя ошибка сервера",
                 });
             }
         }
@@ -56,11 +56,11 @@ namespace BookingService.Controllers
             {
                 return StatusCode(499);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new
                 {
-                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                    Message = $"Внутренняя ошибка сервера",
                 });
             }
         }
@@ -79,11 +79,11 @@ namespace BookingService.Controllers
             {
                 return StatusCode(499);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new
                 {
-                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                    Message = $"Внутренняя ошибка сервера",
                 });
             }
         }
@@ -102,11 +102,11 @@ namespace BookingService.Controllers
             {
                 return StatusCode(499);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new
                 {
-                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                    Message = $"Внутренняя ошибка сервера",
                 });
             }
         }
@@ -129,11 +129,11 @@ namespace BookingService.Controllers
             {
                 return StatusCode(499);
             }            
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new
                 {
-                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                    Message = $"Внутренняя ошибка сервера",
                 });
             }
         }
@@ -160,9 +160,9 @@ namespace BookingService.Controllers
             {
                 return StatusCode(499);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, new { Message = $"Внутренняя ошибка сервера: {ex}" });
+                return StatusCode(500, new { Message = $"Внутренняя ошибка сервера" });
             }
         }
 
@@ -187,11 +187,11 @@ namespace BookingService.Controllers
             {
                 return StatusCode(499);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new
                 {
-                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                    Message = $"Внутренняя ошибка сервера",
                 });
             }
         }
@@ -216,11 +216,11 @@ namespace BookingService.Controllers
             {
                 return StatusCode(499);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new
                 {
-                    Message = $"Внутренняя ошибка сервера\n{ex.Message}",
+                    Message = $"Внутренняя ошибка сервера",
                 });
             }
         }

@@ -29,7 +29,7 @@ namespace BookingService.Services
                 if (bookingDto.TimeBegin >= bookingDto.TimeEnd)
                     throw new InvalidOperationException($"TimeBegin must be less than TimeEnd: ");
 
-                if (bookingDto.UserId.ToString() == string.Empty)
+                if (bookingDto.UserId == Guid.Empty)
                     throw new InvalidOperationException("Invalid UserId.");
 
                 // Проверка пересечения бронирований
