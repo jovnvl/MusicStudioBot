@@ -18,7 +18,6 @@ namespace BookingService.Controllers
             _bookingService = bookingService;
         }
 
-        // GET: api/booking
         [HttpGet]
         //[Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsAsync(CancellationToken ct = default)
@@ -41,7 +40,6 @@ namespace BookingService.Controllers
             }
         }
 
-        // GET: api/booking
         [HttpGet("user/{userId:guid}", Name = "GetBookingsByUserIdAsync")]
         //[Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByUserIdAsync(Guid userId, CancellationToken ct = default)
@@ -64,7 +62,6 @@ namespace BookingService.Controllers
             }
         }
 
-        // GET: api/booking
         [HttpGet("room/{roomId:int}", Name = "GetBookingsByRoomIdAsync")]
         //[Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByRoomIdAsync(int roomId, CancellationToken ct = default)
@@ -87,7 +84,6 @@ namespace BookingService.Controllers
             }
         }
 
-        // GET: api/booking
         [HttpGet("booking/{description}", Name = "GetBookingsByDescriptionAsync")]
         //[Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByDescriptionAsync(string? description, CancellationToken ct = default)
@@ -110,7 +106,6 @@ namespace BookingService.Controllers
             }
         }
 
-        // GET: api/booking/<GUID>
         [HttpGet("booking/{id:guid}", Name = "GetBookingAsync")]
         //[Authorize]
         public async Task<ActionResult<Booking>> GetBookingAsync(Guid id, CancellationToken ct = default)
@@ -165,7 +160,6 @@ namespace BookingService.Controllers
             }
         }
 
-        // UPDATE: api/bookings/<GUID>
         [HttpPut]
         //[Authorize]
         public async Task<ActionResult<Booking>> UpdateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
@@ -195,7 +189,6 @@ namespace BookingService.Controllers
             }
         }
 
-        // DELETE: api/bookings/<GUID>
         [HttpDelete("{id:guid}")]
         //[Authorize]
         public async Task<IActionResult> DeleteBookingAsync(Guid id, CancellationToken ct = default)

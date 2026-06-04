@@ -12,13 +12,15 @@ namespace BookingService.Services
     {
         private readonly IBookingRepository _bookingRepository;
         private readonly IRabbitMQPublisher _rabbitMQPublisher;
+        private readonly ILogger<BookingService> _logger;
 
         private readonly IEventDispatcher _dispatcher;
-        public BookingService(IBookingRepository bookingRepository, IRabbitMQPublisher rabbitMQPublisher, IEventDispatcher dispatcher)
+        public BookingService(IBookingRepository bookingRepository, IRabbitMQPublisher rabbitMQPublisher, IEventDispatcher dispatcher, ILogger<BookingService> logger)
         {
             _bookingRepository = bookingRepository;
             _rabbitMQPublisher = rabbitMQPublisher;
             _dispatcher = dispatcher;
+            _logger = logger;
         }
 
         public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
@@ -138,10 +140,11 @@ namespace BookingService.Services
             try
             {
                 var bookings = await _bookingRepository.GetAllBookingsAsync(ct);
-                /*foreach (var b in bookings)
+                /*
+                foreach (var b in bookings)
                 {
-                    Console.WriteLine(
-                        $"{b.Id} | {b.Period?.TimeBegin} | {b.Period?.TimeEnd}");
+                    _logger.LogInformation($"Booking created with Id ${ b.Id} | { b.Period?.TimeBegin} | { b.Period?.TimeEnd}");;
+                    //Console.WriteLine($"{b.Id} | {b.Period?.TimeBegin} | {b.Period?.TimeEnd}");
                 }*/
                 return bookings;
             }

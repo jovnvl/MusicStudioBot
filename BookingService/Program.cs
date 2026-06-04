@@ -44,19 +44,15 @@ namespace BookingService
                 ?? Environment.GetEnvironmentVariable("PG_BookingService");
 
 
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                Console.WriteLine("Не настроена строка подключения");
-                return;
-            }
-
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
             builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
             //add Handler
             //builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
+
             builder.Services.AddScoped<INotificationHandler<BookingCreatedEvent>, BookingCreatedHandler>();
+            
             //builder.Services.AddScoped<IEventHandler<BookingDeletedEvent>, BookingDeletedHandler>();
 
             //Add MediatR
@@ -76,10 +72,21 @@ namespace BookingService
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
-                    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+                     //policy.WithOrigins());
+                policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());//Безопасность под угрозой - Очень открытый CORS
             });
 
             var app = builder.Build();
+
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("Application started");
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                //Console.WriteLine("Не настроена строка подключения");
+                app.Logger.LogInformation("Не настроена строка подключения");
+                return;
+            }
 
             app.UseCors();
 
