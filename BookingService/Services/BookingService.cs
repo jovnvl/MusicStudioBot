@@ -36,7 +36,7 @@ namespace BookingService.Services
                     throw new InvalidOperationException("Invalid UserId.");
 
                 // Проверка пересечения бронирований
-                if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd), ct = default))
+                if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd), ct))
                     throw new InvalidOperationException($"Уже есть бронь на кабинет {bookingDto.RoomId} на период {bookingDto.TimeBegin?.ToLocalTime()} - {bookingDto.TimeEnd?.ToLocalTime()}");
 
                 var booking = new Booking
@@ -50,10 +50,10 @@ namespace BookingService.Services
                     CreationDate = DateTime.UtcNow
                 };
 
-                await _bookingRepository.AddBookingAsync(booking, ct = default);
+                await _bookingRepository.AddBookingAsync(booking, ct);
                 //
                 await _dispatcher.DispatcherAsync(new BookingCreatedEvent(booking.Id));
-                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingCreatedEvent(booking.Id), ct = default);
+                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingCreatedEvent(booking.Id), ct);
                 //
                 await LogToServiceAsync("Information", "create-booking", $"New booking {booking?.Id} for room {booking?.RoomId} on {booking?.Period?.TimeBegin?.ToLocalTime()}-{booking?.Period?.TimeEnd?.ToLocalTime()} created");
                 await StatisticToServiceAsync("CreatedBooking");
@@ -79,7 +79,7 @@ namespace BookingService.Services
         {
             try
             {
-                var _booking = await _bookingRepository.UpdateBookingAsync(bookingDto, true, ct = default);
+                var _booking = await _bookingRepository.UpdateBookingAsync(bookingDto, true, ct);
 
                 if (!_booking)
                 {
@@ -107,7 +107,7 @@ namespace BookingService.Services
         {
             try
             {
-                var _deleted = await _bookingRepository.RemoveBookingAsync(id, ct = default);
+                var _deleted = await _bookingRepository.RemoveBookingAsync(id, ct);
                 if (!_deleted)
                 {
                     await LogToServiceAsync(Constants.ERROR, "delete-booking-error", "Booking was not deleted");
@@ -116,7 +116,7 @@ namespace BookingService.Services
 
                 await LogToServiceAsync("Information", "delete-booking", $"Booking {id} was deleted");
                 //
-                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingDeletedEvent(id), ct = default);
+                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingDeletedEvent(id), ct);
                 //
                 await StatisticToServiceAsync("DeletedBooking");
                 return _deleted;
@@ -137,7 +137,7 @@ namespace BookingService.Services
         {
             try
             {
-                var bookings = await _bookingRepository.GetAllBookingsAsync(ct = default);
+                var bookings = await _bookingRepository.GetAllBookingsAsync(ct);
                 /*foreach (var b in bookings)
                 {
                     Console.WriteLine(
@@ -163,7 +163,7 @@ namespace BookingService.Services
         {
             try
             {
-                var booking = await _bookingRepository.GetByIdAsync(id, ct = default);
+                var booking = await _bookingRepository.GetByIdAsync(id, ct);
                 if (booking == null)
                 {
                     await LogToServiceAsync(Constants.ERROR, "booking-not-found", $"Booking with ID {id} not found");
@@ -187,7 +187,7 @@ namespace BookingService.Services
         {
             try
             {
-                var bookings = await _bookingRepository.GetByRoomIdAsync(roomId, ct = default);
+                var bookings = await _bookingRepository.GetByRoomIdAsync(roomId, ct);
                 return bookings;
             }
             catch (OperationCanceledException)
@@ -205,7 +205,7 @@ namespace BookingService.Services
         {
             try
             {
-                var bookings = await _bookingRepository.GetByUserIdAsync(userId, ct = default);
+                var bookings = await _bookingRepository.GetByUserIdAsync(userId, ct);
                 return bookings;
             }
 
@@ -225,7 +225,7 @@ namespace BookingService.Services
         {
             try
             {
-                var bookings = await _bookingRepository.GetByDescriptionAsync(description, ct = default);
+                var bookings = await _bookingRepository.GetByDescriptionAsync(description, ct);
                 return bookings;
             }
             catch (OperationCanceledException)
@@ -242,12 +242,12 @@ namespace BookingService.Services
 
         private async Task LogToServiceAsync(string level, string eventType, string message, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(level, eventType, message), ct = default);
+            await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(level, eventType, message), ct);
         }
 
         private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}" }, ct = default);
+            await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}" }, ct);
         }
     }
 }
