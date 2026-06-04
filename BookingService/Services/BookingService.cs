@@ -1,9 +1,10 @@
-﻿using BookingService.Data;
+﻿using BookingService.Common;
+using BookingService.Data;
 using BookingService.DTO;
+using BookingService.Infrastructure;
+using BookingService.Infrastructure.Events;
 using BookingService.Models.Entities;
 using BookingService.Repositories;
-using BookingService.Services.RabbitMQ;
-using BookingService.Common;
 
 namespace BookingService.Services
 {
@@ -12,10 +13,12 @@ namespace BookingService.Services
         private readonly IBookingRepository _bookingRepository;
         private readonly IRabbitMQPublisher _rabbitMQPublisher;
 
-        public BookingService(IBookingRepository bookingRepository, IRabbitMQPublisher rabbitMQPublisher)
+        private readonly IEventDispatcher _dispatcher;
+        public BookingService(IBookingRepository bookingRepository, IRabbitMQPublisher rabbitMQPublisher, IEventDispatcher dispatcher)
         {
             _bookingRepository = bookingRepository;
             _rabbitMQPublisher = rabbitMQPublisher;
+            _dispatcher = dispatcher;
         }
 
         public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
@@ -48,6 +51,10 @@ namespace BookingService.Services
                 };
 
                 await _bookingRepository.AddBookingAsync(booking, ct = default);
+                //
+                await _dispatcher.DispatcherAsync(new BookingCreatedEvent(booking.Id));
+                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingCreatedEvent(booking.Id), ct = default);
+                //
                 await LogToServiceAsync("Information", "create-booking", $"New booking {booking?.Id} for room {booking?.RoomId} on {booking?.Period?.TimeBegin?.ToLocalTime()}-{booking?.Period?.TimeEnd?.ToLocalTime()} created");
                 await StatisticToServiceAsync("CreatedBooking");
                 return booking;
@@ -108,6 +115,9 @@ namespace BookingService.Services
                 }
 
                 await LogToServiceAsync("Information", "delete-booking", $"Booking {id} was deleted");
+                //
+                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingDeletedEvent(id), ct = default);
+                //
                 await StatisticToServiceAsync("DeletedBooking");
                 return _deleted;
             }

@@ -1,7 +1,9 @@
 using BookingService.Data;
+using BookingService.Infrastructure;
+using BookingService.Infrastructure.Events;
 using BookingService.Repositories;
 using BookingService.Services;
-using BookingService.Services.RabbitMQ;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -52,7 +54,15 @@ namespace BookingService
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
             builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
+            //add Handler
+            //builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
+            builder.Services.AddScoped<INotificationHandler<BookingCreatedEvent>, BookingCreatedHandler>();
+            //builder.Services.AddScoped<IEventHandler<BookingDeletedEvent>, BookingDeletedHandler>();
 
+            //Add MediatR
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<BookingCreatedEvent>());
+            builder.Services.AddScoped<IEventDispatcher, MediatorRDispatcher>();
+            //
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

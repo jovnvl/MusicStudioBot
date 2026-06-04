@@ -105,7 +105,10 @@ namespace BookingService.Repositories
             _booking.Description = bookingDto.Description;
 
             if (saveChanges)
+            {
+                _dataContext.Bookings.Update(_booking);
                 await _dataContext.SaveChangesAsync(ct);
+            }
 
             return true;
         }

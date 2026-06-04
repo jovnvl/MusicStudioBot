@@ -1,10 +1,9 @@
-﻿using BookingService.DTO;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 
-namespace BookingService.Services.RabbitMQ
+namespace BookingService.Infrastructure
 {
     public class RabbitMQPublisher : IRabbitMQPublisher
     {

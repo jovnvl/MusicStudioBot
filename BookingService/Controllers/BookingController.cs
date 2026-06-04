@@ -1,7 +1,6 @@
 ﻿using BookingService.DTO;
 using BookingService.Models.Entities;
 using BookingService.Services;
-using BookingService.Services.RabbitMQ;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
