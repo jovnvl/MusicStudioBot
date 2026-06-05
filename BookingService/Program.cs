@@ -48,13 +48,6 @@ namespace BookingService
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
             builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
-            //add Handler
-            //builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
-
-            builder.Services.AddScoped<INotificationHandler<BookingCreatedEvent>, BookingCreatedHandler>();
-            
-            //builder.Services.AddScoped<IEventHandler<BookingDeletedEvent>, BookingDeletedHandler>();
-
             //Add MediatR
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<BookingCreatedEvent>());
             builder.Services.AddScoped<IEventDispatcher, MediatorRDispatcher>();

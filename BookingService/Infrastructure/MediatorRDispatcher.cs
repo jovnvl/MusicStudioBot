@@ -1,7 +1,7 @@
-﻿namespace BookingService.Infrastructure
-{
-    using MediatR;
+﻿using MediatR;
 
+namespace BookingService.Infrastructure
+{
     public sealed class MediatorRDispatcher : IEventDispatcher
     {
         private readonly IMediator _mediator;
