@@ -1,0 +1,68 @@
+﻿using Microsoft.AspNetCore.Connections;
+using Microsoft.Extensions.Logging.Abstractions;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using StatisticService.DTO;
+using StatisticService.Services;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.Json;
+
+namespace StatisticService.Services
+{
+    public class ConsumerService : BackgroundService
+    {
+        private readonly IServiceScopeFactory _scopeFactory;
+
+        public ConsumerService(IServiceScopeFactory scopeFactory)
+        {
+            _scopeFactory = scopeFactory;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken ct)
+        {
+            var factory = new ConnectionFactory() { HostName = "localhost" };
+            using var connection = await factory.CreateConnectionAsync();
+            using var channel = await connection.CreateChannelAsync();
+
+            string queueName = "statistic_service_queue";
+            await channel.QueueDeclareAsync(queue: queueName,
+                                 durable: false,
+                                 exclusive: false,
+                                 autoDelete: false,
+                                 arguments: null);
+
+            Console.WriteLine(" [*] Ожидание сообщений...");
+
+            var consumer = new AsyncEventingBasicConsumer(channel);
+            consumer.ReceivedAsync += async (model, ea) =>
+            {
+                var body = ea.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+                Console.WriteLine($" [x] Получено: {message}");
+
+                using var scope = _scopeFactory.CreateScope();
+                var statisticService = scope.ServiceProvider.GetRequiredService<IStatisticService>();
+
+                var eventType = JsonSerializer.Deserialize<EventDto>(body);
+
+                if (eventType != null)
+                {
+                    switch (eventType.EventType)
+                    {
+                        case "CreatedBooking": await statisticService.IncrementBookingCountAsync(ct);
+                            break;
+                        case "DeletedBooking": await statisticService.IncrementDeleteBookingCountAsync(ct);
+                            break;
+                    }
+                }
+            };
+            await channel.BasicConsumeAsync(queue: queueName,
+                     autoAck: true,
+                     consumer: consumer);
+            Console.WriteLine(" Нажмите [enter] для выхода.");
+            Console.ReadLine();
+        }
+    }
+}

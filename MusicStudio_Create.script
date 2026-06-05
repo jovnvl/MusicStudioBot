@@ -1,0 +1,186 @@
+CREATE DATABASE "MusicStudio"
+    WITH
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'Russian_Russia.1251'
+    LC_CTYPE = 'Russian_Russia.1251'
+    LOCALE_PROVIDER = 'libc'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+
+--1. Role
+CREATE SEQUENCE role_id_seq;
+CREATE TABLE IF NOT EXISTS public."Role"
+(
+    "Id" integer NOT NULL DEFAULT nextval('Role_id_seq'::regclass),
+    "Name" character varying(50) COLLATE pg_catalog."default",
+    "Description" character varying(500) COLLATE pg_catalog."default",
+    CONSTRAINT "Role_pkey" PRIMARY KEY ("Id")
+)
+TABLESPACE pg_default;
+ALTER SEQUENCE public.role_id_seq
+    OWNED BY public."Role"."Id";
+ALTER SEQUENCE public.role_id_seq
+    OWNER TO postgres;
+ALTER TABLE IF EXISTS public."Role"
+    ALTER COLUMN "Id" SET DEFAULT nextval('role_id_seq');
+
+ALTER TABLE IF EXISTS public."Role"
+    OWNER to postgres;
+	
+--2. User
+CREATE SEQUENCE user_id_seq;
+CREATE TABLE IF NOT EXISTS public."User"
+(
+    "Id" integer NOT NULL DEFAULT nextval('user_id_seq'::regclass),
+    "Name" character varying(30) COLLATE pg_catalog."default",
+    "Email" character varying(50) COLLATE pg_catalog."default",
+    "RegistrationDate" date,
+    "Status" integer NULL,
+    CONSTRAINT "User_pkey" PRIMARY KEY ("Id")
+)
+TABLESPACE pg_default;
+ALTER SEQUENCE public.user_id_seq
+    OWNED BY public."User"."Id";
+ALTER SEQUENCE public.user_id_seq
+    OWNER TO postgres;
+ALTER TABLE IF EXISTS public."User"
+    ALTER COLUMN "Id" SET DEFAULT nextval('user_id_seq');
+
+ALTER TABLE IF EXISTS public."User"
+    OWNER to postgres;
+
+--3. CategoryRoom
+CREATE SEQUENCE categoryroom_id_seq;
+CREATE TABLE IF NOT EXISTS public."CategoryRoom"
+(
+    "Id" integer NOT NULL DEFAULT nextval('categoryroom_id_seq'::regclass),
+    "Name" character varying(50) COLLATE pg_catalog."default",
+    "Description" character varying(500) COLLATE pg_catalog."default",
+    CONSTRAINT "CategoryRoom_pkey" PRIMARY KEY ("Id")
+)
+TABLESPACE pg_default;
+ALTER SEQUENCE public.categoryroom_id_seq
+    OWNED BY public."CategoryRoom"."Id";
+ALTER SEQUENCE public.categoryroom_id_seq
+    OWNER TO postgres;
+ALTER TABLE IF EXISTS public."CategoryRoom"
+    ALTER COLUMN "Id" SET DEFAULT nextval('categoryroom_id_seq');
+
+ALTER TABLE IF EXISTS public."CategoryRoom"
+    OWNER to postgres;
+	
+--4. Room	
+CREATE SEQUENCE room_id_seq;
+CREATE TABLE IF NOT EXISTS public."Room"
+(
+    "Id" integer NOT NULL DEFAULT nextval('room_id_seq'::regclass),
+    "Name" character varying(50) COLLATE pg_catalog."default",
+    "Description" character varying(500) COLLATE pg_catalog."default",
+    "Photo" bytea,
+    "CreationDate" date NOT NULL,
+    "CategoryRoomId" integer NOT NULL,
+    "Status" integer,
+    CONSTRAINT "Room_pkey" PRIMARY KEY ("Id"),
+    CONSTRAINT "CategoryRooms" FOREIGN KEY ("CategoryRoomId")
+        REFERENCES public."CategoryRoom" ("Id") MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        NOT VALID
+)
+TABLESPACE pg_default;
+ALTER SEQUENCE public.room_id_seq
+    OWNED BY public."Room"."Id";
+ALTER SEQUENCE public.room_id_seq
+    OWNER TO postgres;
+ALTER TABLE IF EXISTS public."Room"
+    ALTER COLUMN "Id" SET DEFAULT nextval('room_id_seq');
+ALTER TABLE IF EXISTS public."Room"
+    OWNER to postgres;
+
+--5.Boooking
+CREATE SEQUENCE Booking_id_seq;
+CREATE TABLE IF NOT EXISTS public."Booking"
+(
+    "Id" integer NOT NULL DEFAULT nextval('Booking_id_seq'::regclass),
+    "UserId" integer NOT NULL,
+    "RoomId" integer NOT NULL,
+    "CreationDate" date NOT NULL,
+    "Status" integer,
+    CONSTRAINT "Booking_pkey" PRIMARY KEY ("Id"),
+    CONSTRAINT "BookingUsers" FOREIGN KEY ("UserId")
+        REFERENCES public."User" ("Id") MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        NOT VALID,
+    CONSTRAINT "BookingRooms" FOREIGN KEY ("RoomId")
+        REFERENCES public."Room" ("Id") MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        NOT VALID
+)
+
+TABLESPACE pg_default;
+ALTER SEQUENCE public.Booking_id_seq
+    OWNED BY public."Booking"."Id";
+ALTER SEQUENCE public.Booking_id_seq
+    OWNER TO postgres;
+ALTER TABLE IF EXISTS public."Booking"
+    ALTER COLUMN "Id" SET DEFAULT nextval('Booking_id_seq');
+ALTER TABLE IF EXISTS public."Booking"
+    OWNER to postgres;
+
+--6. SubScriberForRoom
+CREATE SEQUENCE SubScribeForRoom_id_seq;
+CREATE TABLE IF NOT EXISTS public."SubScribeForRoom"
+(
+    "Id" integer NOT NULL DEFAULT nextval('SubScribeForRoom_id_seq'::regclass),
+    "UserId" integer NOT NULL,
+    "RoomId" integer NOT NULL,
+    "CreationDate" date NOT NULL,
+    "Status" integer,
+    CONSTRAINT "SubScribeForRoom_pkey" PRIMARY KEY ("Id"),
+    CONSTRAINT "SubScribeForRoomUsers" FOREIGN KEY ("UserId")
+        REFERENCES public."User" ("Id") MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        NOT VALID,
+    CONSTRAINT "SubScribeForRoomRooms" FOREIGN KEY ("RoomId")
+        REFERENCES public."Room" ("Id") MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        NOT VALID
+)
+
+TABLESPACE pg_default;
+ALTER SEQUENCE public.SubScribeForRoom_id_seq
+    OWNED BY public."SubScribeForRoom"."Id";
+ALTER SEQUENCE public.SubScribeForRoom_id_seq
+    OWNER TO postgres;
+ALTER TABLE IF EXISTS public."SubScribeForRoom"
+    ALTER COLUMN "Id" SET DEFAULT nextval('SubScribeForRoom_id_seq');
+ALTER TABLE IF EXISTS public."SubScribeForRoom"
+    OWNER to postgres;
+
+--7. UserRoles
+CREATE TABLE IF NOT EXISTS public."UserRoles"
+(
+    "UserId" integer NOT NULL,
+    "RoleId" integer NOT NULL,
+    CONSTRAINT "PK_UserRoles" PRIMARY KEY ("UserId", "RoleId"),
+    CONSTRAINT "FK_UserRoles_Role" FOREIGN KEY ("RoleId")
+        REFERENCES public."Role" ("Id") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID,
+    CONSTRAINT "FK_UserRoles_User" FOREIGN KEY ("UserId")
+        REFERENCES public."User" ("Id") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public."UserRoles"
+    OWNER to postgres;

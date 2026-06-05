@@ -1,0 +1,6 @@
+@StatisticService_HostAddress = http://localhost:5285
+
+GET {{StatisticService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

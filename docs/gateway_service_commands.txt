@@ -1,0 +1,75 @@
+GATEWAYSERVICE - TELEGRAM КОМАНДЫ
+-----------------------------------
+
+Доступ к командам осуществляется через Telegram бота.
+Уровни доступа: Student(0), Moderator(1), Administrator(2).
+Команды с уровнем выше Student требуют предварительного входа через /login.
+
+/start
+  Описание: Приветственное сообщение
+  Доступ: все пользователи, авторизация не требуется
+
+/help
+  Описание: Список всех доступных команд
+  Доступ: все пользователи, авторизация не требуется
+
+/register username password firstname lastname
+  Описание: Регистрация нового пользователя
+  Доступ: все пользователи, авторизация не требуется
+  Параметры: username, password, firstname, lastname - через пробел
+
+/login password
+  Описание: Вход в систему, получение и сохранение JWT токена
+  Доступ: все пользователи, авторизация не требуется
+  Параметры: password
+
+/myprofile
+  Описание: Просмотр данных своего профиля
+  Доступ: требуется авторизация (любая роль)
+
+/update_profile [username] [firstname] [lastname]
+  Описание: Изменение данных профиля. Символ - используется для пропуска параметра
+  Доступ: требуется авторизация (любая роль)
+  Пример: /update_profile new_name - NewLastName
+
+/rooms
+  Описание: Список всех комнат с их статусом и описанием
+  Доступ: Moderator и выше
+
+/get_room id
+  Описание: Получение информации об одной комнате по её id
+  Доступ: Moderator и выше
+  Параметры: id (целое число)
+
+/create_room name | category_id | description
+  Описание: Создание новой комнаты
+  Доступ: Moderator и выше
+  Параметры: name, category_id (целое число), description - через разделитель |
+
+/create_room_category name | description
+  Описание: Создание новой категории комнат
+  Доступ: Moderator и выше
+  Параметры: name, description - через разделитель |
+
+/update_room_status id status
+  Описание: Изменение статуса комнаты
+  Доступ: Moderator и выше
+  Параметры: id (целое число), status (0-Available, 1-Occupied, 2-Reserved, 3-Maintenance)
+
+/users
+  Описание: Список всех пользователей с их ролями и именами
+  Доступ: Moderator и выше
+
+/change_user_role id role
+  Описание: Изменение роли пользователя по его id
+  Доступ: Administrator
+  Параметры: id (GUID), role (Student, Moderator, Administrator)
+
+
+GATEWAYSERVICE - HTTP ЭНДПОИНТЫ
+----------------------------------
+
+POST /api/telegram/webhook
+  Описание: Эндпоинт для получения обновлений от Telegram в режиме Webhook.
+  Используется как альтернатива Polling. В текущей конфигурации не задействован активно.
+  Тело запроса: объект Update от Telegram

@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>eb2207a6-7bcd-4d50-baf2-c2199329d6a8</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Migrations\20260521201412_AddOutboundMessages.cs" />
+    <Compile Remove="Migrations\20260521201412_AddOutboundMessages.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\.dockerignore" Link=".dockerignore">
+      <DependentUpon>$(DockerDefaultDockerfile)</DependentUpon>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.7" />
+  </ItemGroup>
+
+</Project>

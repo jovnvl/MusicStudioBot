@@ -1,0 +1,69 @@
+GATEWAYSERVICE
+--------------
+
+Назначение
+Точка входа в систему. Принимает команды от пользователей через Telegram и маршрутизирует
+запросы к внутренним микросервисам (IdentityService, RoomService, BookingService).
+
+Платформа и фреймворк
+ASP.NET Core, .NET. Регистрация зависимостей через встроенный DI-контейнер в Program.cs.
+
+Взаимодействие с Telegram
+Используется библиотека Telegram.Bot. Сервис работает в режиме polling - TelegramPollingService
+(наследует BackgroundService) постоянно опрашивает серверы Telegram на наличие новых сообщений.
+Также реализован TelegramWebhookController для поддержки webhook-режима.
+Отправка сообщений пользователю выполняется через MessageSenderService, реализующий
+интерфейс IMessageSender.
+
+Паттерны проектирования
+- Single Responsibility Principle: логика обработки команд вынесена из TelegramBotService
+  в отдельный CommandHandler, реализующий интерфейс ICommandHandler.
+- Interface Segregation: IMessageSender выделен в отдельный интерфейс для разрыва
+  циклической зависимости между сервисами.
+- Dependency Inversion: все зависимости инжектируются через конструктор по интерфейсам.
+- Options Pattern: конфигурация Telegram и адреса сервисов вынесены в классы TelegramSettings
+  и ServicesSettings, загружаемые через IOptions.
+
+Хранение сессий
+JWT-токены пользователей хранятся в памяти через UserSessionService, реализующий
+IUserSessionService. Хранилище представляет собой Dictionary<long, string>, где ключ -
+TelegramId пользователя, значение - JWT-токен. Все зависимости, связанные с сессиями,
+зарегистрированы как Singleton.
+
+Авторизация и проверка прав
+Проверка доступа выполняется в методе IsPermitted, который:
+1. Проверяет наличие токена в сессии пользователя.
+2. Передаёт токен в метод HasRole для проверки роли.
+
+Метод HasRole парсит JWT-токен без валидации подписи через JwtSecurityTokenHandler.ReadJwtToken,
+извлекает claim с типом ClaimTypes.Role и сравнивает числовое значение роли пользователя
+с требуемым минимальным значением. Это обеспечивает иерархическую проверку:
+Administrator >= Moderator >= Student.
+
+Роли пользователей (UserRole enum)
+Student = 0, Moderator = 1, Administrator = 2
+
+Коммуникация с другими сервисами
+HTTP-запросы к внутренним сервисам выполняются через IHttpClientFactory.
+JWT-токен передаётся в заголовке Authorization: Bearer <token> там, где требуется
+авторизация на стороне сервиса (например, update_profile в IdentityService).
+
+Асинхронные события через RabbitMQ
+При регистрации публикуется событие UserRegisteredEvent в очередь user_registered_queue.
+При входе публикуется событие UserLoggedInEvent в очередь user_logged_in_queue.
+Публикация выполняется через IRabbitMQPublisher. Очереди объявляются как durable
+(сохраняются при перезапуске RabbitMQ).
+
+Конфигурация
+Чувствительные данные (BotToken) хранятся в User Secrets (не в appsettings.json).
+Адреса сервисов и параметры RabbitMQ хранятся в appsettings.json.
+
+Логирование
+Используется стандартный ILogger. Логируются входящие сообщения, результаты операций,
+ошибки десериализации и ошибки HTTP-запросов.
+
+Парсинг команд
+Команды с несколькими параметрами используют символ | как разделитель для многословных полей.
+Команды с простыми параметрами используют пробел как разделитель.
+Количество ожидаемых частей команды вынесено в именованные константы (например,
+CreateRoomCommandPartsCount = 3).

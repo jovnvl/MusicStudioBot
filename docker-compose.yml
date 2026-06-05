@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: musicstudio-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: music_studio_bot
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: musicstudio_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672" 
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+   
+  redis:
+    image: redis:7-alpine
+    container_name: musicstudio_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - musicstudio_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: musicstudio_grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - musicstudio_network
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
+  grafana_data:
+  
+networks:
+  musicstudio_network:
+    driver: bridge
