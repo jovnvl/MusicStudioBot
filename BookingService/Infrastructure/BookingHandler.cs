@@ -7,10 +7,6 @@ using System.Reflection.Metadata;
 
 namespace BookingService.Infrastructure
 {
-    public interface IEventHandler<in TEvent>
-    {
-        Task Handle(TEvent evt, CancellationToken ct);
-    }
     //MediatR
     //здесь определение события Event через record
     //public record BookingCreatedEvent(Guid Id) : INotification;

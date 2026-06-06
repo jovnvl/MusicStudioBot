@@ -2,8 +2,10 @@
 using BookingService.Data;
 using BookingService.DTO;
 using BookingService.Infrastructure;
+using BookingService.Infrastructure.Abstraction;
 using BookingService.Infrastructure.Events;
 using BookingService.Models.Entities;
+using BookingService.Models.Mapping;
 using BookingService.Repositories;
 
 namespace BookingService.Services
@@ -15,31 +17,41 @@ namespace BookingService.Services
         private readonly ILogger<BookingService> _logger;
 
         private readonly IEventDispatcher _dispatcher;
-        public BookingService(IBookingRepository bookingRepository, IRabbitMQPublisher rabbitMQPublisher, IEventDispatcher dispatcher, ILogger<BookingService> logger)
+
+        private IBookingValidationStrategy? _bookingValidationStrategy;
+
+        public BookingService(IBookingRepository bookingRepository, IRabbitMQPublisher rabbitMQPublisher,
+            IEventDispatcher dispatcher, ILogger<BookingService> logger)
         {
             _bookingRepository = bookingRepository;
             _rabbitMQPublisher = rabbitMQPublisher;
             _dispatcher = dispatcher;
             _logger = logger;
         }
-
+        private void SetBookingValidationStrategy(IBookingValidationStrategy strategy)
+        {
+            _bookingValidationStrategy = strategy;
+        }
         public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
             try
             {
                 if (bookingDto is null)
                     throw new InvalidOperationException("BookingDto is null.");
-
-                // Валидация бизнес-ограничений
-                if (bookingDto.TimeBegin >= bookingDto.TimeEnd)
-                    throw new InvalidOperationException($"TimeBegin must be less than TimeEnd: ");
-
                 if (bookingDto.UserId == Guid.Empty)
                     throw new InvalidOperationException("Invalid UserId.");
 
+                SetBookingValidationStrategy(new OverlapValidationStrategy(_bookingRepository));
+                if (_bookingValidationStrategy != null)
+                    await _bookingValidationStrategy.ValidateAsync(bookingDto.ToEntity(), ct);
+                // Валидация бизнес-ограничений
+                //if (bookingDto.TimeBegin >= bookingDto.TimeEnd)
+                //    throw new InvalidOperationException($"TimeBegin must be less than TimeEnd: ");
+
+
                 // Проверка пересечения бронирований
-                if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd), ct))
-                    throw new InvalidOperationException($"Уже есть бронь на кабинет {bookingDto.RoomId} на период {bookingDto.TimeBegin?.ToLocalTime()} - {bookingDto.TimeEnd?.ToLocalTime()}");
+                //if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd), ct))
+                //    throw new InvalidOperationException($"Уже есть бронь на кабинет {bookingDto.RoomId} на период {bookingDto.TimeBegin?.ToLocalTime()} - {bookingDto.TimeEnd?.ToLocalTime()}");
 
                 var booking = new Booking
                 {

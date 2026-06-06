@@ -1,4 +1,4 @@
-﻿namespace BookingService.Infrastructure
+﻿namespace BookingService.Infrastructure.Abstraction
 {
     public interface IEventDispatcher
     {

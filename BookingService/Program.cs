@@ -1,5 +1,6 @@
 using BookingService.Data;
 using BookingService.Infrastructure;
+using BookingService.Infrastructure.Abstraction;
 using BookingService.Infrastructure.Events;
 using BookingService.Repositories;
 using BookingService.Services;

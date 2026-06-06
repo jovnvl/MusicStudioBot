@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using BookingService.Infrastructure.Abstraction;
+using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;

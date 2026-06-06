@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using BookingService.Infrastructure.Abstraction;
+using MediatR;
 
 namespace BookingService.Infrastructure
 {

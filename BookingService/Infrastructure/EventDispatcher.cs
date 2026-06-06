@@ -1,4 +1,6 @@
-﻿namespace BookingService.Infrastructure
+﻿using BookingService.Infrastructure.Abstraction;
+
+namespace BookingService.Infrastructure
 {
     public class EventDispatcher : IEventDispatcher
     {
