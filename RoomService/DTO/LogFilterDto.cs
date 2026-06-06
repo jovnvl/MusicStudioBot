@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LoggingService.Models.Entities.DTO
+namespace RoomService.DTO
 {
 
     public class LogFilterDto

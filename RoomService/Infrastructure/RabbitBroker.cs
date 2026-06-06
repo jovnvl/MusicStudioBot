@@ -36,11 +36,7 @@ namespace RoomService.Infrastructure
 
         public static async Task<RabbitBroker> CreateAsync (string queueName, IConnection connection, IChannel channel)
         {
-            await channel.QueueDeclareAsync(queue: queueName,
-                                            durable: false,
-                                            exclusive: false,
-                                            autoDelete: false
-                                            );
+            await channel.QueueDeclareAsync(queue: queueName, durable: false, exclusive: false, autoDelete: false);
             return new RabbitBroker(connection, channel);
         }
     }

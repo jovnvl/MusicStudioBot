@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using RoomService.Services;
+﻿using RoomService.Services;
 namespace RoomService.BackgroundServices
 
 {
@@ -23,15 +22,8 @@ namespace RoomService.BackgroundServices
                     var outboundMessage = await outboundMessagesService.GetActiveOutboundMessagesAsync(ct);
                     if (outboundMessage != null)
                     {
-                        try
-                        {
-                            await messageBrokerService.SendMessageToLogAsync(outboundMessage.Level, outboundMessage.Message, outboundMessage.EventType, ct);
-                            await outboundMessagesService.UpdateOutboundMessageAsync(outboundMessage.Id, MessageStatus.Done, ct);
-                        }
-                        catch
-                        {
-                            throw;
-                        }
+                        await messageBrokerService.SendMessageToLogAsync(outboundMessage.Level, outboundMessage.Message, outboundMessage.EventType, ct);
+                        await outboundMessagesService.UpdateOutboundMessageAsync(outboundMessage.Id, MessageStatus.Done, ct);
                     }
                 }
 

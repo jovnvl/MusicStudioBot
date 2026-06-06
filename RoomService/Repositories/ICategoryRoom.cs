@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
-using RoomService.DTO;
+﻿using RoomService.DTO;
 using RoomService.Models.Entities;
 
 namespace RoomService.Repositories

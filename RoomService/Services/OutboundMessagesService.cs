@@ -1,6 +1,4 @@
-﻿using LoggingService.Models.Entities.DTO;
-using RoomService.DTO;
-using RoomService.Infrastructure;
+﻿using RoomService.DTO;
 using RoomService.Models.Entities;
 using RoomService.Repositories;
 

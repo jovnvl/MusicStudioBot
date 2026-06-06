@@ -1,13 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using RabbitMQ.Client;
+﻿using Microsoft.AspNetCore.Mvc;
 using RoomService.DTO;
-using RoomService.Infrastructure;
 using RoomService.Models.Entities;
-using RoomService.Repositories;
 using RoomService.Services;
-using System.Text;
-using System.Text.Json;
 
 namespace RoomService.Controllers
 {
@@ -17,7 +11,7 @@ namespace RoomService.Controllers
     {
         private readonly IRoomsService _roomsService;
 
-        public RoomsController(IRoomsService roomService, IMessageBrokerService brokerService, IOutboundMessagesService outboundMessagesService)
+        public RoomsController(IRoomsService roomService)
         {
             _roomsService = roomService;
         }

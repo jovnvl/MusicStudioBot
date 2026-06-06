@@ -1,6 +1,5 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RabbitMQ.Client;
@@ -11,7 +10,6 @@ using RoomService.Infrastructure;
 using RoomService.Repositories;
 using RoomService.Services;
 using System.Text;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace RoomService
 {
@@ -69,17 +67,13 @@ namespace RoomService
                 builder.Services.AddScoped<ICategoryRoomRepository, PgCategoryRoomRepository>();
                 builder.Services.AddScoped<IOutboundMessagesRepository, PgOutboundMessagesRepository>();
                 builder.Services.AddHostedService<OutboundMessagesProcessor>();
-                builder.Services.AddSingleton<IMessageBroker>(sp => 
-                {
-                    var rabbitTask = RabbitBroker.CreateAsync("logging_service_queue", connection, channel);
-                    return rabbitTask.GetAwaiter().GetResult();
-                });
 
+                var broker = await RabbitBroker.CreateAsync("logging_service_queue", connection, channel);
+                builder.Services.AddSingleton<IMessageBroker>(broker);
                 builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
                 builder.Services.AddControllers();
-                // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
                 builder.Services.AddOpenApi();
 
                 builder.Services.AddCors(options =>
@@ -90,31 +84,20 @@ namespace RoomService
 
                 var app = builder.Build();
                 app.UseMiddleware<GlobalExceptionMiddleware>();
-
                 app.UseCors();
-
                 app.UseAuthentication(); 
                 app.UseAuthorization();
 
-                // Configure the HTTP request pipeline.
                 if (app.Environment.IsDevelopment())
                 {
                     app.MapOpenApi();
                     app.UseSwagger();
                     app.UseSwaggerUI();
-
-                    //app.UseSwaggerUI(options =>
-                    //{
-                    //    options.SwaggerEndpoint("/openapi/v1.json", "RoomService API v1");
-                    //});
                 }
 
                 app.UseHttpsRedirection();
                 app.UseAuthorization();
                 app.MapControllers();
-
-                //app.MapGet("/", () => "RoomService API is running. Use /swagger for API documentation.");
-
                 app.Lifetime.ApplicationStopped.Register(() =>
                 {
                     channel?.CloseAsync();
@@ -126,7 +109,6 @@ namespace RoomService
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                
             }
         }
     }

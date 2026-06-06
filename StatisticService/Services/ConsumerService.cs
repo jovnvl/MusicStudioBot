@@ -1,11 +1,6 @@
-﻿using Microsoft.AspNetCore.Connections;
-using Microsoft.Extensions.Logging.Abstractions;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using StatisticService.DTO;
-using StatisticService.Services;
-using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
@@ -54,6 +49,9 @@ namespace StatisticService.Services
                         case "CreatedBooking": await statisticService.IncrementBookingCountAsync(ct);
                             break;
                         case "DeletedBooking": await statisticService.IncrementDeleteBookingCountAsync(ct);
+                            break;
+                        case "UpdatedBooking":
+                            await statisticService.IncrementUpdateBookingCountAsync(ct);
                             break;
                     }
                 }

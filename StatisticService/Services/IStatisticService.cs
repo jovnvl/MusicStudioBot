@@ -4,6 +4,7 @@
     {
         Task IncrementBookingCountAsync(CancellationToken ct);
         Task IncrementDeleteBookingCountAsync(CancellationToken ct);
+        Task IncrementUpdateBookingCountAsync(CancellationToken ct);
         Task<long> GetBookingCountAsync(CancellationToken ct);
     }
 }

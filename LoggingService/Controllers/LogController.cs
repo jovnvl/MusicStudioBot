@@ -1,8 +1,6 @@
 ﻿using LoggingService.Models.Entities.DTO;
 using LoggingService.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Runtime.CompilerServices;
 
 namespace LoggingService.Controllers
 {
@@ -15,17 +13,6 @@ namespace LoggingService.Controllers
         {
            _logService = logService;
         }
-        //[HttpGet("health")]
-        //public IActionResult Health()
-        //{
-        //    return Ok(new
-        //    {
-        //        Status = "Healthy",
-        //        RabbitMQ = _rabbitMqHealth.IsHealthy(),
-        //        Database = _dbHealth.IsHealthy(),
-        //        Timestamp = DateTime.UtcNow
-        //    });
-        //}
 
         [HttpGet("logs")]
         public async Task<IActionResult> GetLogs(

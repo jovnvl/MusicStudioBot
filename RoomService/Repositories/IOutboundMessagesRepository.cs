@@ -1,5 +1,4 @@
-﻿using LoggingService.Models.Entities.DTO;
-using RoomService.DTO;
+﻿using RoomService.DTO;
 using RoomService.Models.Entities;
 
 namespace RoomService.Repositories

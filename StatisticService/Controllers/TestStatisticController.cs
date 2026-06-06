@@ -28,7 +28,28 @@ namespace StatisticService.Controllers
             });
         }
 
-        // GET /api/test/booking — посмотреть текущее значение
+        // POST /api/test/booking — увеличить счетчик
+        [HttpPost("deletebooking")]
+        public async Task<IActionResult> DeleteBooking(CancellationToken ct)
+        {
+            await _statisticService.IncrementDeleteBookingCountAsync(ct);
+
+            return Ok(new
+            {
+                Message = "Бронирование удалено"
+            });
+        }
+
+        [HttpPost("updatebooking")]
+        public async Task<IActionResult> UpdateBooking(CancellationToken ct)
+        {
+            await _statisticService.IncrementUpdateBookingCountAsync(ct);
+            return Ok(new
+            {
+                Message = "Бронирование обновлено"
+            });
+        }
+
         [HttpGet("booking")]
         public async Task<IActionResult> GetBookingCount(CancellationToken ct)
         {

@@ -1,5 +1,4 @@
-﻿using LoggingService.Models.Entities.DTO;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RoomService.Data;
 using RoomService.DTO;
 using RoomService.Models.Entities;
@@ -48,7 +47,7 @@ namespace RoomService.Repositories
                 query = query.Where(x => x.CreatedAt >= logFilterDto.from.Value);
 
             if (logFilterDto.to.HasValue)
-                query = query.Where(x => x.CreatedAt >= logFilterDto.to.Value);
+                query = query.Where(x => x.CreatedAt <= logFilterDto.to.Value);
 
             if (!string.IsNullOrEmpty(logFilterDto.service))
                 query = query.Where(x => x.Service == logFilterDto.service);
