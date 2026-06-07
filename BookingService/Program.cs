@@ -1,10 +1,10 @@
 using BookingService.Data;
-using BookingService.Infrastructure;
-using BookingService.Infrastructure.Abstraction;
-using BookingService.Infrastructure.Events;
+using BookingService.Domain;
+using BookingService.Domain.Events;
+using BookingService.Domain.Handlers;
+using BookingService.Infrastructure.MessageBroker;
 using BookingService.Repositories;
 using BookingService.Services;
-using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -49,9 +49,20 @@ namespace BookingService
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
             builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
-            //Add MediatR
-            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<BookingCreatedEvent>());
-            builder.Services.AddScoped<IEventDispatcher, MediatorRDispatcher>();
+            //Add Domain Events
+            builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
+
+            builder.Services.AddScoped<
+                IEventHandler<BookingCreatedEvent>,
+                BookingCreatedHandler>();
+
+            builder.Services.AddScoped<
+                IEventHandler<BookingDeletedEvent>,
+                BookingDeletedHandler>();
+
+            builder.Services.AddScoped<
+                IEventHandler<LogEvent>,
+                LogEventHandler>();
             //
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
             builder.Services.AddEndpointsApiExplorer();

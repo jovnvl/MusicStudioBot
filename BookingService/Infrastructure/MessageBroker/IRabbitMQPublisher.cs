@@ -1,4 +1,4 @@
-﻿namespace BookingService.Infrastructure.Abstraction
+﻿namespace BookingService.Infrastructure.MessageBroker
 {
     public interface IRabbitMQPublisher
     {

@@ -1,6 +1,6 @@
 ﻿using BookingService.Models.Entities;
 
-namespace BookingService.Infrastructure.Abstraction
+namespace BookingService.Infrastructure
 {
     public interface IBookingValidationStrategy
     {

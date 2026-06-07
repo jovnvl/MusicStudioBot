@@ -1,10 +1,9 @@
-﻿using BookingService.Infrastructure.Abstraction;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 
-namespace BookingService.Infrastructure
+namespace BookingService.Infrastructure.MessageBroker
 {
     public class RabbitMQPublisher : IRabbitMQPublisher
     {

@@ -2,29 +2,28 @@
 using BookingService.Data;
 using BookingService.DTO;
 using BookingService.Infrastructure;
-using BookingService.Infrastructure.Abstraction;
-using BookingService.Infrastructure.Events;
+using BookingService.Domain;
+using BookingService.Domain.Events;
 using BookingService.Models.Entities;
 using BookingService.Models.Mapping;
 using BookingService.Repositories;
+using BookingService.Infrastructure.MessageBroker;
 
 namespace BookingService.Services
 {
     public class BookingService : IBookingService
     {
         private readonly IBookingRepository _bookingRepository;
-        private readonly IRabbitMQPublisher _rabbitMQPublisher;
         private readonly ILogger<BookingService> _logger;
 
         private readonly IEventDispatcher _dispatcher;
 
         private IBookingValidationStrategy? _bookingValidationStrategy;
 
-        public BookingService(IBookingRepository bookingRepository, IRabbitMQPublisher rabbitMQPublisher,
+        public BookingService(IBookingRepository bookingRepository,
             IEventDispatcher dispatcher, ILogger<BookingService> logger)
         {
             _bookingRepository = bookingRepository;
-            _rabbitMQPublisher = rabbitMQPublisher;
             _dispatcher = dispatcher;
             _logger = logger;
         }
@@ -44,14 +43,6 @@ namespace BookingService.Services
                 SetBookingValidationStrategy(new OverlapValidationStrategy(_bookingRepository));
                 if (_bookingValidationStrategy != null)
                     await _bookingValidationStrategy.ValidateAsync(bookingDto.ToEntity(), ct);
-                // Валидация бизнес-ограничений
-                //if (bookingDto.TimeBegin >= bookingDto.TimeEnd)
-                //    throw new InvalidOperationException($"TimeBegin must be less than TimeEnd: ");
-
-
-                // Проверка пересечения бронирований
-                //if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd), ct))
-                //    throw new InvalidOperationException($"Уже есть бронь на кабинет {bookingDto.RoomId} на период {bookingDto.TimeBegin?.ToLocalTime()} - {bookingDto.TimeEnd?.ToLocalTime()}");
 
                 var booking = new Booking
                 {
@@ -65,11 +56,9 @@ namespace BookingService.Services
                 };
 
                 await _bookingRepository.AddBookingAsync(booking, ct);
-                //
-                await _dispatcher.DispatcherAsync(new BookingCreatedEvent(booking.Id));
-                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingCreatedEvent(booking.Id), ct);
-                //
+
                 await LogToServiceAsync("Information", "create-booking", $"New booking {booking?.Id} for room {booking?.RoomId} on {booking?.Period?.TimeBegin?.ToLocalTime()}-{booking?.Period?.TimeEnd?.ToLocalTime()} created");
+                                
                 await StatisticToServiceAsync("CreatedBooking");
                 return booking;
             }
@@ -101,7 +90,8 @@ namespace BookingService.Services
                     throw new InvalidOperationException($"Не удалось обновить бронь {bookingDto.Id}");
                     //return BadRequest(new { Message = "Не удалось обновить бронирование" });
                 }
-                await LogToServiceAsync("Information", "update-booking", $"Booking {bookingDto.Id} was updated");
+                await LogToServiceAsync("Information", "update-booking", $"Booking {bookingDto.Id}  for room {bookingDto?.RoomId} on {bookingDto?.TimeBegin?.ToLocalTime()}-{bookingDto?.TimeEnd?.ToLocalTime()} was updated");
+
                 await StatisticToServiceAsync("UpdatedBooking");
                 return _booking;
             }
@@ -129,9 +119,7 @@ namespace BookingService.Services
                 }
 
                 await LogToServiceAsync("Information", "delete-booking", $"Booking {id} was deleted");
-                //
-                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingDeletedEvent(id), ct);
-                //
+
                 await StatisticToServiceAsync("DeletedBooking");
                 return _deleted;
             }
@@ -257,12 +245,19 @@ namespace BookingService.Services
 
         private async Task LogToServiceAsync(string level, string eventType, string message, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(level, eventType, message), ct);
+            await _dispatcher.DispatchAsync(new BookingDeletedEvent(
+                level,
+                eventType,
+                message),
+                ct);
+           // await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(level, eventType, message), ct);
         }
 
+        
         private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}" }, ct);
+            await _dispatcher.DispatchAsync(new LogEvent(eventType), ct);
+            //await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}" }, ct);
         }
     }
 }
