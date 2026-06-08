@@ -55,11 +55,11 @@ namespace BookingService
 
             builder.Services.AddScoped<
                 IEventHandler<BookingEvent>,
-                BookingHandler>();
+                BookingEventHandler>();
 
             builder.Services.AddScoped<
-                IEventHandler<LogEvent>,
-                LogEventHandler>();
+                IEventHandler<StatisticEvent>,
+                StatisticEventHandler>();
             //
             //Add BookingValidationStrategy
             builder.Services.AddScoped<

@@ -251,7 +251,7 @@ namespace BookingService.Services
         
         private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
-            await _dispatcher.DispatchAsync(new LogEvent(eventType), ct);
+            await _dispatcher.DispatchAsync(new StatisticEvent(eventType), ct);
             //await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}" }, ct);
         }
     }
