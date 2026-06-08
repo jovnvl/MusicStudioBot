@@ -240,7 +240,7 @@ namespace BookingService.Services
 
         private async Task LogToServiceAsync(string level, string eventType, string message, CancellationToken ct = default)
         {
-            await _dispatcher.DispatchAsync(new BookingDeletedEvent(
+            await _dispatcher.DispatchAsync(new BookingEvent(
                 level,
                 eventType,
                 message),

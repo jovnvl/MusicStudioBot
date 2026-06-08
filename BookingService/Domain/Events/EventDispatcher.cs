@@ -16,6 +16,9 @@
         {
             var handlers =
                 _serviceProvider.GetServices<IEventHandler<TEvent>>();
+            //Нужно применить только если обработчики независимы.
+            //await Task.WhenAll(
+            //    handlers.Select(h => h.HandleAsync(@event, ct)));
 
             foreach (var handler in handlers)
             {

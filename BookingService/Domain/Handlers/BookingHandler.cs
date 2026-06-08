@@ -5,13 +5,13 @@ using BookingService.Infrastructure.MessageBroker;
 
 namespace BookingService.Domain.Handlers
 {
-    public sealed class BookingCreatedHandler
-    : IEventHandler<BookingCreatedEvent>
+    public sealed class BookingHandler
+    : IEventHandler<BookingEvent>
     {
-        private readonly ILogger<BookingCreatedHandler> _logger;
+        private readonly ILogger<BookingHandler> _logger;
         private readonly IRabbitMQPublisher _publisher;
 
-        public BookingCreatedHandler(ILogger<BookingCreatedHandler> logger,
+        public BookingHandler(ILogger<BookingHandler> logger,
             IRabbitMQPublisher publisher)
         {
             _logger = logger;
@@ -19,31 +19,7 @@ namespace BookingService.Domain.Handlers
         }
 
         public async Task HandleAsync(
-            BookingCreatedEvent @event,
-            CancellationToken ct)
-        {
-            _logger.LogInformation($"Booking: {@event.Message}");
-
-            await _publisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE,
-                new LogEventDto(@event.Level, @event.EventType, @event.Message), ct);
-        }
-    }
-
-    public sealed class BookingDeletedHandler
-    : IEventHandler<BookingDeletedEvent>
-    {
-        private readonly ILogger<BookingDeletedHandler> _logger;
-        private readonly IRabbitMQPublisher _publisher;
-
-        public BookingDeletedHandler(ILogger<BookingDeletedHandler> logger,
-            IRabbitMQPublisher publisher)
-        {
-            _logger = logger;
-            _publisher = publisher;
-        }
-
-        public async Task HandleAsync(
-            BookingDeletedEvent @event,
+            BookingEvent @event,
             CancellationToken ct)
         {
             _logger.LogInformation($"Booking: {@event.Message}");

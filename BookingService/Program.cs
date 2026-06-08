@@ -54,12 +54,8 @@ namespace BookingService
             builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
 
             builder.Services.AddScoped<
-                IEventHandler<BookingCreatedEvent>,
-                BookingCreatedHandler>();
-
-            builder.Services.AddScoped<
-                IEventHandler<BookingDeletedEvent>,
-                BookingDeletedHandler>();
+                IEventHandler<BookingEvent>,
+                BookingHandler>();
 
             builder.Services.AddScoped<
                 IEventHandler<LogEvent>,
