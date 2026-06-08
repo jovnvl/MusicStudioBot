@@ -39,16 +39,14 @@ namespace BookingService.Services
 
                 await _validationPipeline.ValidateAsync(bookingDto.ToEntity(), ct);
 
-                var booking = new Booking
-                {
-                    Id = Guid.NewGuid(),
-                    RoomId = bookingDto.RoomId,
-                    UserId = bookingDto.UserId,
-                    Status = bookingDto.Status,
-                    Period = BookingPeriod.Create(bookingDto.TimeBegin?.ToUniversalTime(), bookingDto.TimeEnd?.ToUniversalTime()),
-                    Description = bookingDto.Description,
-                    CreationDate = DateTime.UtcNow
-                };
+                var booking = Booking.Create
+                (
+                    roomId: bookingDto.RoomId,
+                    userId: bookingDto.UserId,
+                    status: bookingDto.Status,
+                    period: BookingPeriod.Create(bookingDto.TimeBegin?.ToUniversalTime(), bookingDto.TimeEnd?.ToUniversalTime()),                    
+                    description: bookingDto.Description                    
+                );
 
                 await _bookingRepository.AddBookingAsync(booking, ct);
 

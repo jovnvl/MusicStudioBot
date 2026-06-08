@@ -17,6 +17,27 @@ namespace BookingService.Models.Entities
         public DateTime CreationDate { get; set; } = DateTime.UtcNow;
         public BookingStatus? Status { get; set; } = BookingStatus.NotConfirmed;
         public BookingPeriod Period { get; set; } = new(DateTime.UtcNow, DateTime.UtcNow);
-        public string? Description { get; set; }       
+        public string? Description { get; set; }
+        public static Booking Create(
+                Guid userId,
+                int roomId,
+                BookingStatus? status,
+                BookingPeriod period,
+                string description)
+        {
+            var booking = new Booking
+            {
+                Id = Guid.NewGuid(),
+                CreationDate = DateTime.UtcNow,
+                UserId= userId,
+                RoomId = roomId,
+                Status = status,
+                Period = period,
+                Description = description
+            };
+
+            return booking;
+        }
+
     }
 }
