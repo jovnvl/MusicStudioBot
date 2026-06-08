@@ -68,6 +68,16 @@ namespace GatewayService.Services.Telegram
                 var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
                 await handler.HandleRoomSelectionCallback(chatId, data);
             }
+            else if (data.StartsWith("booking_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                await handler.HandleBookingSelectionCallback(chatId, data);
+            }
+            else if (data.StartsWith("status_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                await handler.HandleBookingStatusSelectionCallback(chatId, data);
+            }
             else if (data == "cancel")
             {
                 var stateService = scope.ServiceProvider.GetRequiredService<IConversationStateService>();
@@ -217,13 +227,13 @@ namespace GatewayService.Services.Telegram
                         await bookingsHandler.HandleGetBookingsCommand(chatId);
                         break;
                     }
-                //case "Сменить статус бронирования":
-                //   { 
-                //        var bookingStatusHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
-                //        var conv = scope.ServiceProvider.GetRequiredService<IConversationStateService>().GetOrCreate(chatId);
-                //        await bookingStatusHandler.HandleUpdateBookingInput(chatId, conv);
-                //        break;
-                //    }
+                case "⚙️ Сменить статус бронирования":
+                    {
+                        var bookingStatusHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                        var conv = scope.ServiceProvider.GetRequiredService<IConversationStateService>().GetOrCreate(chatId);
+                        await bookingStatusHandler.HandleUpdateBookingInput(chatId, conv);
+                        break;
+                    }
 
                 default:
                     await _messageSender.SendMessageAsync(chatId,
@@ -283,7 +293,7 @@ namespace GatewayService.Services.Telegram
             var conversation = stateService.GetOrCreate(chatId);
             conversation.Clear();
 
-            // Команды, НЕ требующие авторизации
+            // Команды, не требующие авторизации
             if (callbackData == "menu_register")
             {
                 conversation.State = ConversationState.AwaitingRegistrationPassword;

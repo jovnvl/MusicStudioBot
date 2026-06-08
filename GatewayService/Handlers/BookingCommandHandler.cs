@@ -7,18 +7,15 @@ using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
 using GatewayService.Services.Telegram;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
-using Telegram.Bot.Types;
 
 namespace GatewayService.Handlers
 {
     public class BookingCommandHandler : CommandHandler
     {
         private readonly ServicesSettings _servicesSettings;
-        private const int CreateBookingCommandPartsCount = 3;
         private readonly IConversationStateService _conversationService;
 
         public BookingCommandHandler(
@@ -34,15 +31,30 @@ namespace GatewayService.Handlers
             _conversationService = conversationService;
         }
 
-        private string ComposeBookingStringAsync(
+        protected string MapBookingStatusToEmoji(BookingStatus? status)
+        {
+            return status switch
+            {
+                BookingStatus.NotConfirmed => "🟡",
+                BookingStatus.Canceled => "🔴",
+                BookingStatus.Booked => "🟢",
+                BookingStatus.Completed => "⚪",
+                _ => "❓"
+            };
+        }
+
+        private string ComposeBookingString(
             BookingResponse booking,
             Dictionary<Guid, string> userNames,
             Dictionary<int, string> roomNames)
         {
                 var userName = userNames.TryGetValue(booking.UserId, out var uName) ? uName : "Неизвестный";
                 var roomName = roomNames.TryGetValue(booking.RoomId, out var rName) ? rName : "Неизвестно";
-                var message = $"🟢 {booking.Period?.TimeBegin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")} - {booking.Period?.TimeEnd?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")} {userName}\n";
+                var emoji = MapBookingStatusToEmoji(booking.Status);
+                var message = $"{emoji} {booking.Period?.TimeBegin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")} - {booking.Period?.TimeEnd?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")}\n";
+                message += $"   ├ {userName}\n";
                 message += $"   ├ {roomName}\n";
+                message += $"   ├ {booking.Status.ToString()}\n";
                 message += $"   └ комментарий: {booking.Description}\n\n";
 
 
@@ -89,92 +101,6 @@ namespace GatewayService.Handlers
             return roomNames;
         }
 
-        public async Task HandleCreateBookingCommand(long chatId, string messageText)
-        {
-            if (!await IsPermitted(chatId, UserRole.Moderator))
-                return;
-            string[] createBookingCommand = messageText.Split('|');
-            if (createBookingCommand.Length < CreateBookingCommandPartsCount)
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Неверный формат команды!\nИспользуйте: /create_booking userId | roomId | timeBegin | timeEnd");
-                return;
-            }
-            string userIdString = createBookingCommand[0].Substring(createBookingCommand[0].IndexOf(' ') + 1).Trim();
-            string roomIdString = createBookingCommand[1].Trim();
-            string timeBeginString = createBookingCommand[2].Trim();
-            string timeEndString = createBookingCommand[3].Trim();
-
-            if (!Guid.TryParse(userIdString, out Guid userId))
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Неверный userId.");
-                return;
-            }
-            if (!int.TryParse(roomIdString, out int roomId))
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Неверный roomId.");
-                return;
-            }
-            if (!DateTime.TryParse(timeBeginString, out DateTime timeBegin))
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Неверный формат времени начала!\nИспользуйте: dd.MM.yyyy HH:mm:ss");
-                return;
-            }
-            if (!DateTime.TryParse(timeEndString, out DateTime timeEnd))
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Неверный формат времени окончания!\nИспользуйте: dd.MM.yyyy HH:mm:ss");
-                return;
-            }
-            if (timeBegin > timeEnd)
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "Время начала больше времени окончания!");
-                return;
-            }
-
-            var createBookingRequest = new CreateBookingRequest
-            {
-                Description = "Бронирование комнаты",
-                UserId = userId,
-                RoomId = roomId,
-                Status = BookingStatus.NotConfirmed,
-                TimeBegin = timeBegin.ToUniversalTime(),
-                TimeEnd = timeBegin.ToUniversalTime()
-            };
-
-            try
-            {
-                var response = await SendRequestAsync(HttpMethod.Post, $"{_servicesSettings.BookingServiceUrl}/api/booking", chatId, createBookingRequest);
-                if (response.IsSuccessStatusCode)
-                {
-                    var body = await response.Content.ReadAsStringAsync();
-                    var bookingResponse = JsonSerializer.Deserialize<BookingResponse>(body);
-                    if (bookingResponse == null)
-                    {
-                        _logger.LogError("Failed to deserialize BookingResponse");
-                        return;
-                    }
-                    _logger.LogInformation("Added new booking.");
-
-                    await _messageSender.SendMessageAsync(chatId, "Добавлена запись о бронировании");
-                }
-                else
-                {
-                    var errorMessage = await response.Content.ReadAsStringAsync();
-                    await _messageSender.SendMessageAsync(chatId, $"Ошибка получения данных: {errorMessage}");
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request to BookingService failed");
-                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
-            }
-        }
-
         public async Task HandleUpdateBookingInput(long chatId, UserConversationData conversation)
         {
             if (!await IsPermitted(chatId, UserRole.Moderator))
@@ -203,10 +129,14 @@ namespace GatewayService.Handlers
                     return;
                 }
 
-                // Переводим в состояние выбора комнаты
-                conversation.State = ConversationState.AwaitingRoomSelection;
+                bookings = bookings.OrderBy(b => b.Period?.TimeBegin).ToList();
 
-                var keyboard = KeyboardHelper.GetBookingSelectionKeyboard(bookings);
+                var userNames = await GetUserNamesAsync(bookings.Select(b => b.UserId).Distinct(), chatId);
+                var roomNames = await GetRoomNamesAsync(bookings.Select(b => b.RoomId).Distinct(), chatId);
+
+                conversation.State = ConversationState.AwaitingBookingSelection;
+
+                var keyboard = KeyboardHelper.GetBookingSelectionKeyboard(bookings, userNames, roomNames);
                 await _messageSender.SendMessageAsync(chatId,
                     "Смена статуса бронирования\n\nВыберите бронирование:",
                     replyMarkup: keyboard);
@@ -230,14 +160,13 @@ namespace GatewayService.Handlers
 
             // Извлекаем bookingId из callback (формат: "booking_5")
             var bookingIdString = callbackData.Replace("booking_", "");
-            if (!int.TryParse(bookingIdString, out int bookingId))
+            if (!Guid.TryParse(bookingIdString, out Guid bookingId))
             {
                 await _messageSender.SendMessageAsync(chatId, "Ошибка выбора бронирования.");
                 conversation.Clear();
                 return;
             }
 
-            // Сохраняем выбранное бронирование
             conversation.SetValue("bookingId", bookingId);
 
             // Переходим к выбору статуса
@@ -257,45 +186,77 @@ namespace GatewayService.Handlers
                 return;
             }
 
-            if (!BookingStatus.TryParse(callbackData, out BookingStatus bookingStatus))
+            var statusString = callbackData.Replace("status_", "");
+            if (!Enum.TryParse<BookingStatus>(statusString, out var bookingStatus))
             {
                 await _messageSender.SendMessageAsync(chatId, "Ошибка выбора статуса.");
                 conversation.Clear();
                 return;
             }
 
-            // Получаем сохраненные данные
-            var bookingId = conversation.GetValue<int>("bookingId");
+            var bookingId = conversation.GetValue<Guid>("bookingId");
 
-            //try
-            //{
-            //    var response = await SendRequestAsync(HttpMethod.Put,
-            //        $"{_servicesSettings.BookingServiceUrl}/api/bookings/{bookingId}",
-            //        chatId,
-            //        updateProfileRequest);
+            try
+            {
+                // Получаем текущее бронирование
+                var getResponse = await SendRequestAsync(HttpMethod.Get,
+                    $"{_servicesSettings.BookingServiceUrl}/api/booking/booking/{bookingId}", chatId);
 
-            //    if (response.IsSuccessStatusCode)
-            //    {
-            //        await _messageSender.SendMessageAsync(chatId, "✅ Профиль обновлен!");
-            //        await LogToServiceAsync("Information", "profile-updated",
-            //            $"Profile updated for chatId: {chatId}");
-            //    }
-            //    else
-            //    {
-            //        var errorMessage = await response.Content.ReadAsStringAsync();
-            //        await _messageSender.SendMessageAsync(chatId,
-            //            $"❌ Ошибка: {errorMessage}");
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    _logger.LogError(ex, "Profile update failed");
-            //    await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером.");
-            //}
-            //finally
-            //{
-            //    conversation.Clear();
-            //}
+                if (!getResponse.IsSuccessStatusCode)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "Ошибка: бронирование не найдено.");
+                    conversation.Clear();
+                    return;
+                }
+
+                var body = await getResponse.Content.ReadAsStringAsync();
+                var booking = JsonSerializer.Deserialize<BookingResponse>(body);
+
+                if (booking == null)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "Ошибка получения данных бронирования.");
+                    conversation.Clear();
+                    return;
+                }
+
+                // Отправляем полный объект с изменённым статусом
+                var updateRequest = new BookingRequest
+                {
+                    Id = bookingId,
+                    Description = booking.Description ?? string.Empty,
+                    UserId = booking.UserId,
+                    RoomId = booking.RoomId,
+                    Status = bookingStatus,
+                    TimeBegin = booking.Period?.TimeBegin,
+                    TimeEnd = booking.Period?.TimeEnd
+                };
+
+                var putResponse = await SendRequestAsync(HttpMethod.Put,
+                    $"{_servicesSettings.BookingServiceUrl}/api/booking",
+                    chatId,
+                    updateRequest);
+
+                if (putResponse.IsSuccessStatusCode)
+                {
+                    await _messageSender.SendMessageAsync(chatId, $"✅ Статус бронирования обновлён на {bookingStatus}!");
+                    await LogToServiceAsync("Information", "update-booking-status",
+                        $"Booking {bookingId} status changed to {bookingStatus}");
+                }
+                else
+                {
+                    var error = await putResponse.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"❌ Ошибка: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update booking status");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером.");
+            }
+            finally
+            {
+                conversation.Clear();
+            }
         }
 
         public async Task HandleGetBookingsCommand(long chatId)
@@ -308,13 +269,21 @@ namespace GatewayService.Handlers
                 var body = await response.Content.ReadAsStringAsync();
                 var bookings = JsonSerializer.Deserialize<List<BookingResponse>>(body);
 
-                if (bookings == null || bookings.Count == 0)
+                if (bookings == null)
                 {
                     _logger.LogError("Failed to deserialize BookingResponse");
                     await LogToServiceAsync("Error", "book-response-fail", "Failed to deserialize BookingResponse");
+                    await _messageSender.SendMessageAsync(chatId, "Ошибка получения данных. Попробуйте позже.");
+                    return;
+                }
+
+                if (bookings.Count == 0)
+                {
                     await _messageSender.SendMessageAsync(chatId, "Бронирований пока нет");
                     return;
                 }
+
+                bookings = bookings.OrderBy(b => b.Period?.TimeBegin).ToList();
 
                 _logger.LogInformation("Successful receipt of bookings information.");
                 await LogToServiceAsync("Information", "get-bookings", "Successful receipt of bookings information.");
@@ -325,7 +294,7 @@ namespace GatewayService.Handlers
                 var message = "Список бронирований:\n\n";
                 foreach (var booking in bookings)
                 {
-                    message += ComposeBookingStringAsync(booking, userNames, roomNames);
+                    message += ComposeBookingString(booking, userNames, roomNames);
                 }
 
                 await _messageSender.SendMessageAsync(chatId, message);
@@ -351,13 +320,21 @@ namespace GatewayService.Handlers
                 var body = await response.Content.ReadAsStringAsync();
                 var bookings = JsonSerializer.Deserialize<List<BookingResponse>>(body);
 
-                if (bookings == null || bookings.Count == 0)
+                if (bookings == null)
                 {
                     _logger.LogError("Failed to deserialize BookingResponse");
                     await LogToServiceAsync("Error", "book-response-fail", "Failed to deserialize BookingResponse");
+                    await _messageSender.SendMessageAsync(chatId, "Ошибка получения данных. Попробуйте позже.");
+                    return;
+                }
+
+                if (bookings.Count == 0)
+                {
                     await _messageSender.SendMessageAsync(chatId, "Бронирований пока нет");
                     return;
                 }
+
+                bookings = bookings.OrderBy(b => b.Period?.TimeBegin).ToList();
 
                 _logger.LogInformation("Successful receipt of bookings information.");
                 await LogToServiceAsync("Information", "get-bookings", "Successful receipt of bookings information.");
@@ -368,7 +345,7 @@ namespace GatewayService.Handlers
                 var message = "Список бронирований:\n\n";
                 foreach (var booking in bookings)
                 {
-                    message += ComposeBookingStringAsync(booking, userNames, roomNames);
+                    message += ComposeBookingString(booking, userNames, roomNames);
                 }
 
                 await _messageSender.SendMessageAsync(chatId, message);
@@ -542,7 +519,7 @@ namespace GatewayService.Handlers
             }
 
             // Создаем бронирование
-            var createBookingRequest = new CreateBookingRequest
+            var createBookingRequest = new BookingRequest
             {
                 Description = "Бронирование комнаты",
                 UserId = userId,

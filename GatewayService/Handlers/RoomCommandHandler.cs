@@ -22,6 +22,18 @@ namespace GatewayService.Handlers
             _servicesSettings = servicesSettings.Value;
         }
 
+        protected string MapRoomStatusToEmoji(RoomStatus? status)
+        {
+            return status switch
+            {
+                RoomStatus.Available => "✅",
+                RoomStatus.Occupied => "🔴",
+                RoomStatus.Reserved => "🟡",
+                RoomStatus.Maintenance => "🔧",
+                _ => "❓"
+            };
+        }
+
         public async Task HandleGetRoomsCommand(long chatId)
         {
             //if (!await IsPermitted(chatId, UserRole.Moderator))
@@ -47,7 +59,7 @@ namespace GatewayService.Handlers
                     var message = "Доступные комнаты:\n\n";
                     foreach (var room in rooms)
                     {
-                        var statusEmoji = MapToEmojiStatus(room.Status);
+                        var statusEmoji = MapRoomStatusToEmoji(room.Status);
 
                         message += $"{statusEmoji} {room.Name} (id:{room.Id})\n";
                         message += $"  └ {room.Description}\n\n";
@@ -250,7 +262,7 @@ namespace GatewayService.Handlers
                     }
                     _logger.LogInformation("Successful receipt of room with Id: {Id}  information.", roomResponse.Id);
                     await LogToServiceAsync("Information", "get-room", $"Successful receipt of room with Id: {roomResponse.Id}  information.");
-                    var statusEmoji = MapToEmojiStatus(roomResponse.Status);
+                    var statusEmoji = MapRoomStatusToEmoji(roomResponse.Status);
                     var message = $"{statusEmoji} {roomResponse.Name} (id:{roomResponse.Id})\n";
                     message += $"  └ {roomResponse.Description}\n\n";
                     await _messageSender.SendMessageAsync(chatId, message);

@@ -5,9 +5,10 @@ using System.Text.Json.Serialization;
 namespace GatewayService.DTO
 
 {
-    public class CreateBookingRequest
+    public class BookingRequest
 
     {
+        public Guid Id { get; set; }
         public string Description { get; set; } = string.Empty;
         public Guid UserId { get; set; }
         public int RoomId { get; set; }

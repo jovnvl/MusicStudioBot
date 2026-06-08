@@ -36,18 +36,6 @@ namespace GatewayService.Handlers
             _rabbitMQPublisher = rabbitMQPublisher;
         }
 
-        protected string MapToEmojiStatus(int status)
-        {
-            return status switch
-            {
-                0 => "✅", // Available
-                1 => "🔴", // Occupied
-                2 => "🟡", // Reserved
-                3 => "🔧", // Maintenance
-                _ => "❓"
-            };
-        }
-
         protected async Task<bool> IsPermitted(long chatId, UserRole role)
         {
             var token = await _sessionService.GetTokensAsync(chatId);

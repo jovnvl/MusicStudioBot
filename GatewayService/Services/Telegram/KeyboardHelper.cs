@@ -39,8 +39,8 @@ namespace GatewayService.Services.Telegram
 
                 if (userRole == "Moderator" || userRole == "Administrator")
                 {
-                    keyboardButtonsLine2.Add(new KeyboardButton("Сменить статус бронирования"));
-                    keyboardButtonsLine3.Add(new KeyboardButton("Сменить статус комнаты"));
+                    keyboardButtonsLine2.Add(new KeyboardButton("⚙️ Сменить статус бронирования"));
+                    keyboardButtonsLine3.Add(new KeyboardButton("⚙️ Сменить статус комнаты"));
                     List<KeyboardButton> keyboardButtonsLine4 = new List<KeyboardButton>
                     {
                         new KeyboardButton("⚙️ Показать все бронирования"),
@@ -84,15 +84,24 @@ namespace GatewayService.Services.Telegram
             return new InlineKeyboardMarkup(buttons);
         }
 
-        public static InlineKeyboardMarkup GetBookingSelectionKeyboard(List<BookingResponse> bookings)
+        public static InlineKeyboardMarkup GetBookingSelectionKeyboard(
+            List<BookingResponse> bookings,
+            Dictionary<Guid, string> userNames,
+            Dictionary<int, string> roomNames)
         {
             var buttons = bookings
-                .Where(b => b.Status == BookingStatus.Booked || b.Status == BookingStatus.NotConfirmed)
-                .Select(b => new List<InlineKeyboardButton>
+                .Select(b =>
                 {
-                    InlineKeyboardButton.WithCallbackData($"Пользователь: {b.UserId} Комната: {b.RoomId} Время: {b.Period?.TimeBegin} - {b.Period?.TimeEnd}", $"booking_{b.Id}")
+                    var userName = userNames.TryGetValue(b.UserId, out var u) ? u : "Неизвестный";
+                    var roomName = roomNames.TryGetValue(b.RoomId, out var r) ? r : "Неизвестно";
+                    var label = $"{roomName} — {userName} {b.Period?.TimeBegin?.ToLocalTime():dd.MM HH:mm}";
+                    return new List<InlineKeyboardButton>
+                    {
+                        InlineKeyboardButton.WithCallbackData(label, $"booking_{b.Id}")
+                    };
                 })
                 .ToList();
+
             buttons.Add(new List<InlineKeyboardButton>
             {
                 InlineKeyboardButton.WithCallbackData("❌ Отмена", "cancel")
@@ -109,7 +118,7 @@ namespace GatewayService.Services.Telegram
             {
                 buttons.Add(new List<InlineKeyboardButton>
                 {
-                    InlineKeyboardButton.WithCallbackData(status.ToString(), status.ToString())
+                    InlineKeyboardButton.WithCallbackData(status.ToString(), $"status_{status}")
                 });
             }
 
