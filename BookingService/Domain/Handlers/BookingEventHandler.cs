@@ -1,6 +1,7 @@
 ﻿using BookingService.Common;
 using BookingService.Domain.Events;
 using BookingService.DTO;
+using BookingService.Infrastructure.Events;
 using BookingService.Infrastructure.MessageBroker;
 
 namespace BookingService.Domain.Handlers
@@ -24,7 +25,7 @@ namespace BookingService.Domain.Handlers
         {
             _logger.LogInformation($"Booking: {@event.Message}");
 
-            await _publisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(@event.Level, @event.EventType, @event.Message), ct);
+            await _publisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(@event.Level.ToString(), @event.EventType, @event.Message), ct);
         }
     }
 }

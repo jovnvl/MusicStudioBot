@@ -1,8 +1,8 @@
 using BookingService.Data;
-using BookingService.Domain;
 using BookingService.Domain.Events;
 using BookingService.Domain.Handlers;
 using BookingService.Infrastructure;
+using BookingService.Infrastructure.Events;
 using BookingService.Infrastructure.MessageBroker;
 using BookingService.Repositories;
 using BookingService.Services;

@@ -1,6 +1,6 @@
 ﻿using BookingService.Domain.Events;
 
-namespace BookingService.Domain
+namespace BookingService.Infrastructure.Events
 {
     public sealed record StatisticEvent(
         string EventType

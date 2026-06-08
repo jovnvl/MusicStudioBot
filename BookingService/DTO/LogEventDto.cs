@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using BookingService.Infrastructure.Events;
+using System.Diagnostics;
 
 namespace BookingService.DTO
 {

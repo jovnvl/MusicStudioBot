@@ -1,5 +1,6 @@
 ﻿using BookingService.Common;
 using BookingService.Domain.Events;
+using BookingService.Infrastructure.Events;
 using BookingService.Infrastructure.MessageBroker;
 
 namespace BookingService.Domain.Handlers
