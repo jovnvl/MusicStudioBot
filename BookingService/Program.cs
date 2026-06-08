@@ -2,6 +2,7 @@ using BookingService.Data;
 using BookingService.Domain;
 using BookingService.Domain.Events;
 using BookingService.Domain.Handlers;
+using BookingService.Infrastructure;
 using BookingService.Infrastructure.MessageBroker;
 using BookingService.Repositories;
 using BookingService.Services;
@@ -63,6 +64,23 @@ namespace BookingService
             builder.Services.AddScoped<
                 IEventHandler<LogEvent>,
                 LogEventHandler>();
+            //
+            //Add BookingValidationStrategy
+            builder.Services.AddScoped<
+                IBookingValidationStrategy,
+                DateValidationStrategy>();
+
+            builder.Services.AddScoped<
+                IBookingValidationStrategy,
+                FutureBookingValidationStrategy>();
+
+            builder.Services.AddScoped<
+                IBookingValidationStrategy,
+                OverlapValidationStrategy>();
+
+            builder.Services.AddScoped<
+                IBookingValidationPipeline,
+                BookingValidationPipeline>();
             //
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
             builder.Services.AddEndpointsApiExplorer();

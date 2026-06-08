@@ -17,19 +17,16 @@ namespace BookingService.Services
         private readonly ILogger<BookingService> _logger;
 
         private readonly IEventDispatcher _dispatcher;
+        private readonly IBookingValidationPipeline _validationPipeline;
 
-        private IBookingValidationStrategy? _bookingValidationStrategy;
 
-        public BookingService(IBookingRepository bookingRepository,
+        public BookingService(IBookingRepository bookingRepository, IBookingValidationPipeline validationPipeline,
             IEventDispatcher dispatcher, ILogger<BookingService> logger)
         {
             _bookingRepository = bookingRepository;
             _dispatcher = dispatcher;
             _logger = logger;
-        }
-        private void SetBookingValidationStrategy(IBookingValidationStrategy strategy)
-        {
-            _bookingValidationStrategy = strategy;
+            _validationPipeline = validationPipeline;
         }
         public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
@@ -40,9 +37,7 @@ namespace BookingService.Services
                 if (bookingDto.UserId == Guid.Empty)
                     throw new InvalidOperationException("Invalid UserId.");
 
-                SetBookingValidationStrategy(new OverlapValidationStrategy(_bookingRepository));
-                if (_bookingValidationStrategy != null)
-                    await _bookingValidationStrategy.ValidateAsync(bookingDto.ToEntity(), ct);
+                await _validationPipeline.ValidateAsync(bookingDto.ToEntity(), ct);
 
                 var booking = new Booking
                 {
