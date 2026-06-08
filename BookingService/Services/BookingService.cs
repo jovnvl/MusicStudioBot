@@ -1,14 +1,15 @@
 ﻿using BookingService.Common;
 using BookingService.Data;
-using BookingService.DTO;
-using BookingService.Infrastructure;
-using BookingService.Infrastructure.Events;
 using BookingService.Domain;
 using BookingService.Domain.Events;
+using BookingService.DTO;
+using BookingService.Infrastructure;
+using BookingService.Infrastructure.Concurrency;
+using BookingService.Infrastructure.Events;
+using BookingService.Infrastructure.MessageBroker;
 using BookingService.Models.Entities;
 using BookingService.Models.Mapping;
 using BookingService.Repositories;
-using BookingService.Infrastructure.MessageBroker;
 
 namespace BookingService.Services
 {
@@ -20,14 +21,16 @@ namespace BookingService.Services
         private readonly IEventDispatcher _dispatcher;
         private readonly IBookingValidationPipeline _validationPipeline;
 
+        private readonly IBookingLockProvider _lockProvider;
 
         public BookingService(IBookingRepository bookingRepository, IBookingValidationPipeline validationPipeline,
-            IEventDispatcher dispatcher, ILogger<BookingService> logger)
+            IEventDispatcher dispatcher, ILogger<BookingService> logger, IBookingLockProvider lockProvider)
         {
             _bookingRepository = bookingRepository;
             _dispatcher = dispatcher;
             _logger = logger;
             _validationPipeline = validationPipeline;
+            _lockProvider = lockProvider;
         }
         public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
@@ -38,18 +41,26 @@ namespace BookingService.Services
                 if (bookingDto.UserId == Guid.Empty)
                     throw new InvalidOperationException("Invalid UserId.");
 
-                await _validationPipeline.ValidateAsync(bookingDto.ToEntity(), ct);
-
                 var booking = Booking.Create
                 (
                     roomId: bookingDto.RoomId,
                     userId: bookingDto.UserId,
                     status: bookingDto.Status,
-                    period: BookingPeriod.Create(bookingDto.TimeBegin?.ToUniversalTime(), bookingDto.TimeEnd?.ToUniversalTime()),                    
-                    description: bookingDto.Description                    
+                    period: BookingPeriod.Create(bookingDto.TimeBegin?.ToUniversalTime(), bookingDto.TimeEnd?.ToUniversalTime()),
+                    description: bookingDto.Description
                 );
 
-                await _bookingRepository.AddBookingAsync(booking, ct);
+                var semaphore = _lockProvider.GetLock(bookingDto.RoomId);
+                await semaphore.WaitAsync(ct);
+                try
+                {
+                    await _validationPipeline.ValidateAsync(bookingDto.ToEntity(), ct);
+                    await _bookingRepository.AddBookingAsync(booking, ct);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
 
                 await LogToServiceAsync(LogLevelType.Information, "create-booking", $"New booking {booking?.Id} for room {booking?.RoomId} on {booking?.Period?.TimeBegin?.ToLocalTime()}-{booking?.Period?.TimeEnd?.ToLocalTime()} created");
                                 
@@ -76,9 +87,22 @@ namespace BookingService.Services
         {
             try
             {
-                var _booking = await _bookingRepository.UpdateBookingAsync(bookingDto, true, ct);
+                bool _updateBooking = false;
+                var semaphore = _lockProvider.GetLock(bookingDto.RoomId);
+                await semaphore.WaitAsync(ct);
+                try
+                {
 
-                if (!_booking)
+                    await _validationPipeline.ValidateAsync(bookingDto.ToEntity(), ct);
+
+                    _updateBooking = await _bookingRepository.UpdateBookingAsync(bookingDto, true, ct);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+
+                if (!_updateBooking)
                 {
                     await LogToServiceAsync(LogLevelType.Error, "update-booking-error", "Booking was not updated");
                     throw new InvalidOperationException($"Не удалось обновить бронь {bookingDto.Id}");
@@ -87,7 +111,7 @@ namespace BookingService.Services
                 await LogToServiceAsync(LogLevelType.Information, "update-booking", $"Booking {bookingDto.Id}  for room {bookingDto?.RoomId} on {bookingDto?.TimeBegin?.ToLocalTime()}-{bookingDto?.TimeEnd?.ToLocalTime()} was updated");
 
                 await StatisticToServiceAsync("UpdatedBooking");
-                return _booking;
+                return _updateBooking;
             }
             catch (OperationCanceledException)
             {

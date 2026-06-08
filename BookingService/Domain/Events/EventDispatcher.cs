@@ -20,6 +20,9 @@
             //await Task.WhenAll(
             //    handlers.Select(h => h.HandleAsync(@event, ct)));
 
+            if (!handlers.Any())
+                return;
+
             foreach (var handler in handlers)
             {
                 await handler.HandleAsync(@event, ct);
