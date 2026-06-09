@@ -1,1181 +1,1325 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MusicStudio Admin</title>
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicStudio Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 14px;
-    background: #fafafa;
-    color: #333;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            background: #fafafa;
+            color: #333;
+        }
 
-    /* ===== TOPBAR ===== */
-    .topbar {
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
-    padding: 0 24px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    }
+        /* ===== TOPBAR ===== */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0 24px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
 
-    .topbar-title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
-    .topbar-title span { color: #4a90e2; }
+        .topbar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
 
-    .topbar-user { display: flex; align-items: center; gap: 12px; color: #555; }
+            .topbar-title span {
+                color: #4a90e2;
+            }
 
-    /* ===== LOGIN ===== */
-    #login-screen {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f5f7fa;
-    }
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #555;
+        }
 
-    .login-box {
-    background: #fff;
-    border: 1px solid #dde1e7;
-    border-radius: 4px;
-    padding: 40px 36px;
-    width: 360px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    }
+        /* ===== LOGIN ===== */
+        #login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f7fa;
+        }
 
-    .login-box h2 { font-size: 20px; margin-bottom: 6px; }
-    .login-box p  { color: #888; font-size: 13px; margin-bottom: 28px; }
+        .login-box {
+            background: #fff;
+            border: 1px solid #dde1e7;
+            border-radius: 4px;
+            padding: 40px 36px;
+            width: 360px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
 
-    /* ===== FORMS ===== */
-    label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    }
+            .login-box h2 {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
 
-    input, select {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    font-size: 13px;
-    font-family: inherit;
-    background: #fff;
-    outline: none;
-    margin-bottom: 14px;
-    }
+            .login-box p {
+                color: #888;
+                font-size: 13px;
+                margin-bottom: 28px;
+            }
 
-    input:focus, select:focus { border-color: #4a90e2; }
+        /* ===== FORMS ===== */
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-    /* ===== BUTTONS ===== */
-    button {
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 13px;
-    border-radius: 3px;
-    padding: 7px 14px;
-    border: 1px solid transparent;
-    transition: opacity 0.15s;
-    }
+        input, select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 13px;
+            font-family: inherit;
+            background: #fff;
+            outline: none;
+            margin-bottom: 14px;
+        }
 
-    button:hover { opacity: 0.85; }
+            input:focus, select:focus {
+                border-color: #4a90e2;
+            }
 
-    .btn-primary  { background: #4a90e2; color: #fff; border-color: #4a90e2; }
-    .btn-success  { background: #49cc90; color: #fff; border-color: #49cc90; }
-    .btn-danger   { background: #f93e3e; color: #fff; border-color: #f93e3e; }
-    .btn-outline  { background: #fff;    color: #555; border-color: #ccc; }
-    .btn-sm       { padding: 4px 10px; font-size: 12px; }
-    .btn-full     { width: 100%; }
+        /* ===== BUTTONS ===== */
+        button {
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            border-radius: 3px;
+            padding: 7px 14px;
+            border: 1px solid transparent;
+            transition: opacity 0.15s;
+        }
 
-    /* ===== LAYOUT ===== */
-    #app { display: none; }
+            button:hover {
+                opacity: 0.85;
+            }
 
-    .nav {
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
-    padding: 0 24px;
-    display: flex;
-    gap: 4px;
-    }
+        .btn-primary {
+            background: #4a90e2;
+            color: #fff;
+            border-color: #4a90e2;
+        }
 
-    .nav-tab {
-    padding: 12px 18px;
-    font-size: 13px;
-    color: #666;
-    cursor: pointer;
-    border: none;
-    background: none;
-    border-bottom: 3px solid transparent;
-    border-radius: 0;
-    }
+        .btn-success {
+            background: #49cc90;
+            color: #fff;
+            border-color: #49cc90;
+        }
 
-    .nav-tab.active { color: #4a90e2; border-bottom-color: #4a90e2; font-weight: 600; }
-    .nav-tab:hover  { color: #333; }
+        .btn-danger {
+            background: #f93e3e;
+            color: #fff;
+            border-color: #f93e3e;
+        }
 
-    .content { padding: 28px 24px; max-width: 1100px; }
+        .btn-outline {
+            background: #fff;
+            color: #555;
+            border-color: #ccc;
+        }
 
-    .section { display: none; }
-    .section.active { display: block; }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
 
-    /* ===== PANELS ===== */
-    .panel {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 20px;
-    margin-bottom: 20px;
-    }
+        .btn-full {
+            width: 100%;
+        }
 
-    .panel-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    }
+        /* ===== LAYOUT ===== */
+        #app {
+            display: none;
+        }
 
-    .form-row {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    }
+        .nav {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0 24px;
+            display: flex;
+            gap: 4px;
+        }
 
-    .form-row .form-group { flex: 1; min-width: 150px; }
-    .form-row input,
-    .form-row select    { margin-bottom: 0; }
-    .form-row button    { flex-shrink: 0; height: 34px; }
+        .nav-tab {
+            padding: 12px 18px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+        }
 
-    /* ===== TABLES ===== */
-    .table-wrap { overflow-x: auto; }
+            .nav-tab.active {
+                color: #4a90e2;
+                border-bottom-color: #4a90e2;
+                font-weight: 600;
+            }
 
-    table { width: 100%; border-collapse: collapse; }
+            .nav-tab:hover {
+                color: #333;
+            }
 
-    th {
-    text-align: left;
-    padding: 9px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #555;
-    border-bottom: 2px solid #e0e0e0;
-    background: #f9f9f9;
-    }
+        .content {
+            padding: 28px 24px;
+            max-width: 1100px;
+        }
 
-    td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-    }
+        .section {
+            display: none;
+        }
 
-    tbody tr:hover { background: #f7f9fc; }
+            .section.active {
+                display: block;
+            }
 
-    .mono { font-family: 'Courier New', monospace; font-size: 11px; color: #888; }
+        /* ===== PANELS ===== */
+        .panel {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
 
-    th.sortable {
-        cursor: pointer;
-        user-select: none;
-        position: relative;
-        padding-right: 20px;
-    }
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
 
-    th.sortable:hover {
-        background: #f0f0f0;
-    }
+        .form-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
 
-    th.sortable::after {
-        content: '⇅';
-        position: absolute;
-        right: 8px;
-        opacity: 0.3;
-        font-size: 10px;
-    }
+            .form-row .form-group {
+                flex: 1;
+                min-width: 150px;
+            }
 
-    th.sortable.asc::after {
-        content: '↑';
-        opacity: 1;
-    }
+            .form-row input,
+            .form-row select {
+                margin-bottom: 0;
+            }
 
-    th.sortable.desc::after {
-        content: '↓';
-        opacity: 1;
-    }
-    /* ===== BADGES ===== */
-    .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    }
+            .form-row button {
+                flex-shrink: 0;
+                height: 34px;
+            }
 
-    .badge-green  { background: #e8f8f0; color: #1a9e5c; }
-    .badge-red    { background: #fef0f0; color: #d93025; }
-    .badge-blue   { background: #e8f0fe; color: #1a73e8; }
-    .badge-yellow { background: #fff8e6; color: #b06000; }
-    .badge-gray   { background: #f0f0f0; color: #666; }
+        /* ===== TABLES ===== */
+        .table-wrap {
+            overflow-x: auto;
+        }
 
-    /* ===== SELECT IN TABLE ===== */
-    .select {
-    padding: 4px 6px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    font-size: 12px;
-    background: #fff;
-    cursor: pointer;
-    width: auto;
-    margin-bottom: 0;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-    /* ===== NOTIFICATION ===== */
-    #notification {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 12px 18px;
-    border-radius: 4px;
-    font-size: 13px;
-    display: none;
-    z-index: 9999;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    max-width: 300px;
-    }
+        th {
+            text-align: left;
+            padding: 9px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            background: #f9f9f9;
+        }
 
-    #notification.success { background: #e8f8f0; color: #1a9e5c; border: 1px solid #a3d9b8; }
-    #notification.error   { background: #fef0f0; color: #d93025; border: 1px solid #f4b8b8; }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
 
-    .error-msg { color: #d93025; font-size: 12px; margin-top: 6px; }
-    .loading { text-align: center; padding: 20px; color: #999; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .section-header h2 { font-size: 18px; font-weight: 600; }
-</style>
+        tbody tr:hover {
+            background: #f7f9fc;
+        }
+
+        .mono {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #888;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 20px;
+        }
+
+            th.sortable:hover {
+                background: #f0f0f0;
+            }
+
+            th.sortable::after {
+                content: '⇅';
+                position: absolute;
+                right: 8px;
+                opacity: 0.3;
+                font-size: 10px;
+            }
+
+            th.sortable.asc::after {
+                content: '↑';
+                opacity: 1;
+            }
+
+            th.sortable.desc::after {
+                content: '↓';
+                opacity: 1;
+            }
+
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-green {
+            background: #e8f8f0;
+            color: #1a9e5c;
+        }
+
+        .badge-red {
+            background: #fef0f0;
+            color: #d93025;
+        }
+
+        .badge-blue {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .badge-yellow {
+            background: #fff8e6;
+            color: #b06000;
+        }
+
+        .badge-gray {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        /* ===== SELECT IN TABLE ===== */
+        .select {
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #fff;
+            cursor: pointer;
+            width: auto;
+            margin-bottom: 0;
+        }
+
+        /* ===== NOTIFICATION ===== */
+        #notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 18px;
+            border-radius: 4px;
+            font-size: 13px;
+            display: none;
+            z-index: 9999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            max-width: 300px;
+        }
+
+            #notification.success {
+                background: #e8f8f0;
+                color: #1a9e5c;
+                border: 1px solid #a3d9b8;
+            }
+
+            #notification.error {
+                background: #fef0f0;
+                color: #d93025;
+                border: 1px solid #f4b8b8;
+            }
+
+        .error-msg {
+            color: #d93025;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+            .section-header h2 {
+                font-size: 18px;
+                font-weight: 600;
+            }
+    </style>
 </head>
 <body>
 
-<!-- ==================== LOGIN ==================== -->
-<div id="login-screen">
-    <div class="login-box">
-    <h2>🎵 MusicStudio</h2>
-    <p>Панель администратора</p>
+    <!-- ==================== LOGIN ==================== -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>🎵 MusicStudio</h2>
+            <p>Панель администратора</p>
 
-    <label>Username</label>
-    <input type="text" id="login-username" placeholder="Ваш username">
+            <label>Username</label>
+            <input type="text" id="login-username" placeholder="Ваш username">
 
-    <label>Пароль</label>
-    <input type="password" id="login-password" placeholder="••••••••"
-            onkeydown="if(event.key==='Enter') doLogin()">
+            <label>Пароль</label>
+            <input type="password" id="login-password" placeholder="••••••••"
+                   onkeydown="if(event.key==='Enter') doLogin()">
 
-    <div id="login-error" class="error-msg"></div>
-    <br>
-    <button class="btn-primary btn-full" onclick="doLogin()">Войти</button>
-    </div>
-</div>
-
-<!-- ==================== APP ==================== -->
-<div id="app">
-
-    <div class="topbar">
-    <div class="topbar-title">🎵 <span>MusicStudio</span> Admin</div>
-    <div class="topbar-user">
-        <span id="topbar-info"></span>
-        <button class="btn-outline btn-sm" onclick="doLogout()">Выйти</button>
-    </div>
-    </div>
-
-    <div class="nav">
-    <button class="nav-tab active" onclick="showTab('users',    this)">Пользователи</button>
-    <button class="nav-tab"        onclick="showTab('rooms',    this)">Комнаты</button>
-    <button class="nav-tab"        onclick="showTab('bookings', this)">Бронирования</button>
-    </div>
-
-    <div class="content">
-
-    <!-- ===== USERS ===== -->
-    <div id="tab-users" class="section active">
-        <div class="section-header">
-        <h2>Пользователи</h2>
-        <button class="btn-outline btn-sm" onclick="loadUsers()">Обновить</button>
-        </div>
-
-        <div class="panel">
-        <div class="panel-title">Список пользователей</div>
-        <div class="table-wrap">
-            <table>
-            <thead>
-                <tr>
-                <th>Имя</th>
-                <th>Username</th>
-                <th>Роль</th>
-                <th>Telegram ID</th>
-                <th>ID</th>
-                <th>Активен</th>
-                </tr>
-            </thead>
-            <tbody id="users-tbody">
-                <tr><td colspan="6" class="loading">Загрузка...</td></tr>
-            </tbody>
-            </table>
-        </div>
+            <div id="login-error" class="error-msg"></div>
+            <br>
+            <button class="btn-primary btn-full" onclick="doLogin()">Войти</button>
         </div>
     </div>
 
-    <!-- ===== ROOMS ===== -->
-    <div id="tab-rooms" class="section">
-        <div class="section-header">
-        <h2>Комнаты и категории</h2>
-        <button class="btn-outline btn-sm" onclick="loadRooms(); loadCategories()">Обновить</button>
+    <!-- ==================== APP ==================== -->
+    <div id="app">
+
+        <div class="topbar">
+            <div class="topbar-title">🎵 <span>MusicStudio</span> Admin</div>
+            <div class="topbar-user">
+                <span id="topbar-info"></span>
+                <button class="btn-outline btn-sm" onclick="doLogout()">Выйти</button>
+            </div>
         </div>
 
-        <!-- Create category -->
-        <div class="panel">
-        <div class="panel-title">Создать категорию</div>
-        <div class="form-row">
-            <div class="form-group">
-            <label>Название</label>
-            <input type="text" id="cat-name" placeholder="Музыкальный класс">
-            </div>
-            <div class="form-group">
-            <label>Описание</label>
-            <input type="text" id="cat-desc" placeholder="Описание">
-            </div>
-            <button class="btn-success" onclick="createCategory()">Создать</button>
-        </div>
+        <div class="nav">
+            <button class="nav-tab active" onclick="showTab('users',    this)">Пользователи</button>
+            <button class="nav-tab" onclick="showTab('rooms',    this)">Комнаты</button>
+            <button class="nav-tab" onclick="showTab('bookings', this)">Бронирования</button>
         </div>
 
-        <!-- Categories table -->
-        <div class="panel">
-        <div class="panel-title">Категории</div>
-        <div class="table-wrap">
-            <table>
-            <thead><tr><th>ID</th><th>Название</th><th>Описание</th><th></th></tr></thead>
-            <tbody id="categories-tbody">
-                <tr><td colspan="4" class="loading">Загрузка...</td></tr>
-            </tbody>
-            </table>
-        </div>
-        </div>
+        <div class="content">
 
-        <!-- Create room -->
-        <div class="panel">
-        <div class="panel-title">Создать комнату</div>
-        <div class="form-row">
-            <div class="form-group">
-            <label>Название</label>
-            <input type="text" id="room-name" placeholder="Класс гитары">
-            </div>
-            <div class="form-group">
-            <label>Описание</label>
-            <input type="text" id="room-desc" placeholder="Описание">
-            </div>
-            <div class="form-group">
-            <label>Категория</label>
-            <select id="room-category-select">
-                <option value="">— загрузка —</option>
-            </select>
-            </div>
-            <div class="form-group">
-            <label>Статус</label>
-            <select id="room-status">
-                <option value="0">Available</option>
-                <option value="1">Occupied</option>
-                <option value="2">Reserved</option>
-                <option value="3">Maintenance</option>
-            </select>
-            </div>
-            <button class="btn-success" onclick="createRoom()">Создать</button>
-        </div>
-        </div>
-
-        <!-- Rooms table -->
-        <div class="panel">
-        <div class="panel-title">Список комнат</div>
-        <div class="table-wrap">
-            <table>
-            <thead>
-                <tr><th>ID</th><th>Название</th><th>Описание</th><th>Категория</th><th>Статус</th><th>Создана</th><th></th></tr>
-            </thead>
-            <tbody id="rooms-tbody">
-                <tr><td colspan="7" class="loading">Загрузка...</td></tr>
-            </tbody>
-            </table>
-        </div>
-        </div>
-    </div>
-
-    <!-- ===== BOOKINGS ===== -->
-    <div id="tab-bookings" class="section">
-        <div class="section-header">
-        <h2>Бронирования</h2>
-        <button class="btn-outline btn-sm" onclick="loadBookings()">Обновить</button>
-        </div>
-
-        <div class="panel">
-        <div class="panel-title">Создать бронирование</div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Пользователь</label>
-                <input type="text" id="book-user-search" placeholder="Поиск по имени..."
-                        oninput="filterUserDropdown()" onclick="showUserDropdown()">
-                <div id="user-dropdown" style="display:none; position:absolute; background:#fff; border:1px solid #ccc;
-                    border-radius:3px; max-height:180px; overflow-y:auto; z-index:200; width:220px; box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+            <!-- ===== USERS ===== -->
+            <div id="tab-users" class="section active">
+                <div class="section-header">
+                    <h2>Пользователи</h2>
+                    <button class="btn-outline btn-sm" onclick="loadUsers()">Обновить</button>
                 </div>
-                <input type="hidden" id="book-user-id">
-            </div>
-            <div class="form-group">
-                <label>Комната</label>
-                <select id="book-room-select">
-                    <option value="">- загрузка -</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Описание</label>
-                <input type="text" id="book-desc" placeholder="Репетиция">
-            </div>
-            <div class="form-group">
-                <label>Дата</label>
-                <input type="date" id="book-date">
-            </div>
-            <div class="form-group">
-                <label>Время начала</label>
-                <input type="time" id="book-time-begin">
-            </div>
-            <div class="form-group">
-                <label>Время конца</label>
-                <input type="time" id="book-time-end">
-            </div>
-            <div class="form-group">
-                <label>Статус</label>
-                <select id="book-status">
-                    <option value="0">NotConfirmed</option>
-                    <option value="1">Canceled</option>
-                    <option value="2" selected>Booked</option>
-                    <option value="3">Completed</option>
-                </select>
-            </div>
-            <button class="btn-success" onclick="createBooking()">Создать</button>
-        </div>
-        </div>
 
-        <div class="panel">
-        <div class="panel-title">Список бронирований</div>
-        <div class="table-wrap">
-            <table>
-            <thead>
-                <tr><th>ID</th><th>Пользователь</th><th>Room ID</th><th>Статус</th><th>Описание</th><th>Начало</th><th>Конец</th><th></th></tr>
-            </thead>
-            <tbody id="bookings-tbody">
-                <tr><td colspan="8" class="loading">Загрузка...</td></tr>
-            </tbody>
-            </table>
-        </div>
+                <div class="panel">
+                    <div class="panel-title">Список пользователей</div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Имя</th>
+                                    <th>Username</th>
+                                    <th>Роль</th>
+                                    <th>Telegram ID</th>
+                                    <th>ID</th>
+                                    <th>Активен</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                                <tr><td colspan="6" class="loading">Загрузка...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== ROOMS ===== -->
+            <div id="tab-rooms" class="section">
+                <div class="section-header">
+                    <h2>Комнаты и категории</h2>
+                    <button class="btn-outline btn-sm" onclick="loadRooms(); loadCategories()">Обновить</button>
+                </div>
+
+                <!-- Create category -->
+                <div class="panel">
+                    <div class="panel-title">Создать категорию</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Название</label>
+                            <input type="text" id="cat-name" placeholder="Музыкальный класс">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание</label>
+                            <input type="text" id="cat-desc" placeholder="Описание">
+                        </div>
+                        <button class="btn-success" onclick="createCategory()">Создать</button>
+                    </div>
+                </div>
+
+                <!-- Categories table -->
+                <div class="panel">
+                    <div class="panel-title">Категории</div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>ID</th><th>Название</th><th>Описание</th><th></th></tr></thead>
+                            <tbody id="categories-tbody">
+                                <tr><td colspan="4" class="loading">Загрузка...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Create room -->
+                <div class="panel">
+                    <div class="panel-title">Создать комнату</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Название</label>
+                            <input type="text" id="room-name" placeholder="Класс гитары">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание</label>
+                            <input type="text" id="room-desc" placeholder="Описание">
+                        </div>
+                        <div class="form-group">
+                            <label>Категория</label>
+                            <select id="room-category-select">
+                                <option value="">— загрузка —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Статус</label>
+                            <select id="room-status">
+                                <option value="0">Available</option>
+                                <option value="1">Occupied</option>
+                                <option value="2">Reserved</option>
+                                <option value="3">Maintenance</option>
+                            </select>
+                        </div>
+                        <button class="btn-success" onclick="createRoom()">Создать</button>
+                    </div>
+                </div>
+
+                <!-- Rooms table -->
+                <div class="panel">
+                    <div class="panel-title">Список комнат</div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>ID</th><th>Название</th><th>Описание</th><th>Категория</th><th>Статус</th><th>Создана</th><th></th></tr>
+                            </thead>
+                            <tbody id="rooms-tbody">
+                                <tr><td colspan="7" class="loading">Загрузка...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== BOOKINGS ===== -->
+            <div id="tab-bookings" class="section">
+                <div class="section-header">
+                    <h2>Бронирования</h2>
+                    <button class="btn-outline btn-sm" onclick="loadBookings()">Обновить</button>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Создать бронирование</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Пользователь</label>
+                            <input type="text" id="book-user-search" placeholder="Поиск по имени..."
+                                   oninput="filterUserDropdown()" onclick="showUserDropdown()">
+                            <div id="user-dropdown" style="display:none; position:absolute; background:#fff; border:1px solid #ccc;
+                    border-radius:3px; max-height:180px; overflow-y:auto; z-index:200; width:220px; box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+                            </div>
+                            <input type="hidden" id="book-user-id">
+                        </div>
+                        <div class="form-group">
+                            <label>Комната</label>
+                            <select id="book-room-select">
+                                <option value="">- загрузка -</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Описание</label>
+                            <input type="text" id="book-desc" placeholder="Репетиция">
+                        </div>
+                        <div class="form-group">
+                            <label>Дата</label>
+                            <input type="date" id="book-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Время начала</label>
+                            <input type="time" id="book-time-begin">
+                        </div>
+                        <div class="form-group">
+                            <label>Время конца</label>
+                            <input type="time" id="book-time-end">
+                        </div>
+                        <div class="form-group">
+                            <label>Статус</label>
+                            <select id="book-status">
+                                <option value="0">NotConfirmed</option>
+                                <option value="1">Canceled</option>
+                                <option value="2" selected>Booked</option>
+                                <option value="3">Completed</option>
+                            </select>
+                        </div>
+                        <button class="btn-success" onclick="createBooking()">Создать</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Список бронирований</div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>ID</th><th>Пользователь</th><th>Room ID</th><th>Статус</th><th>Описание</th><th>Начало</th><th>Конец</th><th></th></tr>
+                            </thead>
+                            <tbody id="bookings-tbody">
+                                <tr><td colspan="8" class="loading">Загрузка...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    </div>
-</div>
+    <!-- NOTIFICATION -->
+    <div id="notification"></div>
 
-<!-- NOTIFICATION -->
-<div id="notification"></div>
+    <script>
+        // ================================================================
+        // КОНФИГУРАЦИЯ — URL адреса сервисов
+        // ================================================================
+        const IDENTITY_URL = 'https://localhost:7057';
+        const ROOM_URL = 'https://localhost:64922';
+        const BOOKING_URL = 'https://localhost:57408';
 
-<script>
-// ================================================================
-// КОНФИГУРАЦИЯ — URL адреса сервисов
-// ================================================================
-const IDENTITY_URL = 'https://localhost:7057';
-const ROOM_URL     = 'https://localhost:64922';
-const BOOKING_URL  = 'https://localhost:57408';
+        // ================================================================
+        // СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+        // ================================================================
+        let token = null;
+        let refreshToken = null;
+        let allUsers = [];
+        let allCategories = [];
+        let allRooms = [];
 
-// ================================================================
-// СОСТОЯНИЕ ПРИЛОЖЕНИЯ
-// ================================================================
-let token       = null;
-let refreshToken = null;
-let allUsers    = [];
-let allCategories = [];
-let allRooms = [];
-
-// ================================================================
-// УВЕДОМЛЕНИЕ
-// ================================================================
-function notify(msg, type = 'success') {
-    const el = document.getElementById('notification');
-    el.textContent = msg;
-    el.className = type;
-    el.style.display = 'block';
-    setTimeout(() => el.style.display = 'none', 3500);
-}
-
-// ================================================================
-// ЗАГОЛОВКИ HTTP ЗАПРОСОВ
-// ================================================================
-function jsonHeaders() {
-    return { 'Content-Type': 'application/json' };
-}
-
-function authHeaders() {
-    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-}
-
-// ================================================================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ФОРМАТИРОВАНИЯ
-// ================================================================
-function shortId(id) {
-    return id ? `<span class="mono" title="${id}">${id.substring(0, 8)}…</span>` : '—';
-}
-
-function formatDate(dt) {
-    if (!dt) return '—';
-    return new Date(dt).toLocaleString('ru-RU', {
-    day: '2-digit', month: '2-digit', year: '2-digit',
-    hour: '2-digit', minute: '2-digit'
-    });
-}
-
-function roleBadge(role) {
-    const classes = { Administrator: 'badge-red', Moderator: 'badge-yellow', Student: 'badge-blue' };
-    return `<span class="badge ${classes[role] || 'badge-gray'}">${role}</span>`;
-}
-
-function roomStatusBadge(status) {
-    const map = {
-    0: ['badge-green', 'Available'],
-    1: ['badge-red',   'Occupied'],
-    2: ['badge-yellow','Reserved'],
-    3: ['badge-gray',  'Maintenance']
-    };
-    const [cls, label] = map[status] ?? ['badge-gray', '?'];
-    return `<span class="badge ${cls}">${label}</span>`;
-}
-
-function bookingStatusBadge(status) {
-    const map = {
-    0: ['badge-gray',  'NotConfirmed'],
-    1: ['badge-red',   'Canceled'],
-    2: ['badge-green', 'Booked'],
-    3: ['badge-blue',  'Completed']
-    };
-    const [cls, label] = map[status] ?? ['badge-gray', '?'];
-    return `<span class="badge ${cls}">${label}</span>`;
-}
-
-// ================================================================
-// АВТОРИЗАЦИЯ
-// ================================================================
-
-async function refreshAccessToken() {
-    if (!refreshToken) return false;
-
-    try {
-        const res = await fetch(`${IDENTITY_URL}/api/auth/refresh`, {
-            method: 'POST',
-            headers: jsonHeaders(),
-            body: JSON.stringify({ refreshToken })
-        });
-
-        if (!res.ok) {
-            doLogout();
-            return false;
+        // ================================================================
+        // УВЕДОМЛЕНИЕ
+        // ================================================================
+        function notify(msg, type = 'success') {
+            const el = document.getElementById('notification');
+            el.textContent = msg;
+            el.className = type;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3500);
         }
 
-        const data = await res.json();
-        token = data.token;
-        refreshToken = data.refreshToken;
-        return true;
-    } catch (e) {
-        doLogout();
-        return false;
-    }
-}
-
-async function fetchWithAuth(url, options = {}) {
-    let response = await fetch(url, options);
-
-    if (response.status === 401 && refreshToken) {
-        console.log('Got 401, trying to refresh token...');
-        
-        const refreshed = await refreshAccessToken();
-        
-        if (refreshed) {
-            if (options.headers && options.headers.Authorization) {
-                options.headers.Authorization = `Bearer ${token}`;
-            }
-            response = await fetch(url, options);
-        }
-    }
-
-    return response;
-}
-
-async function doLogin() {
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errEl    = document.getElementById('login-error');
-    errEl.textContent = '';
-
-    if (!username || !password) { errEl.textContent = 'Заполните все поля'; return; }
-
-    try {
-        const usersRes = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
-    if (!usersRes.ok) { errEl.textContent = 'Не удалось подключиться к IdentityService'; return; }
-    const users = await usersRes.json();
-
-    const found = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-    if (!found) { errEl.textContent = 'Пользователь не найден'; return; }
-
-    const loginRes = await fetch(`${IDENTITY_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: jsonHeaders(),
-        body: JSON.stringify({ telegramId: found.telegramId, password })
-    });
-
-    if (!loginRes.ok) {
-        const err = await loginRes.json();
-        errEl.textContent = err.message || 'Неверный пароль';
-        return;
-    }
-
-    const data = await loginRes.json();
-    token = data.token;
-    refreshToken = data.refreshToken; 
-
-    document.getElementById('topbar-info').textContent = `${data.username} (${data.role})`;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-
-    loadUsers();
-
-    } catch (e) {
-    errEl.textContent = 'Ошибка соединения. Проверьте что сервисы запущены и настроен CORS.';
-    }
-}
-
-function doLogout() {
-    if (refreshToken) {
-        fetch(`${IDENTITY_URL}/api/auth/revoke`, {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify({ refreshToken })
-        }).catch(e => console.error('Failed to revoke token', e));
-    }
-
-    token = null;
-    refreshToken = null;
-    allUsers = [];
-    allCategories = [];
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('login-password').value = '';
-}
-
-// ================================================================
-// НАВИГАЦИЯ ПО ВКЛАДКАМ
-// ================================================================
-function showTab(name, btn) {
-    document.querySelectorAll('.section').forEach(s  => s.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(b  => b.classList.remove('active'));
-    document.getElementById(`tab-${name}`).classList.add('active');
-    btn.classList.add('active');
-
-    if (name === 'rooms')    { loadCategories(); loadRooms(); }
-    if (name === 'bookings') { loadBookings(); loadUsersForDropdown(); loadRooms(); }
-}
-
-// ================================================================
-// ПОЛЬЗОВАТЕЛИ
-// ================================================================
-async function loadUsers() {
-    const tbody = document.getElementById('users-tbody');
-    tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка...</td></tr>';
-
-    try {
-        const res = await fetchWithAuth(`${IDENTITY_URL}/api/auth/user/all`, { headers: authHeaders() });
-    const users = await res.json();
-    allUsers = users;
-
-    if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="loading">Нет пользователей</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = users.map(u => `
-        <tr>
-        <td>${u.firstName || ''} ${u.lastName || ''}</td>
-        <td>${u.username}</td>
-        <td>
-            <select class="select" onchange="changeRole('${u.id}', this.value)">
-            <option value="Student"       ${u.role === 'Student'       ? 'selected' : ''}>Student</option>
-            <option value="Moderator"     ${u.role === 'Moderator'     ? 'selected' : ''}>Moderator</option>
-            <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
-            </select>
-        </td>
-        <td class="mono">${u.telegramId}</td>
-        <td>${shortId(u.id)}</td>
-        <td>
-            <button class="btn-${u.isActive ? 'danger' : 'success'} btn-sm" 
-                    onclick="toggleUserStatus('${u.id}', ${!u.isActive})">
-            ${u.isActive ? 'Деактивировать' : 'Активировать'}
-            </button>
-        </td>
-        </tr>
-    `).join('');
-
-    } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
-    }
-}
-
-async function changeRole(userId, newRole) {
-    try {
-    const res = await fetch(`${IDENTITY_URL}/api/auth/user/change_role`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ id: userId, role: newRole })
-    });
-    if (!res.ok) { notify('Ошибка изменения роли', 'error'); return; }
-    notify(`Роль изменена на ${newRole}`);
-    } catch (e) {
-    notify('Ошибка соединения', 'error');
-    }
-}
-
-// ================================================================
-// КАТЕГОРИИ
-// ================================================================
-async function loadCategories() {
-    const tbody = document.getElementById('categories-tbody');
-    tbody.innerHTML = '<tr><td colspan="4" class="loading">Загрузка...</td></tr>';
-
-    try {
-    const res  = await fetch(`${ROOM_URL}/api/categories`);
-    const cats = await res.json();
-    allCategories = cats;
-    refreshCategorySelect();
-
-    if (!cats.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="loading">Нет категорий</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = cats.map(c => `
-        <tr>
-        <td>${c.id}</td>
-        <td>${c.name}</td>
-        <td>${c.description}</td>
-        <td><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Удалить</button></td>
-        </tr>
-    `).join('');
-
-    } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="4" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
-    }
-}
-
-function refreshCategorySelect() {
-    const select = document.getElementById('room-category-select');
-    if (!allCategories.length) {
-    select.innerHTML = '<option value="">— нет категорий —</option>';
-    return;
-    }
-    select.innerHTML = allCategories.map(c =>
-    `<option value="${c.id}">${c.name} (id: ${c.id})</option>`
-    ).join('');
-}
-
-async function createCategory() {
-    const name        = document.getElementById('cat-name').value.trim();
-    const description = document.getElementById('cat-desc').value.trim();
-    if (!name || !description) { notify('Заполните все поля', 'error'); return; }
-
-    try {
-    const res = await fetch(`${ROOM_URL}/api/categories`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ name, description })
-    });
-    if (!res.ok) { notify('Ошибка создания категории', 'error'); return; }
-    notify('Категория создана');
-    document.getElementById('cat-name').value = '';
-    document.getElementById('cat-desc').value = '';
-    loadCategories();
-    } catch (e) {
-    notify('Ошибка соединения', 'error');
-    }
-}
-
-async function deleteCategory(id) {
-    if (!confirm(`Удалить категорию ${id}?`)) return;
-
-    try {
-        const res = await fetch(`${ROOM_URL}/api/categories/${id}`, {
-            method: 'DELETE',
-            headers: authHeaders()
-        });
-    if (!res.ok) { notify('Нельзя удалить — есть комнаты в этой категории', 'error'); return; }
-    notify('Категория удалена');
-    loadCategories();
-    } catch (e) {
-    notify('Ошибка соединения', 'error');
-    }
-}
-
-// ================================================================
-// КОМНАТЫ
-// ================================================================
-async function loadRooms() {
-    const tbody = document.getElementById('rooms-tbody');
-    tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка...</td></tr>';
-
-    try {
-    const res   = await fetch(`${ROOM_URL}/api/rooms`);
-    const rooms = await res.json();
-
-    allRooms = rooms;
-    refreshRoomSelect(); 
-
-    if (!rooms.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="loading">Нет комнат</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = rooms.map(r => `
-        <tr>
-        <td>${r.id}</td>
-        <td>${r.name}</td>
-        <td>${r.description}</td>
-        <td>${r.categoryRoomId}</td>
-        <td>
-            <select class="select" onchange="updateRoomStatus(${r.id}, parseInt(this.value))">
-                <option value="0" ${r.status === 0 ? 'selected' : ''}>Available</option>
-                <option value="1" ${r.status === 1 ? 'selected' : ''}>Occupied</option>
-                <option value="2" ${r.status === 2 ? 'selected' : ''}>Reserved</option>
-                <option value="3" ${r.status === 3 ? 'selected' : ''}>Maintenance</option>
-            </select>
-        </td>
-        <td class="mono">${r.creationDate || '—'}</td>
-        <td>
-            <button class="btn-danger  btn-sm" onclick="deleteRoom(${r.id})">Удалить</button>
-        </td>
-        </tr>
-    `).join('');
-
-    } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="7" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
-    }
-}
-
-async function createRoom() {
-    const name           = document.getElementById('room-name').value.trim();
-    const description    = document.getElementById('room-desc').value.trim();
-    const categoryRoomId = parseInt(document.getElementById('room-category-select').value);
-    const status         = parseInt(document.getElementById('room-status').value);
-
-    if (!name)           { notify('Введите название', 'error'); return; }
-    if (!categoryRoomId) { notify('Выберите категорию', 'error'); return; }
-
-    try {
-    const res = await fetch(`${ROOM_URL}/api/rooms`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ name, description, categoryRoomId, status })
-    });
-    if (!res.ok) { notify('Ошибка создания комнаты', 'error'); return; }
-    notify('Комната создана');
-    document.getElementById('room-name').value = '';
-    document.getElementById('room-desc').value = '';
-    loadRooms();
-    } catch (e) {
-    notify('Ошибка соединения', 'error');
-    }
-}
-
-async function updateRoomStatus(id, status) {
-    try {
-    const res = await fetch(`${ROOM_URL}/api/rooms`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ id, status })
-    });
-    if (!res.ok) { notify('Ошибка обновления', 'error'); return; }
-    notify('Статус обновлён');
-    loadRooms();
-    } catch (e) {
-    notify('Ошибка соединения', 'error');
-    }
-}
-
-async function deleteRoom(id) {
-    if (!confirm(`Удалить комнату ${id}?`)) return;
-
-    try {
-        const res = await fetch(`${ROOM_URL}/api/rooms/${id}`, {
-            method: 'DELETE',
-            headers: authHeaders()
-        });
-    if (!res.ok) { notify('Ошибка удаления', 'error'); return; }
-    notify('Комната удалена');
-    loadRooms();
-    } catch (e) {
-    notify('Ошибка соединения', 'error');
-    }
-}
-
-// ================================================================
-// БРОНИРОВАНИЯ
-// ================================================================
-
-async function loadUsersForDropdown() {
-    if (allUsers.length) return;
-    try {
-    const res = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
-    allUsers = await res.json();
-    } catch (e) {
-    console.error('Не удалось загрузить пользователей');
-    }
-}
-
-function refreshRoomSelect() {
-    const select = document.getElementById('book-room-select');
-    if (!allRooms || !allRooms.length) {
-        select.innerHTML = '<option value="">— нет комнат —</option>';
-        return;
-    }
-    select.innerHTML = allRooms.map(r =>
-        `<option value="${r.id}">${r.name} (ID: ${r.id})</option>`
-    ).join('');
-}
-
-function showUserDropdown() {
-    filterUserDropdown();
-}
-
-function filterUserDropdown() {
-    const search   = document.getElementById('book-user-search').value.toLowerCase();
-    const dropdown = document.getElementById('user-dropdown');
-
-    const filtered = allUsers.filter(u =>
-    u.username.toLowerCase().includes(search) ||
-    (u.firstName && u.firstName.toLowerCase().includes(search)) ||
-    (u.lastName  && u.lastName.toLowerCase().includes(search))
-    );
-
-    if (!filtered.length) { dropdown.style.display = 'none'; return; }
-
-    dropdown.innerHTML = filtered.map(u => `
-    <div onclick="selectUser('${u.id}', '${u.username}')"
-            style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; font-size:13px;"
-            onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background=''">
-        ${u.username}
-        <span style="color:#999; font-size:11px; margin-left:6px;">${u.firstName || ''} ${u.lastName || ''}</span>
-    </div>
-    `).join('');
-
-    dropdown.style.display = 'block';
-}
-
-function selectUser(userId, username) {
-    document.getElementById('book-user-id').value     = userId;
-    document.getElementById('book-user-search').value = username;
-    document.getElementById('user-dropdown').style.display = 'none';
-}
-
-async function toggleUserStatus(userId, newStatus) {
-    const action = newStatus ? 'активировать' : 'деактивировать';
-    if (!confirm(`Вы уверены, что хотите ${action} пользователя?`)) return;
-
-    try {
-        const res = await fetch(`${IDENTITY_URL}/api/auth/user/set_active_status`, {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ id: userId, isActive: newStatus })
-        });
-
-        if (!res.ok) {
-            notify(`Ошибка: не удалось ${action} пользователя`, 'error');
-            return;
+        // ================================================================
+        // ЗАГОЛОВКИ HTTP ЗАПРОСОВ
+        // ================================================================
+        function jsonHeaders() {
+            return { 'Content-Type': 'application/json' };
         }
 
-        notify(`Пользователь ${newStatus ? 'активирован' : 'деактивирован'}`);
-        loadUsers();
-    } catch (e) {
-        notify('Ошибка соединения', 'error');
-    }
-}
+        function authHeaders() {
+            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+        }
 
-document.addEventListener('click', e => {
-    if (!e.target.closest('#book-user-search') && !e.target.closest('#user-dropdown')) {
-    document.getElementById('user-dropdown').style.display = 'none';
-    }
-});
+        // ================================================================
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ФОРМАТИРОВАНИЯ
+        // ================================================================
+        function shortId(id) {
+            return id ? `<span class="mono" title="${id}">${id.substring(0, 8)}…</span>` : '—';
+        }
 
-async function loadBookings() {
-    const tbody = document.getElementById('bookings-tbody');
-    tbody.innerHTML = '<tr><td colspan="8" class="loading">Загрузка...</td></tr>';
+        function formatDate(dt) {
+            if (!dt) return '—';
+            return new Date(dt).toLocaleString('ru-RU', {
+                day: '2-digit', month: '2-digit', year: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
 
-    try {
-        const res = await fetch(`${BOOKING_URL}/api/booking`, { headers: authHeaders() });
-    const bookings = await res.json();
+        function roleBadge(role) {
+            const classes = { Administrator: 'badge-red', Moderator: 'badge-yellow', Student: 'badge-blue' };
+            return `<span class="badge ${classes[role] || 'badge-gray'}">${role}</span>`;
+        }
 
-    if (!bookings.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="loading">Нет бронирований</td></tr>';
-        return;
-    }
+        function roomStatusBadge(status) {
+            const map = {
+                0: ['badge-green', 'Available'],
+                1: ['badge-red', 'Occupied'],
+                2: ['badge-yellow', 'Reserved'],
+                3: ['badge-gray', 'Maintenance']
+            };
+            const [cls, label] = map[status] ?? ['badge-gray', '?'];
+            return `<span class="badge ${cls}">${label}</span>`;
+        }
 
-    tbody.innerHTML = bookings.map(b => `
-        <tr>
-        <td>${shortId(b.id)}</td>
-        <td>${shortId(b.userId)}</td>
-        <td>${b.roomId}</td>
-        <td>${bookingStatusBadge(b.status)}</td>
-        <td>${b.description || '—'}</td>
-        <td class="mono">${formatDate(b.period.timeBegin)}</td>
-        <td class="mono">${formatDate(b.period.timeEnd)}</td>
-        <td><button class="btn-danger btn-sm" onclick="deleteBooking('${b.id}')">Удалить</button></td>
-        </tr>
-    `).join('');
+        function bookingStatusBadge(status) {
+            const map = {
+                0: ['badge-gray', 'NotConfirmed'],
+                1: ['badge-red', 'Canceled'],
+                2: ['badge-green', 'Booked'],
+                3: ['badge-blue', 'Completed']
+            };
+            const [cls, label] = map[status] ?? ['badge-gray', '?'];
+            return `<span class="badge ${cls}">${label}</span>`;
+        }
 
-    } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
-    }
-}
+        // ================================================================
+        // АВТОРИЗАЦИЯ
+        // ================================================================
 
-async function createBooking() {
-    const userId      = document.getElementById('book-user-id').value.trim();
-    const roomId      = parseInt(document.getElementById('book-room-select').value);
-    const description = document.getElementById('book-desc').value.trim();
-    const status      = parseInt(document.getElementById('book-status').value);
-    const date = document.getElementById('book-date').value;
-    const timeBegin = document.getElementById('book-time-begin').value;
-    const timeEnd = document.getElementById('book-time-end').value;
+        async function refreshAccessToken() {
+            if (!refreshToken) return false;
 
-    if (!userId) { notify('Выберите пользователя из списка', 'error'); return; }
-    if (!date || !timeBegin || !timeEnd) { notify('Укажите время начала и конца', 'error'); return; }
-
-    const timeBeginISO = new Date(`${date}T${timeBegin}`).toISOString();
-    const timeEndISO = new Date(`${date}T${timeEnd}`).toISOString();
-
-    const payload = {
-        userId,
-        roomId,
-        description,
-        status,
-        timeBegin: timeBeginISO,
-        timeEnd: timeEndISO
-    };
-
-    try {
-    const res = await fetch(`${BOOKING_URL}/api/booking`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(payload)
-    });
-    if (!res.ok) { notify('Ошибка создания бронирования', 'error'); return; }
-    notify('Бронирование создано');
-    document.getElementById('book-user-search').value = '';
-    document.getElementById('book-user-id').value     = '';
-    document.getElementById('book-desc').value        = '';
-    document.getElementById('book-date').value = '';
-    document.getElementById('book-time-begin').value = '';
-    document.getElementById('book-time-end').value = '';
-    loadBookings();
-    } catch (e) {
-    notify('Ошибка соединения', 'error');
-    }
-}
-
-async function deleteBooking(id) {
-    if (!confirm(`Удалить бронирование ${id}?`)) return;
-
-    try {
-        const res = await fetch(`${BOOKING_URL}/api/Booking/${id}`, {
-            method: 'DELETE',
-            headers: authHeaders(),
-        });
-    if (!res.ok) { notify('Ошибка удаления', 'error'); return; }
-    notify('Бронирование удалено');
-    loadBookings();
-    } catch (e) {
-    notify('Ошибка соединения', 'error');
-    }
-    }
-
-function makeSortable(tableSelector) {
-    const tables = document.querySelectorAll(tableSelector);
-
-    tables.forEach(table => {
-        const headers = table.querySelectorAll('thead th');
-
-        headers.forEach((th, index) => {
-            if (th.textContent.trim() === '') return;
-            th.classList.add('sortable');
-
-            th.addEventListener('click', () => {
-                const tbody = table.querySelector('tbody');
-                const rows = Array.from(tbody.querySelectorAll('tr'));
-
-                if (rows.length === 0 || rows[0].children.length === 1) return;
-
-                const isAsc = th.classList.contains('asc');
-                headers.forEach(h => h.classList.remove('asc', 'desc'));
-                th.classList.add(isAsc ? 'desc' : 'asc');
-
-                rows.sort((a, b) => {
-                    const aText = a.children[index]?.textContent.trim() || '';
-                    const bText = b.children[index]?.textContent.trim() || '';
-
-                    const aNum = parseFloat(aText.replace(/[^\d.-]/g, ''));
-                    const bNum = parseFloat(bText.replace(/[^\d.-]/g, ''));
-
-                    let comparison = 0;
-                    if (!isNaN(aNum) && !isNaN(bNum)) {
-                        comparison = aNum - bNum;
-                    } else {
-                        comparison = aText.localeCompare(bText, 'ru');
-                    }
-
-                    return isAsc ? -comparison : comparison;
+            try {
+                const res = await fetch(`${IDENTITY_URL}/api/auth/refresh`, {
+                    method: 'POST',
+                    headers: jsonHeaders(),
+                    body: JSON.stringify({ refreshToken })
                 });
 
-                rows.forEach(row => tbody.appendChild(row));
-            });
+                if (!res.ok) {
+                    doLogout();
+                    return false;
+                }
+
+                const data = await res.json();
+                token = data.token;
+                refreshToken = data.refreshToken;
+                return true;
+            } catch (e) {
+                doLogout();
+                return false;
+            }
+        }
+
+        async function fetchWithAuth(url, options = {}) {
+            let response = await fetch(url, options);
+
+            if (response.status === 401 && refreshToken) {
+                console.log('Got 401, trying to refresh token...');
+
+                const refreshed = await refreshAccessToken();
+
+                if (refreshed) {
+                    if (options.headers && options.headers.Authorization) {
+                        options.headers.Authorization = `Bearer ${token}`;
+                    }
+                    response = await fetch(url, options);
+                }
+            }
+
+            return response;
+        }
+
+        async function doLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const errEl = document.getElementById('login-error');
+            errEl.textContent = '';
+
+            if (!username || !password) { errEl.textContent = 'Заполните все поля'; return; }
+
+            try {
+                const usersRes = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
+                if (!usersRes.ok) { errEl.textContent = 'Не удалось подключиться к IdentityService'; return; }
+                const users = await usersRes.json();
+
+                const found = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+                if (!found) { errEl.textContent = 'Пользователь не найден'; return; }
+
+                const loginRes = await fetch(`${IDENTITY_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: jsonHeaders(),
+                    body: JSON.stringify({ telegramId: found.telegramId, password })
+                });
+
+                if (!loginRes.ok) {
+                    const err = await loginRes.json();
+                    errEl.textContent = err.message || 'Неверный пароль';
+                    return;
+                }
+
+                const data = await loginRes.json();
+                token = data.token;
+                refreshToken = data.refreshToken;
+
+                document.getElementById('topbar-info').textContent = `${data.username} (${data.role})`;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+
+                loadUsers();
+
+            } catch (e) {
+                errEl.textContent = 'Ошибка соединения. Проверьте что сервисы запущены и настроен CORS.';
+            }
+        }
+
+        function doLogout() {
+            if (refreshToken) {
+                fetch(`${IDENTITY_URL}/api/auth/revoke`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ refreshToken })
+                }).catch(e => console.error('Failed to revoke token', e));
+            }
+
+            token = null;
+            refreshToken = null;
+            allUsers = [];
+            allCategories = [];
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-password').value = '';
+        }
+
+        // ================================================================
+        // НАВИГАЦИЯ ПО ВКЛАДКАМ
+        // ================================================================
+        function showTab(name, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${name}`).classList.add('active');
+            btn.classList.add('active');
+
+            if (name === 'rooms') { loadCategories(); loadRooms(); }
+            if (name === 'bookings') { loadBookings(); loadUsersForDropdown(); loadRooms(); }
+        }
+
+        // ================================================================
+        // ПОЛЬЗОВАТЕЛИ
+        // ================================================================
+        async function loadUsers() {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка...</td></tr>';
+
+            try {
+                const res = await fetchWithAuth(`${IDENTITY_URL}/api/auth/user/all`, { headers: authHeaders() });
+                const users = await res.json();
+                allUsers = users;
+
+                if (!users.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="loading">Нет пользователей</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = users.map(u => `
+            <tr>
+            <td>${u.firstName || ''} ${u.lastName || ''}</td>
+            <td>${u.username}</td>
+            <td data-sort="${u.role}">
+                <select class="select" onchange="changeRole('${u.id}', this.value)">
+                <option value="Student"       ${u.role === 'Student' ? 'selected' : ''}>Student</option>
+                <option value="Moderator"     ${u.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
+                <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
+                </select>
+            </td>
+            <td class="mono">${u.telegramId}</td>
+            <td>${shortId(u.id)}</td>
+            <td data-sort="${u.isActive ? '1' : '0'}">
+                <button class="btn-${u.isActive ? 'danger' : 'success'} btn-sm"
+                        onclick="toggleUserStatus('${u.id}', ${!u.isActive})">
+                ${u.isActive ? 'Деактивировать' : 'Активировать'}
+                </button>
+            </td>
+            </tr>
+        `).join('');
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
+            }
+        }
+
+        async function changeRole(userId, newRole) {
+            try {
+                const res = await fetch(`${IDENTITY_URL}/api/auth/user/change_role`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ id: userId, role: newRole })
+                });
+                if (!res.ok) { notify('Ошибка изменения роли', 'error'); return; }
+                notify(`Роль изменена на ${newRole}`);
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        // ================================================================
+        // КАТЕГОРИИ
+        // ================================================================
+        async function loadCategories() {
+            const tbody = document.getElementById('categories-tbody');
+            tbody.innerHTML = '<tr><td colspan="4" class="loading">Загрузка...</td></tr>';
+
+            try {
+                const res = await fetch(`${ROOM_URL}/api/categories`);
+                const cats = await res.json();
+                allCategories = cats;
+                refreshCategorySelect();
+
+                if (!cats.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="loading">Нет категорий</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = cats.map(c => `
+            <tr>
+            <td>${c.id}</td>
+            <td>${c.name}</td>
+            <td>${c.description}</td>
+            <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Удалить</button></td>
+            </tr>
+        `).join('');
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="4" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
+            }
+        }
+
+        function refreshCategorySelect() {
+            const select = document.getElementById('room-category-select');
+            if (!allCategories.length) {
+                select.innerHTML = '<option value="">— нет категорий —</option>';
+                return;
+            }
+            select.innerHTML = allCategories.map(c =>
+                `<option value="${c.id}">${c.name} (id: ${c.id})</option>`
+            ).join('');
+        }
+
+        async function createCategory() {
+            const name = document.getElementById('cat-name').value.trim();
+            const description = document.getElementById('cat-desc').value.trim();
+            if (!name || !description) { notify('Заполните все поля', 'error'); return; }
+
+            try {
+                const res = await fetch(`${ROOM_URL}/api/categories`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ name, description })
+                });
+                if (!res.ok) { notify('Ошибка создания категории', 'error'); return; }
+                notify('Категория создана');
+                document.getElementById('cat-name').value = '';
+                document.getElementById('cat-desc').value = '';
+                loadCategories();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        async function deleteCategory(id) {
+            if (!confirm(`Удалить категорию ${id}?`)) return;
+
+            try {
+                const res = await fetch(`${ROOM_URL}/api/categories/${id}`, {
+                    method: 'DELETE',
+                    headers: authHeaders()
+                });
+                if (!res.ok) { notify('Нельзя удалить — есть комнаты в этой категории', 'error'); return; }
+                notify('Категория удалена');
+                loadCategories();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        // ================================================================
+        // КОМНАТЫ
+        // ================================================================
+        async function loadRooms() {
+            const tbody = document.getElementById('rooms-tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка...</td></tr>';
+
+            try {
+                const res = await fetch(`${ROOM_URL}/api/rooms`);
+                const rooms = await res.json();
+
+                allRooms = rooms;
+                refreshRoomSelect();
+
+                if (!rooms.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="loading">Нет комнат</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = rooms.map(r => `
+            <tr>
+            <td>${r.id}</td>
+            <td>${r.name}</td>
+            <td>${r.description}</td>
+            <td>${r.categoryRoomId}</td>
+            <td data-sort="${r.status}">
+                <select class="select" onchange="updateRoomStatus(${r.id}, parseInt(this.value))">
+                    <option value="0" ${r.status === 0 ? 'selected' : ''}>Available</option>
+                    <option value="1" ${r.status === 1 ? 'selected' : ''}>Occupied</option>
+                    <option value="2" ${r.status === 2 ? 'selected' : ''}>Reserved</option>
+                    <option value="3" ${r.status === 3 ? 'selected' : ''}>Maintenance</option>
+                </select>
+            </td>
+            <td class="mono">${r.creationDate || '—'}</td>
+            <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteRoom(${r.id})">Удалить</button></td>
+            </tr>
+        `).join('');
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
+            }
+        }
+
+        async function createRoom() {
+            const name = document.getElementById('room-name').value.trim();
+            const description = document.getElementById('room-desc').value.trim();
+            const categoryRoomId = parseInt(document.getElementById('room-category-select').value);
+            const status = parseInt(document.getElementById('room-status').value);
+
+            if (!name) { notify('Введите название', 'error'); return; }
+            if (!categoryRoomId) { notify('Выберите категорию', 'error'); return; }
+
+            try {
+                const res = await fetch(`${ROOM_URL}/api/rooms`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ name, description, categoryRoomId, status })
+                });
+                if (!res.ok) { notify('Ошибка создания комнаты', 'error'); return; }
+                notify('Комната создана');
+                document.getElementById('room-name').value = '';
+                document.getElementById('room-desc').value = '';
+                loadRooms();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        async function updateRoomStatus(id, status) {
+            try {
+                const res = await fetch(`${ROOM_URL}/api/rooms`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ id, status })
+                });
+                if (!res.ok) { notify('Ошибка обновления', 'error'); return; }
+                notify('Статус обновлён');
+                loadRooms();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        async function deleteRoom(id) {
+            if (!confirm(`Удалить комнату ${id}?`)) return;
+
+            try {
+                const res = await fetch(`${ROOM_URL}/api/rooms/${id}`, {
+                    method: 'DELETE',
+                    headers: authHeaders()
+                });
+                if (!res.ok) { notify('Ошибка удаления', 'error'); return; }
+                notify('Комната удалена');
+                loadRooms();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        // ================================================================
+        // БРОНИРОВАНИЯ
+        // ================================================================
+
+        async function loadUsersForDropdown() {
+            if (allUsers.length) return;
+            try {
+                const res = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
+                allUsers = await res.json();
+            } catch (e) {
+                console.error('Не удалось загрузить пользователей');
+            }
+        }
+
+        function refreshRoomSelect() {
+            const select = document.getElementById('book-room-select');
+            if (!allRooms || !allRooms.length) {
+                select.innerHTML = '<option value="">— нет комнат —</option>';
+                return;
+            }
+            select.innerHTML = allRooms.map(r =>
+                `<option value="${r.id}">${r.name} (ID: ${r.id})</option>`
+            ).join('');
+        }
+
+        function showUserDropdown() {
+            filterUserDropdown();
+        }
+
+        function filterUserDropdown() {
+            const search = document.getElementById('book-user-search').value.toLowerCase();
+            const dropdown = document.getElementById('user-dropdown');
+
+            const filtered = allUsers.filter(u =>
+                u.username.toLowerCase().includes(search) ||
+                (u.firstName && u.firstName.toLowerCase().includes(search)) ||
+                (u.lastName && u.lastName.toLowerCase().includes(search))
+            );
+
+            if (!filtered.length) { dropdown.style.display = 'none'; return; }
+
+            dropdown.innerHTML = filtered.map(u => `
+        <div onclick="selectUser('${u.id}', '${u.username}')"
+                style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; font-size:13px;"
+                onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background=''">
+            ${u.username}
+            <span style="color:#999; font-size:11px; margin-left:6px;">${u.firstName || ''} ${u.lastName || ''}</span>
+        </div>
+        `).join('');
+
+            dropdown.style.display = 'block';
+        }
+
+        function selectUser(userId, username) {
+            document.getElementById('book-user-id').value = userId;
+            document.getElementById('book-user-search').value = username;
+            document.getElementById('user-dropdown').style.display = 'none';
+        }
+
+        async function toggleUserStatus(userId, newStatus) {
+            const action = newStatus ? 'активировать' : 'деактивировать';
+            if (!confirm(`Вы уверены, что хотите ${action} пользователя?`)) return;
+
+            try {
+                const res = await fetch(`${IDENTITY_URL}/api/auth/user/set_active_status`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ id: userId, isActive: newStatus })
+                });
+
+                if (!res.ok) {
+                    notify(`Ошибка: не удалось ${action} пользователя`, 'error');
+                    return;
+                }
+
+                notify(`Пользователь ${newStatus ? 'активирован' : 'деактивирован'}`);
+                loadUsers();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#book-user-search') && !e.target.closest('#user-dropdown')) {
+                document.getElementById('user-dropdown').style.display = 'none';
+            }
         });
-    });
-}
 
-const originalLoadUsers = loadUsers;
-loadUsers = async function () {
-    await originalLoadUsers();
-    makeSortable('#tab-users table');
-};
+        async function loadBookings() {
+            const tbody = document.getElementById('bookings-tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="loading">Загрузка...</td></tr>';
 
-const originalLoadCategories = loadCategories;
-loadCategories = async function () {
-    await originalLoadCategories();
-    makeSortable('#tab-rooms table');
-};
+            try {
+                const res = await fetch(`${BOOKING_URL}/api/booking`, { headers: authHeaders() });
+                const bookings = await res.json();
 
-const originalLoadRooms = loadRooms;
-loadRooms = async function () {
-    await originalLoadRooms();
-    makeSortable('#tab-rooms table');
-};
+                if (!bookings.length) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="loading">Нет бронирований</td></tr>';
+                    return;
+                }
 
-const originalLoadBookings = loadBookings;
-loadBookings = async function () {
-    await originalLoadBookings();
-    makeSortable('#tab-bookings table');
-};
-</script>
+                tbody.innerHTML = bookings.map(b => `
+            <tr>
+            <td>${shortId(b.id)}</td>
+            <td>${shortId(b.userId)}</td>
+            <td>${b.roomId}</td>
+            <td data-sort="${b.status}">
+                <select class="select" onchange="updateBookingStatus('${b.id}', parseInt(this.value))">
+                    <option value="0" ${b.status === 0 ? 'selected' : ''}>NotConfirmed</option>
+                    <option value="1" ${b.status === 1 ? 'selected' : ''}>Canceled</option>
+                    <option value="2" ${b.status === 2 ? 'selected' : ''}>Booked</option>
+                    <option value="3" ${b.status === 3 ? 'selected' : ''}>Completed</option>
+                </select>
+            </td>
+            <td>${b.description || '—'}</td>
+            <td class="mono" data-sort="${b.period.timeBegin}">${formatDate(b.period.timeBegin)}</td>
+            <td class="mono" data-sort="${b.period.timeEnd}">${formatDate(b.period.timeEnd)}</td>
+            <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteBooking('${b.id}')">Удалить</button></td>
+            </tr>
+        `).join('');
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
+            }
+        }
+
+        async function createBooking() {
+            const userId = document.getElementById('book-user-id').value.trim();
+            const roomId = parseInt(document.getElementById('book-room-select').value);
+            const description = document.getElementById('book-desc').value.trim();
+            const status = parseInt(document.getElementById('book-status').value);
+            const date = document.getElementById('book-date').value;
+            const timeBegin = document.getElementById('book-time-begin').value;
+            const timeEnd = document.getElementById('book-time-end').value;
+
+            if (!userId) { notify('Выберите пользователя из списка', 'error'); return; }
+            if (!date || !timeBegin || !timeEnd) { notify('Укажите время начала и конца', 'error'); return; }
+
+            const timeBeginISO = new Date(`${date}T${timeBegin}`).toISOString();
+            const timeEndISO = new Date(`${date}T${timeEnd}`).toISOString();
+
+            const payload = {
+                userId,
+                roomId,
+                description,
+                status,
+                timeBegin: timeBeginISO,
+                timeEnd: timeEndISO
+            };
+
+            try {
+                const res = await fetch(`${BOOKING_URL}/api/booking`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) { notify('Ошибка создания бронирования', 'error'); return; }
+                notify('Бронирование создано');
+                document.getElementById('book-user-search').value = '';
+                document.getElementById('book-user-id').value = '';
+                document.getElementById('book-desc').value = '';
+                document.getElementById('book-date').value = '';
+                document.getElementById('book-time-begin').value = '';
+                document.getElementById('book-time-end').value = '';
+                loadBookings();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        async function updateBookingStatus(id, status) {
+            try {
+                const res = await fetch(`${BOOKING_URL}/api/booking`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ id, status })
+                });
+                if (!res.ok) { notify('Ошибка обновления', 'error'); return; }
+                notify('Статус обновлён');
+                loadBookings();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        async function deleteBooking(id) {
+            if (!confirm(`Удалить бронирование ${id}?`)) return;
+
+            try {
+                const res = await fetch(`${BOOKING_URL}/api/Booking/${id}`, {
+                    method: 'DELETE',
+                    headers: authHeaders(),
+                });
+                if (!res.ok) { notify('Ошибка удаления', 'error'); return; }
+                notify('Бронирование удалено');
+                loadBookings();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        // ================================================================
+        // СОРТИРОВКА ТАБЛИЦ
+        // ================================================================
+        function makeSortable(tableSelector) {
+            const tables = document.querySelectorAll(tableSelector);
+            if (!tables.length) return;
+
+            tables.forEach(table => {
+                const headers = table.querySelectorAll('thead th');
+
+                headers.forEach((th, index) => {
+                    if (th.textContent.trim() === '') return;
+                    th.classList.add('sortable');
+
+                    th.addEventListener('click', () => {
+                        const tbody = table.querySelector('tbody');
+                        const rows = Array.from(tbody.querySelectorAll('tr'));
+                        if (rows.length === 0 || rows[0].children.length === 1) return;
+
+                        const isAsc = th.classList.contains('asc');
+                        headers.forEach(h => h.classList.remove('asc', 'desc'));
+                        th.classList.add(isAsc ? 'desc' : 'asc');
+
+                        rows.sort((a, b) => {
+                            const aCell = a.children[index];
+                            const bCell = b.children[index];
+                            const aText = (aCell?.dataset.sort ?? aCell?.textContent ?? '').trim();
+                            const bText = (bCell?.dataset.sort ?? bCell?.textContent ?? '').trim();
+
+                            const aNum = parseFloat(aText.replace(/[^\d.-]/g, ''));
+                            const bNum = parseFloat(bText.replace(/[^\d.-]/g, ''));
+
+                            let comparison = (!isNaN(aNum) && !isNaN(bNum))
+                                ? aNum - bNum
+                                : aText.localeCompare(bText, 'ru');
+
+                            return isAsc ? -comparison : comparison;
+                        });
+
+                        rows.forEach(row => tbody.appendChild(row));
+                    });
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            makeSortable('#tab-users table');
+            makeSortable('#tab-rooms table');
+            makeSortable('#tab-bookings table');
+        });
+    </script>
 </body>
 </html>
