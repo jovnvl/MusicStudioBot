@@ -113,10 +113,11 @@ namespace BookingService.Repositories
             return true;
         }
 
-        public async Task<bool> HasOverlappingBookingAsync(int roomId, BookingPeriod? bookingPeriod, CancellationToken ct)
+        public async Task<bool> HasOverlappingBookingAsync(int roomId, BookingPeriod? bookingPeriod, Guid id, CancellationToken ct)
         {
             return await _dataContext.Bookings.AnyAsync(
                 b => b.RoomId == roomId
+                  && b.Id != id
                   && (b.Period != null && bookingPeriod != null
                       && b.Period.TimeBegin < bookingPeriod.TimeEnd
                       && b.Period.TimeEnd > bookingPeriod.TimeBegin)

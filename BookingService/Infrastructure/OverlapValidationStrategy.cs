@@ -23,6 +23,7 @@ namespace BookingService.Infrastructure
                 await _repository.HasOverlappingBookingAsync(
                     booking.RoomId,
                     booking.Period,
+                    booking.Id,
                     ct);
 
             if (hasOverlap)
