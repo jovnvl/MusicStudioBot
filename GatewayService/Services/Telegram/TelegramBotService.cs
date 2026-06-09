@@ -78,6 +78,16 @@ namespace GatewayService.Services.Telegram
                 var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
                 await handler.HandleBookingStatusSelectionCallback(chatId, data);
             }
+            else if (data.StartsWith("roomstatus_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                await handler.HandleRoomStatusSelectionCallback(chatId, data);
+            }
+            else if (data.StartsWith("newroomstatus_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                await handler.HandleRoomNewStatusCallback(chatId, data);
+            }
             else if (data == "cancel")
             {
                 var stateService = scope.ServiceProvider.GetRequiredService<IConversationStateService>();
@@ -232,6 +242,13 @@ namespace GatewayService.Services.Telegram
                         var bookingStatusHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
                         var conv = scope.ServiceProvider.GetRequiredService<IConversationStateService>().GetOrCreate(chatId);
                         await bookingStatusHandler.HandleUpdateBookingInput(chatId, conv);
+                        break;
+                    }
+                case "⚙️ Сменить статус комнаты":
+                    {
+                        var roomHandler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                        var conv = scope.ServiceProvider.GetRequiredService<IConversationStateService>().GetOrCreate(chatId);
+                        await roomHandler.HandleUpdateRoomStatusInput(chatId, conv);
                         break;
                     }
 

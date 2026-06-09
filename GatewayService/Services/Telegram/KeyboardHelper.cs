@@ -69,7 +69,7 @@ namespace GatewayService.Services.Telegram
         public static InlineKeyboardMarkup GetRoomSelectionKeyboard(List<RoomResponse> rooms)
         {
             var buttons = rooms
-                .Where(r => r.Status == 0)
+                .Where(r => r.Status == RoomStatus.Available)
                 .Select(r => new List<InlineKeyboardButton>
                 {
                     InlineKeyboardButton.WithCallbackData($"🏠 {r.Name}", $"room_{r.Id}")
@@ -148,6 +148,35 @@ namespace GatewayService.Services.Telegram
                 ResizeKeyboard = true,
                 OneTimeKeyboard = true // Скрывается после нажатия
             };
+        }
+
+        public static InlineKeyboardMarkup GetRoomStatusSelectionKeyboard(List<RoomResponse> rooms)
+        {
+            var buttons = rooms
+                .Select(r => new List<InlineKeyboardButton>
+                {
+            InlineKeyboardButton.WithCallbackData(
+                $"{r.Name} — {(r.Status == RoomStatus.Available ? "✅" : "🔧")}",
+                $"roomstatus_{r.Id}")
+                })
+                .ToList();
+
+            buttons.Add(new List<InlineKeyboardButton>
+            {
+                InlineKeyboardButton.WithCallbackData("❌ Отмена", "cancel")
+            });
+
+            return new InlineKeyboardMarkup(buttons);
+        }
+
+        public static InlineKeyboardMarkup GetRoomNewStatusKeyboard()
+        {
+            return new InlineKeyboardMarkup(new[]
+            {
+                new[] { InlineKeyboardButton.WithCallbackData("✅ Доступна",     "newroomstatus_Available") },
+                new[] { InlineKeyboardButton.WithCallbackData("🔧 Недоступна",   "newroomstatus_Maintenance") },
+                new[] { InlineKeyboardButton.WithCallbackData("❌ Отмена",       "cancel") }
+            });
         }
     }
 }

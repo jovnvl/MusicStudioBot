@@ -1,9 +1,11 @@
 ﻿using GatewayService.Configuration;
 using GatewayService.DTO;
+using GatewayService.Models.Conversation;
 using GatewayService.Models.DTOs;
 using GatewayService.Models.Enums;
 using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
+using GatewayService.Services.Telegram;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -12,14 +14,23 @@ namespace GatewayService.Handlers
     public class RoomCommandHandler : CommandHandler
     {
         private readonly ServicesSettings _servicesSettings;
+        private readonly IConversationStateService _conversationService;
         private const int CreateRoomCategoryCommandPartsCount = 2;
         private const int CreateRoomCommandPartsCount = 3;
         private const int UpdateRoomCommandMinPartsCount = 2;
         private const int GetRoomCommandMinPartsCount = 1;
 
-        public RoomCommandHandler(IHttpClientFactory httpClientFactory, ILogger<CommandHandler> logger, IUserSessionService sessionService, IMessageSender messageSender, IRabbitMQPublisher rabbitMQPublisher, IOptions<ServicesSettings> servicesSettings) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
+        public RoomCommandHandler(
+            IHttpClientFactory httpClientFactory, 
+            ILogger<CommandHandler> logger, 
+            IUserSessionService sessionService, 
+            IMessageSender messageSender, 
+            IRabbitMQPublisher rabbitMQPublisher, 
+            IOptions<ServicesSettings> servicesSettings,
+            IConversationStateService conversationService) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
         {
             _servicesSettings = servicesSettings.Value;
+            _conversationService = conversationService;
         }
 
         protected string MapRoomStatusToEmoji(RoomStatus? status)
@@ -279,6 +290,125 @@ namespace GatewayService.Handlers
                 _logger.LogError(ex, "HTTP request to RoomService failed");
                 await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
                 await LogToServiceAsync("Error", "request-fail", "HTTP request to RoomService failed");
+            }
+        }
+
+        public async Task HandleUpdateRoomStatusInput(long chatId, UserConversationData conversation)
+        {
+            if (!await IsPermitted(chatId, UserRole.Moderator))
+            {
+                conversation.Clear();
+                return;
+            }
+
+            try
+            {
+                var response = await SendRequestAsync(HttpMethod.Get,
+                    $"{_servicesSettings.RoomServiceUrl}/api/rooms", chatId);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "Ошибка получения списка комнат.");
+                    conversation.Clear();
+                    return;
+                }
+
+                var body = await response.Content.ReadAsStringAsync();
+                var rooms = JsonSerializer.Deserialize<List<RoomResponse>>(body);
+
+                if (rooms == null || rooms.Count == 0)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "Комнат пока нет.");
+                    conversation.Clear();
+                    return;
+                }
+
+                conversation.State = ConversationState.AwaitingRoomStatusSelection;
+
+                await _messageSender.SendMessageAsync(chatId,
+                    "Смена статуса комнаты\n\nВыберите комнату:",
+                    replyMarkup: KeyboardHelper.GetRoomStatusSelectionKeyboard(rooms));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to load rooms for status update");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка. Попробуйте позже.");
+                conversation.Clear();
+            }
+        }
+
+        public async Task HandleRoomStatusSelectionCallback(long chatId, string callbackData)
+        {
+            var conversation = _conversationService.GetOrCreate(chatId);
+
+            if (conversation.State != ConversationState.AwaitingRoomStatusSelection)
+            {
+                await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
+                return;
+            }
+
+            var roomIdString = callbackData.Replace("roomstatus_", "");
+            if (!int.TryParse(roomIdString, out int roomId))
+            {
+                await _messageSender.SendMessageAsync(chatId, "Ошибка выбора комнаты.");
+                conversation.Clear();
+                return;
+            }
+
+            conversation.SetValue("roomId", roomId);
+            conversation.State = ConversationState.AwaitingRoomStatusConfirmation;
+
+            await _messageSender.SendMessageAsync(chatId,
+                "Выберите новый статус:",
+                replyMarkup: KeyboardHelper.GetRoomNewStatusKeyboard());
+        }
+
+        public async Task HandleRoomNewStatusCallback(long chatId, string callbackData)
+        {
+            var conversation = _conversationService.GetOrCreate(chatId);
+
+            if (conversation.State != ConversationState.AwaitingRoomStatusConfirmation)
+            {
+                await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
+                return;
+            }
+
+            var statusString = callbackData.Replace("newroomstatus_", "");
+            if (!Enum.TryParse<RoomStatus>(statusString, out var newStatus))
+            {
+                await _messageSender.SendMessageAsync(chatId, "Ошибка выбора статуса.");
+                conversation.Clear();
+                return;
+            }
+
+            var roomId = conversation.GetValue<int>("roomId");
+
+            try
+            {
+                var updateRequest = new UpdateRoomRequest { Id = roomId, Status = newStatus };
+                var response = await SendRequestAsync(HttpMethod.Put,
+                    $"{_servicesSettings.RoomServiceUrl}/api/rooms", chatId, updateRequest);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "✅ Статус комнаты обновлён!");
+                    await LogToServiceAsync("Information", "update-room-status",
+                        $"Room {roomId} status changed to {newStatus}");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"❌ Ошибка: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update room status");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером.");
+            }
+            finally
+            {
+                conversation.Clear();
             }
         }
     }

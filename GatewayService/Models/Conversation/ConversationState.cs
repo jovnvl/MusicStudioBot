@@ -12,12 +12,16 @@
         // Обновление профиля
         AwaitingUpdateProfileField,
 
-        // Создание бронирования
+        // Создание/изменение бронирования
         AwaitingRoomSelection,
         AwaitingBookingDate,
         AwaitingBookingStartTime,
         AwaitingBookingEndTime,
         AwaitingBookingSelection,
-        AwaitingBookingStatus
+        AwaitingBookingStatus,
+
+        //Изменение статуса комнаты
+        AwaitingRoomStatusSelection,
+        AwaitingRoomStatusConfirmation,
     }
 }
