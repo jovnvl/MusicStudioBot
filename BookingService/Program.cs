@@ -100,6 +100,7 @@ namespace BookingService
                 IBookingValidationPipeline,
                 BookingValidationPipeline>();
             //add BookingLockProvider
+            builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<
                 IBookingLockProvider,
                 BookingLockProvider>();

@@ -1,17 +1,27 @@
 ﻿using BookingService.Infrastructure.Concurrency;
+using Microsoft.Extensions.Caching.Memory;
+
 namespace BookingService.Infrastructure.Concurrency
 {
-    using System.Collections.Concurrent;
-
+    
     public sealed class BookingLockProvider : IBookingLockProvider
     {
-        private readonly ConcurrentDictionary<int, SemaphoreSlim> _locks = new();
+        private readonly IMemoryCache _cache;
+
+        public BookingLockProvider(IMemoryCache cache)
+        {
+            _cache = cache;
+        }
 
         public SemaphoreSlim GetLock(int roomId)
         {
-            return _locks.GetOrAdd(
-                roomId,
-                _ => new SemaphoreSlim(1, 1));
+            return _cache.GetOrCreate(roomId, entry =>
+            {
+                entry.SlidingExpiration =
+                    TimeSpan.FromMinutes(10);
+
+                return new SemaphoreSlim(1, 1);
+            })!;
         }
     }
 }
