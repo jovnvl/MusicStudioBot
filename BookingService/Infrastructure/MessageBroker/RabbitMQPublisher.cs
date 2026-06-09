@@ -5,7 +5,7 @@ using System.Threading.Channels;
 
 namespace BookingService.Infrastructure.MessageBroker
 {
-    public class RabbitMQPublisher : IRabbitMQPublisher
+    public class RabbitMQPublisher : IMessagePublisher
     {
         private readonly ILogger<RabbitMQPublisher> _logger;
         private readonly string _hostName;

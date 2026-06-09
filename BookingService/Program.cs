@@ -7,6 +7,7 @@ using BookingService.Infrastructure.Events;
 using BookingService.Infrastructure.MessageBroker;
 using BookingService.Repositories;
 using BookingService.Services;
+using Confluent.Kafka;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -49,8 +50,27 @@ namespace BookingService
 
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+            //RabbitMQ
+            builder.Services.AddSingleton<IMessagePublisher, RabbitMQPublisher>();
+            /*Kafka
+            builder.Services.AddSingleton<
+                IProducer<string, string>>(
+                _ =>
+                {
+                    var config = new ProducerConfig
+                    {
+                        BootstrapServers =
+                            builder.Configuration["Kafka:BootstrapServers"]
+                    };
 
-            builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
+                    return new ProducerBuilder<string, string>(
+                        config)
+                        .Build();
+                });
+            builder.Services.AddSingleton<
+                IMessagePublisher,
+                KafkaPublisher>();
+            */
             //Add Domain Events
             builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
 

@@ -9,10 +9,10 @@ namespace BookingService.Domain.Handlers
     : IEventHandler<StatisticEvent>
     {
         private readonly ILogger<StatisticEventHandler> _logger;
-        private readonly IRabbitMQPublisher _publisher;
+        private readonly IMessagePublisher _publisher;
 
         public StatisticEventHandler(ILogger<StatisticEventHandler> logger,
-            IRabbitMQPublisher publisher)
+            IMessagePublisher publisher)
         {
             _logger = logger;
             _publisher = publisher;

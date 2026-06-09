@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace BookingService.Infrastructure.MessageBroker
 {
-    public class RabbitMQAdapter : IRabbitMQPublisher
+    public class RabbitMQAdapter : IMessagePublisher
     {
         private readonly ILogger<RabbitMQAdapter> _logger;
         private readonly string _hostName;
