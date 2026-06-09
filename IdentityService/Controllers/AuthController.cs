@@ -56,7 +56,7 @@ namespace IdentityService.Controllers
                 var result = await _authService.LoginAsync(request);
                 return Ok(result);
             }
-            catch (NullReferenceException ex)
+            catch (KeyNotFoundException ex)
             {
                 await LogToServiceAsync("Error", "user-not-found", $"User {request.TelegramId} not found");
                 return BadRequest(new { message = ex.Message });
@@ -66,7 +66,7 @@ namespace IdentityService.Controllers
                 await LogToServiceAsync("Error", "incorrect-password", $"Password of user {request.TelegramId} is incorrect");
                 return BadRequest(new { message = ex.Message });
             }
-            catch (AccessViolationException ex)
+            catch (UnauthorizedAccessException ex)
             {
                 await LogToServiceAsync("Error", "profile-deactivated", $"User {request.TelegramId} profile is inactive");
                 return BadRequest(new { message = ex.Message });
@@ -83,12 +83,12 @@ namespace IdentityService.Controllers
                 await LogToServiceAsync("Information", "telegram-login", $"Telegram login successful for user {request.TelegramId}");
                 return Ok(result);
             }
-            catch (NullReferenceException ex)
+            catch (KeyNotFoundException ex)
             {
                 await LogToServiceAsync("Error", "user-not-found", $"User {request.TelegramId} not found");
                 return BadRequest(new { message = ex.Message });
             }
-            catch (AccessViolationException ex)
+            catch (UnauthorizedAccessException ex)
             {
                 await LogToServiceAsync("Error", "profile-deactivated", $"User {request.TelegramId} profile is inactive");
                 return BadRequest(new { message = ex.Message });
@@ -114,7 +114,7 @@ namespace IdentityService.Controllers
 
         // GET api/auth/user/all
         [HttpGet("user/all")]
-        //[Authorize(Roles = "Moderator,Administrator")]
+        [Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetUsers()
         {
             try
@@ -186,7 +186,7 @@ namespace IdentityService.Controllers
                 await LogToServiceAsync("Error", "request-reading-fail", $"Change role request for user {request.Id} reading failed");
                 return BadRequest(new { message = ex.Message });
             }
-            catch (NullReferenceException ex)
+            catch (KeyNotFoundException ex)
             {
                 await LogToServiceAsync("Error", "user-not-found", $"User {request.Id} not found");
                 return BadRequest(new { message = ex.Message });
@@ -205,7 +205,7 @@ namespace IdentityService.Controllers
                 await LogToServiceAsync("Information", $"user-{action}", $"User {user.Username} (ID: {user.Id}) {action}");
                 return Ok(user);
             }
-            catch (NullReferenceException ex)
+            catch (KeyNotFoundException ex)
             {
                 await LogToServiceAsync("Error", "user-not-found", "User not found");
                 return BadRequest(new { message = ex.Message });
@@ -227,12 +227,12 @@ namespace IdentityService.Controllers
                 await LogToServiceAsync("Error", "invalid-refresh-token", ex.Message);
                 return Unauthorized(new { message = ex.Message });
             }
-            catch (NullReferenceException ex)
+            catch (KeyNotFoundException ex)
             {
                 await LogToServiceAsync("Error", "null-reference-exception", ex.Message);
                 return Unauthorized(new { message = ex.Message });
             }
-            catch (AccessViolationException ex)
+            catch (UnauthorizedAccessException ex)
             {
                 await LogToServiceAsync("Error", "access-violation", ex.Message);
                 return Unauthorized(new { message = ex.Message });
