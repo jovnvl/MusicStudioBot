@@ -645,6 +645,7 @@
         let allUsers = [];
         let allCategories = [];
         let allRooms = [];
+        let allBookings = [];
 
         // ================================================================
         // УВЕДОМЛЕНИЕ
@@ -1158,6 +1159,8 @@
                 const res = await fetch(`${BOOKING_URL}/api/booking`, { headers: authHeaders() });
                 const bookings = await res.json();
 
+                allBookings = bookings;
+
                 if (!bookings.length) {
                     tbody.innerHTML = '<tr><td colspan="8" class="loading">Нет бронирований</td></tr>';
                     return;
@@ -1233,11 +1236,25 @@
         }
 
         async function updateBookingStatus(id, status) {
+            const booking = allBookings.find(b => b.id === id);
+            if (!booking) { notify('Бронирование не найдено', 'error'); return; }
+
+            const payload = {
+                id: booking.id,
+                userId: booking.userId,
+                roomId: booking.roomId,
+                description: booking.description ?? '',
+                status: status,
+                creationDate: booking.creationDate,
+                timeBegin: booking.period.timeBegin,
+                timeEnd: booking.period.timeEnd
+            };
+
             try {
                 const res = await fetch(`${BOOKING_URL}/api/booking`, {
                     method: 'PUT',
                     headers: authHeaders(),
-                    body: JSON.stringify({ id, status })
+                    body: JSON.stringify(payload)
                 });
                 if (!res.ok) { notify('Ошибка обновления', 'error'); return; }
                 notify('Статус обновлён');
