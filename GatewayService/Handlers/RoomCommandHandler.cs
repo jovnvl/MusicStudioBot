@@ -343,6 +343,7 @@ namespace GatewayService.Handlers
 
             if (conversation.State != ConversationState.AwaitingRoomStatusSelection)
             {
+                conversation.Clear();
                 await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
                 return;
             }
@@ -369,6 +370,7 @@ namespace GatewayService.Handlers
 
             if (conversation.State != ConversationState.AwaitingRoomStatusConfirmation)
             {
+                conversation.Clear();
                 await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
                 return;
             }

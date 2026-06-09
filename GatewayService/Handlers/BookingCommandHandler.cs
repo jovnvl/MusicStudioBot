@@ -154,6 +154,7 @@ namespace GatewayService.Handlers
 
             if (conversation.State != ConversationState.AwaitingBookingSelection)
             {
+                conversation.Clear();
                 await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
                 return;
             }
@@ -182,6 +183,7 @@ namespace GatewayService.Handlers
 
             if (conversation.State != ConversationState.AwaitingBookingStatus)
             {
+                conversation.Clear();
                 await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
                 return;
             }
@@ -410,6 +412,7 @@ namespace GatewayService.Handlers
 
             if (conversation.State != ConversationState.AwaitingRoomSelection)
             {
+                conversation.Clear();
                 await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
                 return;
             }
