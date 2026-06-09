@@ -45,7 +45,7 @@ namespace IdentityService.Services
             var user = await _context.Users.FindAsync(request.Id);
             if (user == null)
             {
-                throw new NullReferenceException("Пользователь не найден.");
+                throw new KeyNotFoundException("Пользователь не найден.");
             }
 
             if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var requestRole))
@@ -82,7 +82,7 @@ namespace IdentityService.Services
             
             if (user == null)
             {
-                throw new NullReferenceException("Пользователь не найден.");
+                throw new KeyNotFoundException("Пользователь не найден.");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -92,8 +92,29 @@ namespace IdentityService.Services
 
             if (!user.IsActive)
             {           
-                throw new AccessViolationException("Доступ закрыт.");
+                throw new UnauthorizedAccessException("Доступ закрыт.");
             }
+
+            var token = GenerateJwtToken(user);
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+            return new AuthResponse { Token = token, RefreshToken = refreshToken.Token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
+        }
+
+        public async Task<AuthResponse> AdminLoginAsync(AdminLoginRequest request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+
+            if (user == null)
+                throw new KeyNotFoundException("Пользователь не найден.");
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                throw new AuthenticationException("Неверный пароль.");
+
+            if (!user.IsActive)
+                throw new UnauthorizedAccessException("Доступ закрыт.");
+
+            if (user.Role == UserRole.Student)
+                throw new UnauthorizedAccessException("Недостаточно прав.");
 
             var token = GenerateJwtToken(user);
             var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
@@ -149,7 +170,7 @@ namespace IdentityService.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
-                throw new NullReferenceException("Пользователь не найден.");
+                throw new KeyNotFoundException("Пользователь не найден.");
             }
 
             user.IsActive = isActive;
@@ -173,14 +194,14 @@ namespace IdentityService.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]!));
             if (key == null)
             {
-                throw new NullReferenceException("Не удалось получить Secretkey");
+                throw new KeyNotFoundException("Не удалось получить Secretkey");
             }
 
             // 3. Создаем подпись (алгоритм HMAC-SHA256)
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             if (credentials == null)
             {
-                throw new NullReferenceException("Не удалось создать подпись (алгоритм HMAC-SHA256)");
+                throw new KeyNotFoundException("Не удалось создать подпись (алгоритм HMAC-SHA256)");
             }
 
             // 4. Настраиваем токен
@@ -204,7 +225,7 @@ namespace IdentityService.Services
 
             if (refreshToken == null)
             {
-                throw new NullReferenceException("Refresh token не найден");
+                throw new KeyNotFoundException("Refresh token не найден");
             }
             if (refreshToken.IsExpired)
             { 
@@ -214,11 +235,11 @@ namespace IdentityService.Services
             var user = await _context.Users.FindAsync(refreshToken.UserId);
             if (user == null)
             {
-                throw new NullReferenceException("Пользователь не найден");
+                throw new KeyNotFoundException("Пользователь не найден");
             }
             if (!user.IsActive)
             {
-                throw new AccessViolationException("Доступ закрыт.");
+                throw new UnauthorizedAccessException("Доступ закрыт.");
             }
 
             var newAccessToken = GenerateJwtToken(user);
@@ -247,11 +268,11 @@ namespace IdentityService.Services
             
             if (user == null)
             {
-                throw new NullReferenceException("Пользователь не найден");
+                throw new KeyNotFoundException("Пользователь не найден");
             }
             if (!user.IsActive)
             {
-                throw new AccessViolationException("Доступ закрыт.");
+                throw new UnauthorizedAccessException("Доступ закрыт.");
             }
 
             var token = GenerateJwtToken(user);

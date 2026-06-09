@@ -1,8 +1,6 @@
-﻿using GatewayService.Configuration;
-using GatewayService.Services;
+﻿using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
 using GatewayService.Services.Telegram;
-using Microsoft.Extensions.Options;
 
 namespace GatewayService.Handlers
 {

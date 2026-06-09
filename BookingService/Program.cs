@@ -87,9 +87,9 @@ namespace BookingService
                 IBookingValidationStrategy,
                 DateValidationStrategy>();
 
-            builder.Services.AddScoped<
-                IBookingValidationStrategy,
-                FutureBookingValidationStrategy>();
+            //builder.Services.AddScoped<
+            //    IBookingValidationStrategy,
+            //    FutureBookingValidationStrategy>();
 
             builder.Services.AddScoped<
                 IBookingValidationStrategy,
