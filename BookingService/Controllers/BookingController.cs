@@ -19,7 +19,7 @@ namespace BookingService.Controllers
         }
 
         [HttpGet]
-        //[Authorize(Roles = "Moderator,Administrator")]
+        [Authorize]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsAsync(CancellationToken ct = default)
         {
             try
@@ -41,7 +41,7 @@ namespace BookingService.Controllers
         }
 
         [HttpGet("user/{userId:guid}", Name = "GetBookingsByUserIdAsync")]
-        //[Authorize(Roles = "Moderator,Administrator")]
+        [Authorize]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByUserIdAsync(Guid userId, CancellationToken ct = default)
         {
             try
@@ -63,7 +63,7 @@ namespace BookingService.Controllers
         }
 
         [HttpGet("room/{roomId:int}", Name = "GetBookingsByRoomIdAsync")]
-        //[Authorize(Roles = "Moderator,Administrator")]
+        [Authorize]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByRoomIdAsync(int roomId, CancellationToken ct = default)
         {
             try
@@ -84,8 +84,8 @@ namespace BookingService.Controllers
             }
         }
 
-        [HttpGet("booking/{description}", Name = "GetBookingsByDescriptionAsync")]
-        //[Authorize(Roles = "Moderator,Administrator")]
+        [HttpGet("description/{description}", Name = "GetBookingsByDescriptionAsync")]
+        [Authorize]
         public async Task<ActionResult<IReadOnlyList<Booking>>> GetBookingsByDescriptionAsync(string? description, CancellationToken ct = default)
         {
             try
@@ -107,7 +107,7 @@ namespace BookingService.Controllers
         }
 
         [HttpGet("booking/{id:guid}", Name = "GetBookingAsync")]
-        //[Authorize]
+        [Authorize]
         public async Task<ActionResult<Booking>> GetBookingAsync(Guid id, CancellationToken ct = default)
         {
             try
@@ -133,7 +133,7 @@ namespace BookingService.Controllers
         }
         
         [HttpPost]
-        //[Authorize]
+        [Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<Booking>> CreateBookingAsync([FromBody] BookingDto dto, CancellationToken ct)
         {
             if (!ModelState.IsValid)
@@ -161,7 +161,7 @@ namespace BookingService.Controllers
         }
 
         [HttpPut]
-        //[Authorize]
+        [Authorize(Roles = "Moderator,Administrator")]
         public async Task<ActionResult<Booking>> UpdateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
             try
@@ -190,7 +190,7 @@ namespace BookingService.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        //[Authorize]
+        [Authorize(Roles = "Moderator,Administrator")]
         public async Task<IActionResult> DeleteBookingAsync(Guid id, CancellationToken ct = default)
         {
             try
