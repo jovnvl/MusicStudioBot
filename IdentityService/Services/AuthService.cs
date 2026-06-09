@@ -92,8 +92,29 @@ namespace IdentityService.Services
 
             if (!user.IsActive)
             {           
-                throw new AccessViolationException("Доступ закрыт.");
+                throw new UnauthorizedAccessException("Доступ закрыт.");
             }
+
+            var token = GenerateJwtToken(user);
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
+            return new AuthResponse { Token = token, RefreshToken = refreshToken.Token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
+        }
+
+        public async Task<AuthResponse> AdminLoginAsync(AdminLoginRequest request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+
+            if (user == null)
+                throw new KeyNotFoundException("Пользователь не найден.");
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                throw new AuthenticationException("Неверный пароль.");
+
+            if (!user.IsActive)
+                throw new UnauthorizedAccessException("Доступ закрыт.");
+
+            if (user.Role == UserRole.Student)
+                throw new UnauthorizedAccessException("Недостаточно прав.");
 
             var token = GenerateJwtToken(user);
             var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
@@ -218,81 +239,7 @@ namespace IdentityService.Services
             }
             if (!user.IsActive)
             {
-                throw new public async Task<AuthResponse> RefreshTokenAsync(string refreshTokenString)
-        {
-            var refreshToken = await _refreshTokenService.GetRefreshTokenAsync(refreshTokenString);
-
-            if (refreshToken == null)
-            {
-                throw new KeyNotFoundException("Refresh token не найден");
-            }
-            if (refreshToken.IsExpired)
-            {
-                throw new SecurityTokenException("Недействительный refresh token");
-            }
-
-            var user = await _context.Users.FindAsync(refreshToken.UserId);
-            if (user == null)
-            {
-                throw new KeyNotFoundException("Пользователь не найден");
-            }
-            if (!user.IsActive)
-            {
-                throw new public async Task<AuthResponse> RefreshTokenAsync(string refreshTokenString)
-        {
-            var refreshToken = await _refreshTokenService.GetRefreshTokenAsync(refreshTokenString);
-
-            if (refreshToken == null)
-            {
-                throw new KeyNotFoundException("Refresh token не найден");
-            }
-            if (refreshToken.IsExpired)
-            {
-                throw new SecurityTokenException("Недействительный refresh token");
-            }
-
-            var user = await _context.Users.FindAsync(refreshToken.UserId);
-            if (user == null)
-            {
-                throw new KeyNotFoundException("Пользователь не найден");
-            }
-            if (!user.IsActive)
-            {
                 throw new UnauthorizedAccessException("Доступ закрыт.");
-            }
-
-            var newAccessToken = GenerateJwtToken(user);
-            var newRefreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
-
-            await _refreshTokenService.RevokeRefreshTokenAsync(refreshTokenString);
-
-            return new AuthResponse
-            {
-                Token = newAccessToken,
-                RefreshToken = newRefreshToken.Token,
-                UserId = user.Id,
-                Username = user.Username,
-                Role = user.Role.ToString()
-            };
-        }
-        ("Доступ закрыт.");
-            }
-
-            var newAccessToken = GenerateJwtToken(user);
-            var newRefreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
-
-            await _refreshTokenService.RevokeRefreshTokenAsync(refreshTokenString);
-
-            return new AuthResponse
-            {
-                Token = newAccessToken,
-                RefreshToken = newRefreshToken.Token,
-                UserId = user.Id,
-                Username = user.Username,
-                Role = user.Role.ToString()
-            };
-        }
-        ("Доступ закрыт.");
             }
 
             var newAccessToken = GenerateJwtToken(user);
@@ -325,7 +272,7 @@ namespace IdentityService.Services
             }
             if (!user.IsActive)
             {
-                throw new AccessViolationException("Доступ закрыт.");
+                throw new UnauthorizedAccessException("Доступ закрыт.");
             }
 
             var token = GenerateJwtToken(user);

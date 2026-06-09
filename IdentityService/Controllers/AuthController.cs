@@ -46,6 +46,29 @@ namespace IdentityService.Controllers
             }
         }
 
+        [HttpPost("admin/login")]
+        public async Task<ActionResult<AuthResponse>> AdminLogin([FromBody] AdminLoginRequest request)
+        {
+            try
+            {
+                var result = await _authService.AdminLoginAsync(request);
+                await LogToServiceAsync("Information", "admin-login", $"Admin login: {request.Username}");
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (AuthenticationException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+        }
+
         // POST api/auth/login
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)

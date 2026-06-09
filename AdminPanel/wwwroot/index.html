@@ -767,17 +767,10 @@
             if (!username || !password) { errEl.textContent = 'Заполните все поля'; return; }
 
             try {
-                const usersRes = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
-                if (!usersRes.ok) { errEl.textContent = 'Не удалось подключиться к IdentityService'; return; }
-                const users = await usersRes.json();
-
-                const found = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-                if (!found) { errEl.textContent = 'Пользователь не найден'; return; }
-
-                const loginRes = await fetch(`${IDENTITY_URL}/api/auth/login`, {
+                const loginRes = await fetch(`${IDENTITY_URL}/api/auth/admin/login`, {
                     method: 'POST',
                     headers: jsonHeaders(),
-                    body: JSON.stringify({ telegramId: found.telegramId, password })
+                    body: JSON.stringify({ username, password })
                 });
 
                 if (!loginRes.ok) {
