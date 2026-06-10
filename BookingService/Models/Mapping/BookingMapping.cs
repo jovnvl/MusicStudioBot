@@ -5,7 +5,7 @@ namespace BookingService.Models.Mapping
 {
     public static class BookingMapping
     {
-        public static BookingDto ToDto(this Booking b) => new()
+        public static BookingDto ToDto(this Booking b) => new BookingDto()
         {
             Id = b.Id,
             CreationDate = b.CreationDate,
@@ -17,15 +17,14 @@ namespace BookingService.Models.Mapping
             Description = (b.Description) ?? string.Empty
         };
 
-        public static Booking ToEntity(this BookingDto dto) => new()
-        {
-            Id = dto.Id,
-            CreationDate = dto.CreationDate,
-            UserId = dto.UserId,
-            RoomId = dto.RoomId,
-            Period = BookingPeriod.Create(dto.TimeBegin, dto.TimeEnd),
-            Status = dto.Status,
-            Description = dto.Description
-        };
+        public static Booking ToEntity(this BookingDto dto) => Booking.Clone(
+            id: dto.Id,
+            creationDate: dto.CreationDate,
+            userId: dto.UserId,
+            roomId: dto.RoomId,
+            period: BookingPeriod.Create(dto.TimeBegin, dto.TimeEnd),
+            status: dto.Status,
+            description: dto.Description
+            );
     }
 }
