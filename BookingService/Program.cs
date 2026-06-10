@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using RabbitMQ.Client;
 using System.Text;
 
 namespace BookingService
@@ -52,9 +53,26 @@ namespace BookingService
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             //RabbitMQ
-            builder.Services.AddSingleton<RabbitMqConnection>();
-            builder.Services.AddSingleton<IMessagePublisher, RabbitMQAdapter>();
+            //Простой способ публикации сообщений в RabbitMQ - создавать новое соединение и канал для каждого сообщения. Это просто, но неэффективно из-за накладных расходов на установление соединения.
+            //builder.Services.AddSingleton<RabbitMqConnection>();
+            //builder.Services.AddSingleton<IMessagePublisher, RabbitMQAdapter>();
 
+            //для публикации с помощью пула каналов RabbitMQ
+            //    пул каналов, то схема регистрации обычно такая:
+            //1.ConnectionFactory(Singleton)
+            builder.Services.AddSingleton(sp =>
+            {
+                var configuration = sp.GetRequiredService<IConfiguration>();
+
+                return new ConnectionFactory
+                {
+                    HostName = configuration["RabbitMQ:Host"] ?? "localhost",
+                };
+            });
+            //2.RabbitMqChannelPool(Singleton)
+            builder.Services.AddSingleton<RabbitMqChannelPool>();
+            //3.RabbitMQAdapterPool(Singleton)
+            builder.Services.AddSingleton<IMessagePublisher, RabbitMQAdapterPool>();
             /*Kafka
             builder.Services.AddSingleton<
                 IProducer<string, string>>(
