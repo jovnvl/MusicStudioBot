@@ -268,14 +268,12 @@ namespace BookingService.Services
                 eventType,
                 message),
                 ct);
-           // await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(level, eventType, message), ct);
         }
 
         
         private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
             await _dispatcher.DispatchAsync(new StatisticEvent(eventType), ct);
-            //await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}" }, ct);
         }
     }
 }

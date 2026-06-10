@@ -16,11 +16,13 @@ namespace BookingService.Infrastructure.MessageBroker
 
         private readonly SemaphoreSlim _publishLock = new(1, 1);
 
-        public RabbitMQAdapter(ILogger<RabbitMQAdapter> logger, IConfiguration configuration)
+        public RabbitMQAdapter(ILogger<RabbitMQAdapter> logger, RabbitMqConnection rabbitMqConnection, IConfiguration configuration)
         {
             _logger = logger;
             _hostName = configuration["RabbitMQ:Host"] ?? "localhost";
             _factory = new ConnectionFactory { HostName = _hostName };
+            _connection = rabbitMqConnection.Connection;
+            _channel = rabbitMqConnection.Channel;
         }
 
         private async Task EnsureConnectedAsync(CancellationToken ct)

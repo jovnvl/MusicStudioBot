@@ -52,7 +52,9 @@ namespace BookingService
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             //RabbitMQ
-            builder.Services.AddSingleton<IMessagePublisher, RabbitMQPublisher>();
+            builder.Services.AddSingleton<RabbitMqConnection>();
+            builder.Services.AddSingleton<IMessagePublisher, RabbitMQAdapter>();
+
             /*Kafka
             builder.Services.AddSingleton<
                 IProducer<string, string>>(
