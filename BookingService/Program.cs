@@ -90,7 +90,9 @@ namespace BookingService
                 });
             builder.Services.AddSingleton<
                 IMessagePublisher,
-                KafkaPublisher>();
+                KafkaAdapter>();
+            //если не нужен отдельный класс-держатель для продюсера:
+            builder.Services.AddSingleton<KafkaProducerHolder>();
             */
             //Add Domain Events
             builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
