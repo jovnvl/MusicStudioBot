@@ -74,6 +74,16 @@ namespace GatewayService.Services.Telegram
                 var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
                 await handler.HandleBookingSelectionCallback(chatId, data);
             }
+            else if (data.StartsWith("cancelbook_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                await handler.HandleCancelBookingSelectionCallback(chatId, data);
+            }
+            else if (data.StartsWith("confirmcancel_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                await handler.HandleConfirmCancelBookingCallback(chatId, data);
+            }
             else if (data.StartsWith("status_"))
             {
                 var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
@@ -199,6 +209,14 @@ namespace GatewayService.Services.Telegram
                         conversation.Clear();
                         var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
                         await handler.StartCreateBooking(chatId, conversation);
+                        break;
+                    }
+
+                case "❌ Отменить бронирование":
+                    {
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                        await handler.HandleCancelMyBookingInput(chatId, conversation);
                         break;
                     }
 

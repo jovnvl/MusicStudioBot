@@ -30,6 +30,7 @@ namespace GatewayService.Services.Telegram
                 {
                     new KeyboardButton("📋 Мои бронирования"),
                     new KeyboardButton("📅 Забронировать комнату"),
+                    new KeyboardButton("❌ Отменить бронирование"),
                 };
 
                 List<KeyboardButton> keyboardButtonsLine3 = new List<KeyboardButton>
@@ -128,6 +129,38 @@ namespace GatewayService.Services.Telegram
             });
 
             return new InlineKeyboardMarkup(buttons);
+        }
+
+        public static InlineKeyboardMarkup GetCancelBookingSelectionKeyboard(List<BookingResponse> bookings,
+            Dictionary<int, string> roomNames)
+        {
+            var buttons = bookings
+                .Select(b =>
+                {
+                    var roomName = roomNames.TryGetValue(b.RoomId, out var r) ? r : "Неизвестно";
+                    var label = $"{roomName} — {b.Period?.TimeBegin?.ToLocalTime():dd.MM HH:mm}";
+                    return new List<InlineKeyboardButton>
+                    {
+                        InlineKeyboardButton.WithCallbackData(label, $"cancelbook_{b.Id}")
+                    };
+                })
+                .ToList();
+
+            buttons.Add(new List<InlineKeyboardButton>
+            {
+                InlineKeyboardButton.WithCallbackData("❌ Отмена", "cancel")
+            });
+
+            return new InlineKeyboardMarkup(buttons);
+        }
+
+        public static InlineKeyboardMarkup GetCancelBookingConfirmKeyboard(Guid bookingId)
+        {
+            return new InlineKeyboardMarkup(new[]
+            {
+                new [] { InlineKeyboardButton.WithCallbackData("✅ Да, отменить", $"confirmcancel_{bookingId}") },
+                new [] { InlineKeyboardButton.WithCallbackData("❌ Нет", "cancel") }
+            });
         }
 
         public static InlineKeyboardMarkup GetCancelKeyboard()

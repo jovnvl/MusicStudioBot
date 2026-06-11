@@ -19,6 +19,8 @@
         AwaitingBookingEndTime,
         AwaitingBookingSelection,
         AwaitingBookingStatus,
+        AwaitingCancelBookingSelection,
+        AwaitingCancelBookingConfirmation,
 
         //Изменение статуса комнаты
         AwaitingRoomStatusSelection,

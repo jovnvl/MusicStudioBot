@@ -336,7 +336,10 @@ namespace GatewayService.Handlers
                     return;
                 }
 
-                bookings = bookings.OrderBy(b => b.Period?.TimeBegin).ToList();
+                bookings = bookings
+                    .Where(b => b.Status != BookingStatus.Canceled && b.Status != BookingStatus.Completed)
+                    .OrderBy(b => b.Period?.TimeBegin)
+                    .ToList();
 
                 _logger.LogInformation("Successful receipt of bookings information.");
                 await LogToServiceAsync("Information", "get-bookings", "Successful receipt of bookings information.");
@@ -564,6 +567,167 @@ namespace GatewayService.Handlers
             finally
             {
                 // Очищаем состояние диалога
+                conversation.Clear();
+            }
+        }
+
+        public async Task HandleCancelMyBookingInput(long chatId, UserConversationData conversation)
+        {
+            if (!await IsPermitted(chatId, UserRole.Student))
+            {
+                conversation.Clear();
+                return;
+            }
+
+            try
+            {
+                var token = await _sessionService.GetTokensAsync(chatId);
+                var claims = new JwtSecurityTokenHandler().ReadJwtToken(token.accessToken).Claims;
+                var tokenId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var response = await SendRequestAsync(HttpMethod.Get,
+                    $"{_servicesSettings.BookingServiceUrl}/api/booking/user/{tokenId}", chatId);
+                var body = await response.Content.ReadAsStringAsync();
+                var bookings = JsonSerializer.Deserialize<List<BookingResponse>>(body);
+
+                if (bookings == null || bookings.Count == 0)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "Нет активных бронирований.");
+                    conversation.Clear();
+                    return;
+                }
+
+                bookings = bookings
+                    .Where(b => b.Status != BookingStatus.Canceled && b.Status != BookingStatus.Completed)
+                    .OrderBy(b => b.Period?.TimeBegin)
+                    .ToList();
+
+                if (bookings.Count == 0)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "Нет активных бронирований.");
+                    conversation.Clear();
+                    return;
+                }
+
+                var roomNames = await GetRoomNamesAsync(bookings.Select(b => b.RoomId).Distinct(), chatId);
+
+                conversation.State = ConversationState.AwaitingCancelBookingSelection;
+
+                var keyboard = KeyboardHelper.GetCancelBookingSelectionKeyboard(bookings, roomNames);
+                await _messageSender.SendMessageAsync(chatId,
+                    "❌ Отмена бронирования\n\nВыберите бронирование:",
+                    replyMarkup: keyboard);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request to BookingService failed");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером. Попробуйте позже.");
+                conversation.Clear();
+            }
+        }
+
+        public async Task HandleCancelBookingSelectionCallback(long chatId, string callbackData)
+        {
+            var conversation = _conversationService.GetOrCreate(chatId);
+
+            if (conversation.State != ConversationState.AwaitingCancelBookingSelection)
+            {
+                conversation.Clear();
+                await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
+                return;
+            }
+
+            var bookingIdString = callbackData.Replace("cancelbook_", "");
+            if (!Guid.TryParse(bookingIdString, out Guid bookingId))
+            {
+                await _messageSender.SendMessageAsync(chatId, "Ошибка выбора бронирования.");
+                conversation.Clear();
+                return;
+            }
+
+            conversation.SetValue("bookingId", bookingId);
+            conversation.State = ConversationState.AwaitingCancelBookingConfirmation;
+
+            await _messageSender.SendMessageAsync(chatId,
+                "Вы уверены, что хотите отменить бронирование?",
+                replyMarkup: KeyboardHelper.GetCancelBookingConfirmKeyboard(bookingId));
+        }
+
+        public async Task HandleConfirmCancelBookingCallback(long chatId, string callbackData)
+        {
+            var conversation = _conversationService.GetOrCreate(chatId);
+
+            if (conversation.State != ConversationState.AwaitingCancelBookingConfirmation)
+            {
+                conversation.Clear();
+                await _messageSender.SendMessageAsync(chatId, "Ошибка состояния. Начните заново.");
+                return;
+            }
+
+            var bookingIdString = callbackData.Replace("confirmcancel_", "");
+            if (!Guid.TryParse(bookingIdString, out Guid bookingId))
+            {
+                await _messageSender.SendMessageAsync(chatId, "Ошибка. Попробуйте заново.");
+                conversation.Clear();
+                return;
+            }
+
+            try
+            {
+                var getResponse = await SendRequestAsync(HttpMethod.Get,
+                    $"{_servicesSettings.BookingServiceUrl}/api/booking/booking/{bookingId}", chatId);
+
+                if (!getResponse.IsSuccessStatusCode)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "Ошибка: бронирование не найдено.");
+                    conversation.Clear();
+                    return;
+                }
+
+                var body = await getResponse.Content.ReadAsStringAsync();
+                var booking = JsonSerializer.Deserialize<BookingResponse>(body);
+
+                if (booking == null)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "Ошибка получения данных бронирования.");
+                    conversation.Clear();
+                    return;
+                }
+
+                var updateRequest = new BookingRequest
+                {
+                    Id = bookingId,
+                    Description = booking.Description ?? string.Empty,
+                    UserId = booking.UserId,
+                    RoomId = booking.RoomId,
+                    Status = BookingStatus.Canceled,
+                    TimeBegin = booking.Period?.TimeBegin,
+                    TimeEnd = booking.Period?.TimeEnd
+                };
+
+                var putResponse = await SendRequestAsync(HttpMethod.Put,
+                    $"{_servicesSettings.BookingServiceUrl}/api/booking",
+                    chatId,
+                    updateRequest);
+
+                if (putResponse.IsSuccessStatusCode)
+                {
+                    await _messageSender.SendMessageAsync(chatId, "✅ Бронирование отменено.");
+                    await LogToServiceAsync("Information", "cancel-booking", $"Booking {bookingId} canceled by user");
+                }
+                else
+                {
+                    var error = await putResponse.Content.ReadAsStringAsync();
+                    await _messageSender.SendMessageAsync(chatId, $"❌ Ошибка: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to cancel booking");
+                await _messageSender.SendMessageAsync(chatId, "Ошибка соединения с сервером.");
+            }
+            finally
+            {
                 conversation.Clear();
             }
         }
