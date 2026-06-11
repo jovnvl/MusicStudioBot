@@ -646,6 +646,7 @@
         let allCategories = [];
         let allRooms = [];
         let allBookings = [];
+        let changePasswordUserId = null;
 
         // ================================================================
         // УВЕДОМЛЕНИЕ
@@ -844,26 +845,27 @@
                 }
 
                 tbody.innerHTML = users.map(u => `
-            <tr>
-            <td>${u.firstName || ''} ${u.lastName || ''}</td>
-            <td>${u.username}</td>
-            <td data-sort="${u.role}">
-                <select class="select" onchange="changeRole('${u.id}', this.value)">
-                <option value="Student"       ${u.role === 'Student' ? 'selected' : ''}>Student</option>
-                <option value="Moderator"     ${u.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
-                <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
-                </select>
-            </td>
-            <td class="mono">${u.telegramId}</td>
-            <td>${shortId(u.id)}</td>
-            <td data-sort="${u.isActive ? '1' : '0'}">
-                <button class="btn-${u.isActive ? 'danger' : 'success'} btn-sm"
-                        onclick="toggleUserStatus('${u.id}', ${!u.isActive})">
-                ${u.isActive ? 'Деактивировать' : 'Активировать'}
-                </button>
-            </td>
-            </tr>
-        `).join('');
+                <tr>
+                <td>${u.firstName || ''} ${u.lastName || ''}</td>
+                <td>${u.username}</td>
+                <td data-sort="${u.role}">
+                    <select class="select" onchange="changeRole('${u.id}', this.value)">
+                    <option value="Student"       ${u.role === 'Student' ? 'selected' : ''}>Student</option>
+                    <option value="Moderator"     ${u.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
+                    <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
+                    </select>
+                </td>
+                <td class="mono">${u.telegramId}</td>
+                <td>${shortId(u.id)}</td>
+                <td data-sort="${u.isActive ? '1' : '0'}">
+                    <button class="btn-${u.isActive ? 'danger' : 'success'} btn-sm"
+                            onclick="toggleUserStatus('${u.id}', ${!u.isActive})">
+                    ${u.isActive ? 'Деактивировать' : 'Активировать'}
+                    </button>
+                    <button class="btn-outline btn-sm" onclick="openChangePassword('${u.id}', '${u.username}')">🔑 Пароль</button>
+                </td>
+                </tr>
+            `).join('');
 
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="6" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
@@ -884,6 +886,45 @@
             }
         }
 
+        function openChangePassword(userId, username) {
+            changePasswordUserId = userId;
+            document.getElementById('change-password-username').textContent = `Пользователь: ${username}`;
+            document.getElementById('change-password-input').value = '';
+            document.getElementById('change-password-error').textContent = '';
+            document.getElementById('change-password-modal').style.display = 'flex';
+        }
+
+        function closeChangePassword() {
+            changePasswordUserId = null;
+            document.getElementById('change-password-modal').style.display = 'none';
+        }
+
+        async function submitChangePassword() {
+            const newPassword = document.getElementById('change-password-input').value.trim();
+            const errEl = document.getElementById('change-password-error');
+            errEl.textContent = '';
+
+            if (!newPassword) { errEl.textContent = 'Введите пароль'; return; }
+            if (newPassword.length < 4) { errEl.textContent = 'Минимум 4 символа'; return; }
+
+            try {
+                const res = await fetchWithAuth(`${IDENTITY_URL}/api/auth/user/change_password`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ userId: changePasswordUserId, newPassword })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    errEl.textContent = err.message || 'Ошибка';
+                    return;
+                }
+
+                closeChangePassword();
+            } catch (e) {
+                errEl.textContent = 'Ошибка соединения';
+            }
+        }
         // ================================================================
         // КАТЕГОРИИ
         // ================================================================
@@ -903,13 +944,13 @@
                 }
 
                 tbody.innerHTML = cats.map(c => `
-            <tr>
-            <td>${c.id}</td>
-            <td>${c.name}</td>
-            <td>${c.description}</td>
-            <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Удалить</button></td>
-            </tr>
-        `).join('');
+                <tr>
+                <td>${c.id}</td>
+                <td>${c.name}</td>
+                <td>${c.description}</td>
+                <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Удалить</button></td>
+                </tr>
+            `).join('');
 
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="4" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
@@ -984,23 +1025,23 @@
                 }
 
                 tbody.innerHTML = rooms.map(r => `
-            <tr>
-            <td>${r.id}</td>
-            <td>${r.name}</td>
-            <td>${r.description}</td>
-            <td>${r.categoryRoomId}</td>
-            <td data-sort="${r.status}">
-                <select class="select" onchange="updateRoomStatus(${r.id}, parseInt(this.value))">
-                    <option value="0" ${r.status === 0 ? 'selected' : ''}>Available</option>
-                    <option value="1" ${r.status === 1 ? 'selected' : ''}>Occupied</option>
-                    <option value="2" ${r.status === 2 ? 'selected' : ''}>Reserved</option>
-                    <option value="3" ${r.status === 3 ? 'selected' : ''}>Maintenance</option>
-                </select>
-            </td>
-            <td class="mono">${r.creationDate || '—'}</td>
-            <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteRoom(${r.id})">Удалить</button></td>
-            </tr>
-        `).join('');
+                <tr>
+                <td>${r.id}</td>
+                <td>${r.name}</td>
+                <td>${r.description}</td>
+                <td>${r.categoryRoomId}</td>
+                <td data-sort="${r.status}">
+                    <select class="select" onchange="updateRoomStatus(${r.id}, parseInt(this.value))">
+                        <option value="0" ${r.status === 0 ? 'selected' : ''}>Available</option>
+                        <option value="1" ${r.status === 1 ? 'selected' : ''}>Occupied</option>
+                        <option value="2" ${r.status === 2 ? 'selected' : ''}>Reserved</option>
+                        <option value="3" ${r.status === 3 ? 'selected' : ''}>Maintenance</option>
+                    </select>
+                </td>
+                <td class="mono">${r.creationDate || '—'}</td>
+                <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteRoom(${r.id})">Удалить</button></td>
+                </tr>
+            `).join('');
 
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="7" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
@@ -1105,13 +1146,13 @@
             if (!filtered.length) { dropdown.style.display = 'none'; return; }
 
             dropdown.innerHTML = filtered.map(u => `
-        <div onclick="selectUser('${u.id}', '${u.username}')"
-                style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; font-size:13px;"
-                onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background=''">
-            ${u.username}
-            <span style="color:#999; font-size:11px; margin-left:6px;">${u.firstName || ''} ${u.lastName || ''}</span>
-        </div>
-        `).join('');
+            <div onclick="selectUser('${u.id}', '${u.username}')"
+                    style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; font-size:13px;"
+                    onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background=''">
+                ${u.username}
+                <span style="color:#999; font-size:11px; margin-left:6px;">${u.firstName || ''} ${u.lastName || ''}</span>
+            </div>
+            `).join('');
 
             dropdown.style.display = 'block';
         }
@@ -1167,24 +1208,24 @@
                 }
 
                 tbody.innerHTML = bookings.map(b => `
-            <tr>
-            <td>${shortId(b.id)}</td>
-            <td>${shortId(b.userId)}</td>
-            <td>${b.roomId}</td>
-            <td data-sort="${b.status}">
-                <select class="select" onchange="updateBookingStatus('${b.id}', parseInt(this.value))">
-                    <option value="0" ${b.status === 0 ? 'selected' : ''}>NotConfirmed</option>
-                    <option value="1" ${b.status === 1 ? 'selected' : ''}>Canceled</option>
-                    <option value="2" ${b.status === 2 ? 'selected' : ''}>Booked</option>
-                    <option value="3" ${b.status === 3 ? 'selected' : ''}>Completed</option>
-                </select>
-            </td>
-            <td>${b.description || '—'}</td>
-            <td class="mono" data-sort="${b.period.timeBegin}">${formatDate(b.period.timeBegin)}</td>
-            <td class="mono" data-sort="${b.period.timeEnd}">${formatDate(b.period.timeEnd)}</td>
-            <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteBooking('${b.id}')">Удалить</button></td>
-            </tr>
-        `).join('');
+                <tr>
+                <td>${shortId(b.id)}</td>
+                <td>${shortId(b.userId)}</td>
+                <td>${b.roomId}</td>
+                <td data-sort="${b.status}">
+                    <select class="select" onchange="updateBookingStatus('${b.id}', parseInt(this.value))">
+                        <option value="0" ${b.status === 0 ? 'selected' : ''}>NotConfirmed</option>
+                        <option value="1" ${b.status === 1 ? 'selected' : ''}>Canceled</option>
+                        <option value="2" ${b.status === 2 ? 'selected' : ''}>Booked</option>
+                        <option value="3" ${b.status === 3 ? 'selected' : ''}>Completed</option>
+                    </select>
+                </td>
+                <td>${b.description || '—'}</td>
+                <td class="mono" data-sort="${b.period.timeBegin}">${formatDate(b.period.timeBegin)}</td>
+                <td class="mono" data-sort="${b.period.timeEnd}">${formatDate(b.period.timeEnd)}</td>
+                <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteBooking('${b.id}')">Удалить</button></td>
+                </tr>
+            `).join('');
 
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
@@ -1331,5 +1372,17 @@
             makeSortable('#tab-bookings table');
         });
     </script>
+    <div id="change-password-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#ffffff; padding:2rem; border-radius:12px; min-width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.3); position:relative; z-index:1001;">
+            <h3>🔑 Смена пароля</h3>
+            <p id="change-password-username" style="color:var(--text-secondary); margin-bottom:1rem;"></p>
+            <input type="password" id="change-password-input" placeholder="Новый пароль" style="width:100%; margin-bottom:1rem;">
+            <div style="display:flex; gap:.5rem; justify-content:flex-end;">
+                <button class="btn-outline btn-sm" onclick="closeChangePassword()">Отмена</button>
+                <button class="btn-primary btn-sm" onclick="submitChangePassword()">Сохранить</button>
+            </div>
+            <div id="change-password-error" class="error-msg"></div>
+        </div>
+    </div>
 </body>
 </html>
