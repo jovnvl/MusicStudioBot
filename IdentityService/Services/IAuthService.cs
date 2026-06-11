@@ -16,5 +16,6 @@ namespace IdentityService.Services
         Task RevokeTokenAsync(string refreshToken);
         Task<AuthResponse> TelegramLoginAsync(long telegramId);
         Task<AuthResponse> AdminLoginAsync(AdminLoginRequest request);
+        Task<UserResponse> ChangePasswordAsync(ChangePasswordRequest request);
     }
 }

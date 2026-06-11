@@ -153,6 +153,20 @@ namespace IdentityService.Services
             return new AuthResponse{Token = token, RefreshToken = refreshToken.Token, UserId = user.Id, Username = user.Username, Role = user.Role.ToString() };
         }
 
+        public async Task<UserResponse> ChangePasswordAsync(ChangePasswordRequest request)
+        {
+            var user = await _context.Users.FindAsync(request.UserId);
+            if (user == null)
+            {
+                throw new AuthenticationException("Пользователь не найден.");
+            }
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.PasswordHash = passwordHash;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return MapToResponse(user);
+        }
+
         public async Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
         {
             var user = await _context.Users.FindAsync(userId);

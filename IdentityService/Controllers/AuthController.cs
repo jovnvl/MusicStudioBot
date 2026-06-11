@@ -193,6 +193,23 @@ namespace IdentityService.Controllers
             }
         }
 
+        // PUT api/auth/user/change_password
+        [HttpPut("user/change_password")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<ActionResult<UserResponse>> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            try
+            {
+                var result = await _authService.ChangePasswordAsync(request);
+                await LogToServiceAsync("Information", "change-password", $"Password changed for user {request.UserId}");
+                return Ok(result);
+            }
+            catch (AuthenticationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         // PUT api/auth/user/change_role
         [HttpPut("user/change_role")]
         [Authorize(Roles = "Administrator")]
