@@ -61,7 +61,8 @@ namespace GatewayService.Services.Telegram
 
             if (data.StartsWith("menu_"))
             {
-                await HandleMenuCallbackWithScope(chatId, data, scope);
+                var username = callbackQuery.From?.Username ?? callbackQuery.From?.Id.ToString() ?? chatId.ToString();
+                await HandleMenuCallbackWithScope(chatId, data, scope, username);
             }
             else if (data.StartsWith("room_"))
             {
@@ -129,6 +130,7 @@ namespace GatewayService.Services.Telegram
                 case "📝 Регистрация":
                     {
                         conversation.Clear();
+                        conversation.SetValue("username", message.From?.Username ?? message.From?.Id.ToString() ?? chatId.ToString());
                         conversation.State = ConversationState.AwaitingRegistrationPassword;
                         await _messageSender.SendMessageAsync(chatId,
                             "📝 Регистрация\n\nВведите пароль:",
@@ -292,7 +294,7 @@ namespace GatewayService.Services.Telegram
             }
         }
 
-        private async Task HandleMenuCallbackWithScope(long chatId, string callbackData, IServiceScope scope)
+        private async Task HandleMenuCallbackWithScope(long chatId, string callbackData, IServiceScope scope, string telegramUsername)
         {
             var stateService = scope.ServiceProvider.GetRequiredService<IConversationStateService>();
             var conversation = stateService.GetOrCreate(chatId);
@@ -301,6 +303,7 @@ namespace GatewayService.Services.Telegram
             // Команды, не требующие авторизации
             if (callbackData == "menu_register")
             {
+                conversation.SetValue("username", telegramUsername);
                 conversation.State = ConversationState.AwaitingRegistrationPassword;
                 await _messageSender.SendMessageAsync(chatId,
                     "📝 Регистрация\n\nВведите пароль:",

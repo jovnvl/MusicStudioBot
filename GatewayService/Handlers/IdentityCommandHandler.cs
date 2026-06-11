@@ -100,7 +100,7 @@ namespace GatewayService.Handlers
 
             var registerRequest = new RegisterRequest
             {
-                Username = chatId.ToString(), // Используем chatId как username
+                Username = conversation.GetValue<string>("username") ?? chatId.ToString(),
                 Password = password!,
                 FirstName = firstName,
                 LastName = lastName,
@@ -129,7 +129,7 @@ namespace GatewayService.Handlers
                     }
 
                     await _messageSender.SendMessageAsync(chatId,
-                        "✅ Регистрация успешна!\n\nТеперь используйте /login password для входа.");
+                        "✅ Регистрация успешна!\n\nТеперь используйте /start для входа.");
                     await LogToServiceAsync("Information", "user-registered",
                         $"New user registered: {chatId}");
                 }
@@ -160,22 +160,20 @@ namespace GatewayService.Handlers
             }
 
             var parts = input.Split(' ');
-            if (parts.Length < 3)
+            if (parts.Length < 2)
             {
                 await _messageSender.SendMessageAsync(chatId,
-                    "❌ Неверный формат!\n\nИспользуйте: username firstname lastname\nПример: new_user - NewLastName");
+                    "❌ Неверный формат!\n\nИспользуйте: firstname lastname\nПример: NewFirstName -");
                 return;
             }
 
             var updateProfileRequest = new UpdateProfileRequest
             {
                 Username = parts[0] != "-" ? parts[0] : null,
-                FirstName = parts[1] != "-" ? parts[1] : null,
-                LastName = parts[2] != "-" ? parts[2] : null
+                FirstName = parts[1] != "-" ? parts[1] : null
             };
 
-            if (updateProfileRequest.Username == null &&
-                updateProfileRequest.FirstName == null &&
+            if (updateProfileRequest.FirstName == null &&
                 updateProfileRequest.LastName == null)
             {
                 await _messageSender.SendMessageAsync(chatId,
