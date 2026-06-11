@@ -364,7 +364,7 @@ namespace GatewayService.Handlers
 
         public async Task StartCreateBooking(long chatId, UserConversationData conversation)
         {
-            if (!await IsPermitted(chatId, UserRole.Moderator))
+            if (!await IsPermitted(chatId, UserRole.Student))
             {
                 conversation.Clear();
                 return;

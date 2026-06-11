@@ -182,7 +182,7 @@ namespace GatewayService.Services.Telegram
                         conversation.Clear();
                         conversation.State = ConversationState.AwaitingUpdateProfileField;
                         await _messageSender.SendMessageAsync(chatId,
-                            "✏️ Обновление профиля\n\nВведите данные в формате:\nusername firstname lastname\n\nИспользуйте '-' для пропуска.");
+                            "✏️ Обновление профиля\n\nВведите данные в формате:\nfirstname lastname\n\nИспользуйте '-' для пропуска.");
                         break;
                     }
 
@@ -241,6 +241,14 @@ namespace GatewayService.Services.Telegram
                         conversation.Clear();
                         var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
                         await handler.HandleUpdateRoomStatusInput(chatId, conversation);
+                        break;
+                    }
+
+                case "/logout":
+                    {
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
+                        await handler.HandleLogoutCommand(chatId);
                         break;
                     }
 

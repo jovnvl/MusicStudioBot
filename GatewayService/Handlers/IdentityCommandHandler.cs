@@ -13,7 +13,6 @@ namespace GatewayService.Handlers
     public class IdentityCommandHandler : CommandHandler
     {
         private readonly ServicesSettings _servicesSettings;
-        private readonly IConversationStateService _conversationService;
 
         public IdentityCommandHandler(
             IHttpClientFactory httpClientFactory, 
@@ -21,11 +20,9 @@ namespace GatewayService.Handlers
             IUserSessionService sessionService, 
             IMessageSender messageSender, 
             IRabbitMQPublisher rabbitMQPublisher, 
-            IOptions<ServicesSettings> servicesSettings,
-            IConversationStateService conversationService) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
+            IOptions<ServicesSettings> servicesSettings) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
         {
             _servicesSettings = servicesSettings.Value;
-            _conversationService = conversationService;
         }
         
         public async Task HandleMyProfileCommand(long chatId)
@@ -150,8 +147,8 @@ namespace GatewayService.Handlers
 
             var updateProfileRequest = new UpdateProfileRequest
             {
-                Username = parts[0] != "-" ? parts[0] : null,
-                FirstName = parts[1] != "-" ? parts[1] : null
+                FirstName = parts[0] != "-" ? parts[0] : null,
+                LastName = parts[1] != "-" ? parts[1] : null
             };
 
             if (updateProfileRequest.FirstName == null &&
