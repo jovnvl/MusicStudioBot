@@ -128,6 +128,10 @@ namespace IdentityService.Services
                 throw new InvalidOperationException("Пользователь уже зарегистрирован.");
             }
 
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(
+                request.Password ?? Guid.NewGuid().ToString()
+            );
+
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -135,7 +139,7 @@ namespace IdentityService.Services
                 Username = request.Username, 
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                PasswordHash = passwordHash,
                 Role = UserRole.Student,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,

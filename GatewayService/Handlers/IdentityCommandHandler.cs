@@ -66,23 +66,6 @@ namespace GatewayService.Handlers
             }
         }
 
-        public async Task HandleRegistrationPasswordInput(long chatId, string password, UserConversationData conversation)
-        {
-            if (password.Length < 4)
-            {
-                await _messageSender.SendMessageAsync(chatId,
-                    "❌ Пароль должен содержать минимум 4 символа. Попробуйте снова:");
-                return;
-            }
-
-            conversation.SetValue("password", password);
-            conversation.State = ConversationState.AwaitingRegistrationFirstName;
-
-            await _messageSender.SendMessageAsync(chatId,
-                "Введите ваше имя:",
-                replyMarkup: KeyboardHelper.GetCancelKeyboard());
-        }
-
         public async Task HandleRegistrationFirstNameInput(long chatId, string firstName, UserConversationData conversation)
         {
             conversation.SetValue("firstName", firstName);
@@ -95,13 +78,11 @@ namespace GatewayService.Handlers
 
         public async Task HandleRegistrationLastNameInput(long chatId, string lastName, UserConversationData conversation)
         {
-            var password = conversation.GetValue<string>("password");
             var firstName = conversation.GetValue<string>("firstName");
 
             var registerRequest = new RegisterRequest
             {
                 Username = conversation.GetValue<string>("username") ?? chatId.ToString(),
-                Password = password!,
                 FirstName = firstName,
                 LastName = lastName,
                 TelegramId = chatId

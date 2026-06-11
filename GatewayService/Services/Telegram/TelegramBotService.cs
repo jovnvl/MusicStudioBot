@@ -141,9 +141,9 @@ namespace GatewayService.Services.Telegram
                     {
                         conversation.Clear();
                         conversation.SetValue("username", message.From?.Username ?? message.From?.Id.ToString() ?? chatId.ToString());
-                        conversation.State = ConversationState.AwaitingRegistrationPassword;
+                        conversation.State = ConversationState.AwaitingRegistrationFirstName;
                         await _messageSender.SendMessageAsync(chatId,
-                            "📝 Регистрация\n\nВведите пароль:",
+                            "📝 Регистрация\n\nВведите Имя:",
                             replyMarkup: KeyboardHelper.GetLoginPasswordKeyboard());
                         break;
                     }
@@ -271,11 +271,6 @@ namespace GatewayService.Services.Telegram
         {
             switch (conversation.State)
             {
-                case ConversationState.AwaitingRegistrationPassword:
-                    var regHandler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
-                    await regHandler.HandleRegistrationPasswordInput(chatId, messageText, conversation);
-                    break;
-
                 case ConversationState.AwaitingRegistrationFirstName:
                     var regHandler2 = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
                     await regHandler2.HandleRegistrationFirstNameInput(chatId, messageText, conversation);
@@ -322,9 +317,9 @@ namespace GatewayService.Services.Telegram
             if (callbackData == "menu_register")
             {
                 conversation.SetValue("username", telegramUsername);
-                conversation.State = ConversationState.AwaitingRegistrationPassword;
+                conversation.State = ConversationState.AwaitingRegistrationFirstName;
                 await _messageSender.SendMessageAsync(chatId,
-                    "📝 Регистрация\n\nВведите пароль:",
+                    "📝 Регистрация\n\nВведите Имя:",
                     replyMarkup: KeyboardHelper.GetCancelKeyboard());
                 return;
             }
@@ -343,9 +338,9 @@ namespace GatewayService.Services.Telegram
             switch (callbackData)
             {
                 case "menu_register":
-                    conversation.State = ConversationState.AwaitingRegistrationPassword;
+                    conversation.State = ConversationState.AwaitingRegistrationFirstName;
                     await _messageSender.SendMessageAsync(chatId,
-                        "📝 Регистрация\n\nВведите пароль:",
+                        "📝 Регистрация\n\nВведите Имя:",
                         replyMarkup: KeyboardHelper.GetCancelKeyboard());
                     break;
 

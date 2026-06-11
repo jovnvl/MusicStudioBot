@@ -5,7 +5,6 @@
         None,
 
         // Регистрация
-        AwaitingRegistrationPassword,
         AwaitingRegistrationFirstName,
         AwaitingRegistrationLastName,
 
