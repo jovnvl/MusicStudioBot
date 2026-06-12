@@ -133,7 +133,7 @@ namespace BookingService.Controllers
         }
         
         [HttpPost]
-        [Authorize(Roles = "Moderator,Administrator")]
+        [Authorize(Roles = "Student,Moderator,Administrator")]
         public async Task<ActionResult<Booking>> CreateBookingAsync([FromBody] BookingDto dto, CancellationToken ct)
         {
             if (!ModelState.IsValid)
@@ -161,7 +161,7 @@ namespace BookingService.Controllers
         }
 
         [HttpPut]
-        [Authorize(Roles = "Moderator,Administrator")]
+        [Authorize(Roles = "Student,Moderator,Administrator")]
         public async Task<ActionResult<Booking>> UpdateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
             try
@@ -190,7 +190,7 @@ namespace BookingService.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize(Roles = "Moderator,Administrator")]
+        [Authorize(Roles = "Student,Moderator,Administrator")]
         public async Task<IActionResult> DeleteBookingAsync(Guid id, CancellationToken ct = default)
         {
             try

@@ -1,10 +1,7 @@
 ﻿namespace BookingService.Domain.Events
 {
-    public interface IEventDispatcher
+    public interface IEventDispatcher<in TEvent> where TEvent : IEvent 
     {
-        Task DispatchAsync<TEvent>(
-            TEvent @event,
-            CancellationToken ct = default)
-            where TEvent : IEvent;
+        Task DispatchAsync(TEvent @event, CancellationToken ct = default);
     }
 }

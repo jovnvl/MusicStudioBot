@@ -18,16 +18,18 @@ namespace BookingService.Services
         private readonly IBookingRepository _bookingRepository;
         private readonly ILogger<BookingService> _logger;
 
-        private readonly IEventDispatcher _dispatcher;
+        private readonly IEventDispatcher<BookingEvent> _bookingDispatcher;
+        private readonly IEventDispatcher<StatisticEvent> _statisticDispatcher;
         private readonly IBookingValidationPipeline _validationPipeline;
 
         private readonly IBookingLockProvider _lockProvider;
 
         public BookingService(IBookingRepository bookingRepository, IBookingValidationPipeline validationPipeline,
-            IEventDispatcher dispatcher, ILogger<BookingService> logger, IBookingLockProvider lockProvider)
+            IEventDispatcher<BookingEvent> bookingDispatcher, IEventDispatcher<StatisticEvent> statisticDispatcher, ILogger<BookingService> logger, IBookingLockProvider lockProvider)
         {
             _bookingRepository = bookingRepository;
-            _dispatcher = dispatcher;
+            _bookingDispatcher = bookingDispatcher;
+            _statisticDispatcher = statisticDispatcher;
             _logger = logger;
             _validationPipeline = validationPipeline;
             _lockProvider = lockProvider;
@@ -263,7 +265,7 @@ namespace BookingService.Services
 
         private async Task LogToServiceAsync(LogLevelType level, string eventType, string message, CancellationToken ct = default)
         {
-            await _dispatcher.DispatchAsync(new BookingEvent(
+            await _bookingDispatcher.DispatchAsync(new BookingEvent(
                 level,
                 eventType,
                 message),
@@ -273,7 +275,7 @@ namespace BookingService.Services
         
         private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
-            await _dispatcher.DispatchAsync(new StatisticEvent(eventType), ct);
+            await _statisticDispatcher.DispatchAsync(new StatisticEvent(eventType), ct);
         }
     }
 }

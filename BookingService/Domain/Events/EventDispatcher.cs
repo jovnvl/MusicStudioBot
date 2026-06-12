@@ -1,31 +1,29 @@
 ﻿namespace BookingService.Domain.Events
 {
-    public sealed class EventDispatcher : IEventDispatcher
+    public sealed class EventDispatcher<TEvent> : IEventDispatcher<TEvent>
+         where TEvent : IEvent
     {
-        private readonly IServiceProvider _serviceProvider;
-
-        public EventDispatcher(IServiceProvider serviceProvider)
+        private readonly IEnumerable<IEventHandler<TEvent>> _handlers;
+        
+        public EventDispatcher(IEnumerable<IEventHandler<TEvent>> handlers)
         {
-            _serviceProvider = serviceProvider;
+            _handlers = handlers;
         }
 
-        public async Task DispatchAsync<TEvent>(
+        public async Task DispatchAsync(
             TEvent @event,
             CancellationToken ct = default)
-            where TEvent : IEvent
-        {
-            var handlers =
-                _serviceProvider.GetServices<IEventHandler<TEvent>>();
+        {            
             //Нужно применить только если обработчики независимы.
             //await Task.WhenAll(
-            //    handlers.Select(h => h.HandleAsync(@event, ct)));
+            //    _handlers.Select(h => h.HandleAsync(@event, ct)));
 
-            if (!handlers.Any())
+            if (!_handlers.Any())
                 return;
 
-            foreach (var handler in handlers)
+            foreach (var _handler in _handlers)
             {
-                await handler.HandleAsync(@event, ct);
+                await _handler.HandleAsync(@event, ct);
             }
         }
     }

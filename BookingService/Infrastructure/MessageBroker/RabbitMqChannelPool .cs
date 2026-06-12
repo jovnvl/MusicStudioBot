@@ -63,6 +63,9 @@ namespace BookingService.Infrastructure.MessageBroker
                 var connection = await GetConnectionAsync(ct);
 
                 return await connection.CreateChannelAsync(
+                    new CreateChannelOptions(
+                        publisherConfirmationsEnabled: true,
+                        publisherConfirmationTrackingEnabled: true),
                     cancellationToken: ct);
             }
             catch

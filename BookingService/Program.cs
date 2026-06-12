@@ -95,12 +95,13 @@ namespace BookingService
             builder.Services.AddSingleton<KafkaProducerHolder>();
             */
             //Add Domain Events
-            builder.Services.AddScoped<IEventDispatcher, EventDispatcher>();
-
+            //одна открытая generic-регистрация
+            builder.Services.AddScoped(typeof(IEventDispatcher<>), typeof(EventDispatcher<>));
+            //и конкретные обработчики событий
             builder.Services.AddScoped<
                 IEventHandler<BookingEvent>,
                 BookingEventHandler>();
-
+            
             builder.Services.AddScoped<
                 IEventHandler<StatisticEvent>,
                 StatisticEventHandler>();
