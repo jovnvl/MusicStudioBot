@@ -5,6 +5,7 @@ namespace BookingService.Models.Entities
 {
     public class Booking
     {
+        private Booking(){}
         public Guid Id { get; private set; }
         [Required]
         [Column("UserId")]
@@ -16,7 +17,7 @@ namespace BookingService.Models.Entities
 
         public DateTime CreationDate { get; private set; } = DateTime.UtcNow;
         public BookingStatus? Status { get; private set; } = BookingStatus.NotConfirmed;
-        public BookingPeriod Period { get; private set; } = new(DateTime.UtcNow, DateTime.UtcNow);
+        public BookingPeriod Period { get; private set; } = BookingPeriod.Create(DateTime.UtcNow, DateTime.UtcNow);
         public string? Description { get; private set; } = string.Empty;
         public static Booking Create(
                 Guid userId,
