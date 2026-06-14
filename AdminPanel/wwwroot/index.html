@@ -626,6 +626,30 @@
         </div>
     </div>
 
+    <!-- MODAL: редактирование периода брони -->
+    <div id="edit-booking-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:8px; padding:28px; min-width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+            <div style="font-weight:600; font-size:15px; margin-bottom:16px;">Изменить период бронирования</div>
+            <input type="hidden" id="edit-booking-id">
+            <div class="form-group">
+                <label>Дата</label>
+                <input type="date" id="edit-booking-date">
+            </div>
+            <div class="form-group">
+                <label>Время начала</label>
+                <input type="time" id="edit-booking-time-begin">
+            </div>
+            <div class="form-group">
+                <label>Время конца</label>
+                <input type="time" id="edit-booking-time-end">
+            </div>
+            <div style="display:flex; gap:8px; margin-top:16px;">
+                <button class="btn-success" onclick="submitEditBookingPeriod()">Сохранить</button>
+                <button class="btn-danger" onclick="closeEditBookingModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <!-- NOTIFICATION -->
     <div id="notification"></div>
 
@@ -845,27 +869,27 @@
                 }
 
                 tbody.innerHTML = users.map(u => `
-                <tr>
-                <td>${u.firstName || ''} ${u.lastName || ''}</td>
-                <td>${u.username}</td>
-                <td data-sort="${u.role}">
-                    <select class="select" onchange="changeRole('${u.id}', this.value)">
-                    <option value="Student"       ${u.role === 'Student' ? 'selected' : ''}>Student</option>
-                    <option value="Moderator"     ${u.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
-                    <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
-                    </select>
-                </td>
-                <td class="mono">${u.telegramId}</td>
-                <td>${shortId(u.id)}</td>
-                <td data-sort="${u.isActive ? '1' : '0'}">
-                    <button class="btn-${u.isActive ? 'danger' : 'success'} btn-sm"
-                            onclick="toggleUserStatus('${u.id}', ${!u.isActive})">
-                    ${u.isActive ? 'Деактивировать' : 'Активировать'}
-                    </button>
-                    <button class="btn-outline btn-sm" onclick="openChangePassword('${u.id}', '${u.username}')">🔑 Пароль</button>
-                </td>
-                </tr>
-            `).join('');
+                    <tr>
+                    <td>${u.firstName || ''} ${u.lastName || ''}</td>
+                    <td>${u.username}</td>
+                    <td data-sort="${u.role}">
+                        <select class="select" onchange="changeRole('${u.id}', this.value)">
+                        <option value="Student"       ${u.role === 'Student' ? 'selected' : ''}>Student</option>
+                        <option value="Moderator"     ${u.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
+                        <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
+                        </select>
+                    </td>
+                    <td class="mono">${u.telegramId}</td>
+                    <td>${shortId(u.id)}</td>
+                    <td data-sort="${u.isActive ? '1' : '0'}">
+                        <button class="btn-${u.isActive ? 'danger' : 'success'} btn-sm"
+                                onclick="toggleUserStatus('${u.id}', ${!u.isActive})">
+                        ${u.isActive ? 'Деактивировать' : 'Активировать'}
+                        </button>
+                        <button class="btn-outline btn-sm" onclick="openChangePassword('${u.id}', '${u.username}')">🔑 Пароль</button>
+                    </td>
+                    </tr>
+                `).join('');
 
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="6" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
@@ -944,13 +968,13 @@
                 }
 
                 tbody.innerHTML = cats.map(c => `
-                <tr>
-                <td>${c.id}</td>
-                <td>${c.name}</td>
-                <td>${c.description}</td>
-                <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Удалить</button></td>
-                </tr>
-            `).join('');
+                    <tr>
+                    <td>${c.id}</td>
+                    <td>${c.name}</td>
+                    <td>${c.description}</td>
+                    <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Удалить</button></td>
+                    </tr>
+                `).join('');
 
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="4" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
@@ -1025,23 +1049,23 @@
                 }
 
                 tbody.innerHTML = rooms.map(r => `
-                <tr>
-                <td>${r.id}</td>
-                <td>${r.name}</td>
-                <td>${r.description}</td>
-                <td>${r.categoryRoomId}</td>
-                <td data-sort="${r.status}">
-                    <select class="select" onchange="updateRoomStatus(${r.id}, parseInt(this.value))">
-                        <option value="0" ${r.status === 0 ? 'selected' : ''}>Available</option>
-                        <option value="1" ${r.status === 1 ? 'selected' : ''}>Occupied</option>
-                        <option value="2" ${r.status === 2 ? 'selected' : ''}>Reserved</option>
-                        <option value="3" ${r.status === 3 ? 'selected' : ''}>Maintenance</option>
-                    </select>
-                </td>
-                <td class="mono">${r.creationDate || '—'}</td>
-                <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteRoom(${r.id})">Удалить</button></td>
-                </tr>
-            `).join('');
+                    <tr>
+                    <td>${r.id}</td>
+                    <td>${r.name}</td>
+                    <td>${r.description}</td>
+                    <td>${r.categoryRoomId}</td>
+                    <td data-sort="${r.status}">
+                        <select class="select" onchange="updateRoomStatus(${r.id}, parseInt(this.value))">
+                            <option value="0" ${r.status === 0 ? 'selected' : ''}>Available</option>
+                            <option value="1" ${r.status === 1 ? 'selected' : ''}>Occupied</option>
+                            <option value="2" ${r.status === 2 ? 'selected' : ''}>Reserved</option>
+                            <option value="3" ${r.status === 3 ? 'selected' : ''}>Maintenance</option>
+                        </select>
+                    </td>
+                    <td class="mono">${r.creationDate || '—'}</td>
+                    <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteRoom(${r.id})">Удалить</button></td>
+                    </tr>
+                `).join('');
 
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="7" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
@@ -1146,13 +1170,13 @@
             if (!filtered.length) { dropdown.style.display = 'none'; return; }
 
             dropdown.innerHTML = filtered.map(u => `
-            <div onclick="selectUser('${u.id}', '${u.username}')"
-                    style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; font-size:13px;"
-                    onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background=''">
-                ${u.username}
-                <span style="color:#999; font-size:11px; margin-left:6px;">${u.firstName || ''} ${u.lastName || ''}</span>
-            </div>
-            `).join('');
+                <div onclick="selectUser('${u.id}', '${u.username}')"
+                        style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; font-size:13px;"
+                        onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background=''">
+                    ${u.username}
+                    <span style="color:#999; font-size:11px; margin-left:6px;">${u.firstName || ''} ${u.lastName || ''}</span>
+                </div>
+                `).join('');
 
             dropdown.style.display = 'block';
         }
@@ -1208,24 +1232,24 @@
                 }
 
                 tbody.innerHTML = bookings.map(b => `
-                <tr>
-                <td>${shortId(b.id)}</td>
-                <td>${shortId(b.userId)}</td>
-                <td>${b.roomId}</td>
-                <td data-sort="${b.status}">
-                    <select class="select" onchange="updateBookingStatus('${b.id}', parseInt(this.value))">
-                        <option value="0" ${b.status === 0 ? 'selected' : ''}>NotConfirmed</option>
-                        <option value="1" ${b.status === 1 ? 'selected' : ''}>Canceled</option>
-                        <option value="2" ${b.status === 2 ? 'selected' : ''}>Booked</option>
-                        <option value="3" ${b.status === 3 ? 'selected' : ''}>Completed</option>
-                    </select>
-                </td>
-                <td>${b.description || '—'}</td>
-                <td class="mono" data-sort="${b.period.timeBegin}">${formatDate(b.period.timeBegin)}</td>
-                <td class="mono" data-sort="${b.period.timeEnd}">${formatDate(b.period.timeEnd)}</td>
-                <td data-sort=""><button class="btn-danger btn-sm" onclick="deleteBooking('${b.id}')">Удалить</button></td>
-                </tr>
-            `).join('');
+                    <tr>
+                    <td>${shortId(b.id)}</td>
+                    <td>${shortId(b.userId)}</td>
+                    <td>${b.roomId}</td>
+                    <td data-sort="${b.status}">
+                        <select class="select" onchange="updateBookingStatus('${b.id}', parseInt(this.value))">
+                            <option value="0" ${b.status === 0 ? 'selected' : ''}>NotConfirmed</option>
+                            <option value="1" ${b.status === 1 ? 'selected' : ''}>Canceled</option>
+                            <option value="2" ${b.status === 2 ? 'selected' : ''}>Booked</option>
+                            <option value="3" ${b.status === 3 ? 'selected' : ''}>Completed</option>
+                        </select>
+                    </td>
+                    <td>${b.description || '—'}</td>
+                    <td class="mono" data-sort="${b.period.timeBegin}">${formatDate(b.period.timeBegin)}</td>
+                    <td class="mono" data-sort="${b.period.timeEnd}">${formatDate(b.period.timeEnd)}</td>
+                    <td data-sort=""><button class="btn-sm" onclick="openEditBookingModal('${b.id}')" style="margin-right:4px;">✏️</button><button class="btn-danger btn-sm" onclick="deleteBooking('${b.id}')">Удалить</button></td>
+                    </tr>
+                `).join('');
 
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color:#d93025">Ошибка: ${e.message}</td></tr>`;
@@ -1315,6 +1339,62 @@
                 });
                 if (!res.ok) { notify('Ошибка удаления', 'error'); return; }
                 notify('Бронирование удалено');
+                loadBookings();
+            } catch (e) {
+                notify('Ошибка соединения', 'error');
+            }
+        }
+
+        function openEditBookingModal(id) {
+            const booking = allBookings.find(b => b.id === id);
+            if (!booking) return;
+
+            const begin = new Date(booking.period.timeBegin);
+            const end = new Date(booking.period.timeEnd);
+
+            document.getElementById('edit-booking-id').value = id;
+            document.getElementById('edit-booking-date').value = begin.toISOString().slice(0, 10);
+            document.getElementById('edit-booking-time-begin').value = begin.toTimeString().slice(0, 5);
+            document.getElementById('edit-booking-time-end').value = end.toTimeString().slice(0, 5);
+
+            document.getElementById('edit-booking-modal').style.display = 'flex';
+        }
+
+        function closeEditBookingModal() {
+            document.getElementById('edit-booking-modal').style.display = 'none';
+        }
+
+        async function submitEditBookingPeriod() {
+            const id = document.getElementById('edit-booking-id').value;
+            const date = document.getElementById('edit-booking-date').value;
+            const timeBegin = document.getElementById('edit-booking-time-begin').value;
+            const timeEnd = document.getElementById('edit-booking-time-end').value;
+
+            if (!date || !timeBegin || !timeEnd) { notify('Заполните все поля', 'error'); return; }
+
+            const booking = allBookings.find(b => b.id === id);
+            if (!booking) { notify('Бронирование не найдено', 'error'); return; }
+
+            const payload = {
+                id: booking.id,
+                userId: booking.userId,
+                roomId: booking.roomId,
+                description: booking.description ?? '',
+                status: booking.status,
+                creationDate: booking.creationDate,
+                timeBegin: new Date(`${date}T${timeBegin}`).toISOString(),
+                timeEnd: new Date(`${date}T${timeEnd}`).toISOString()
+            };
+
+            try {
+                const res = await fetchWithAuth(`${BOOKING_URL}/api/booking`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) { notify('Ошибка обновления периода', 'error'); return; }
+                notify('Период обновлён');
+                closeEditBookingModal();
                 loadBookings();
             } catch (e) {
                 notify('Ошибка соединения', 'error');
