@@ -332,12 +332,13 @@ namespace GatewayService.Handlers
 
                 if (bookings.Count == 0)
                 {
-                    await _messageSender.SendMessageAsync(chatId, "Бронирований пока нет");
+                    await _messageSender.SendMessageAsync(chatId, "Актуальных бронирований нет.");
                     return;
                 }
 
                 bookings = bookings
                     .Where(b => b.Status != BookingStatus.Canceled && b.Status != BookingStatus.Completed)
+                    .Where(b => b.Period?.TimeBegin >= DateTime.UtcNow.Date)
                     .OrderBy(b => b.Period?.TimeBegin)
                     .ToList();
 
