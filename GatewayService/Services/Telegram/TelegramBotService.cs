@@ -360,7 +360,7 @@ namespace GatewayService.Services.Telegram
                 case "menu_update_profile":
                     conversation.State = ConversationState.AwaitingUpdateProfileField;
                     await _messageSender.SendMessageAsync(chatId,
-                        "✏️ Обновление профиля\n\nВведите данные в формате:\nusername firstname lastname\n\nИспользуйте '-' для пропуска.",
+                        "✏️ Обновление профиля\n\nВведите данные в формате:\nfirstname lastname\n\nИспользуйте '-' для пропуска.",
                         replyMarkup: KeyboardHelper.GetCancelKeyboard());
                     break;
 
