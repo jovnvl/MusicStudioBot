@@ -933,7 +933,7 @@
             tbody.innerHTML = '<tr><td colspan="4" class="loading">Загрузка...</td></tr>';
 
             try {
-                const res = await fetch(`${ROOM_URL}/api/categories`);
+                const res = await fetchWithAuth(`${ROOM_URL}/api/categories`);
                 const cats = await res.json();
                 allCategories = cats;
                 refreshCategorySelect();
@@ -993,7 +993,7 @@
             if (!confirm(`Удалить категорию ${id}?`)) return;
 
             try {
-                const res = await fetch(`${ROOM_URL}/api/categories/${id}`, {
+                const res = await fetchWithAuth(`${ROOM_URL}/api/categories/${id}`, {
                     method: 'DELETE',
                     headers: authHeaders()
                 });
@@ -1013,7 +1013,7 @@
             tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка...</td></tr>';
 
             try {
-                const res = await fetch(`${ROOM_URL}/api/rooms`);
+                const res = await fetchWithAuth(`${ROOM_URL}/api/rooms`);
                 const rooms = await res.json();
 
                 allRooms = rooms;
@@ -1058,7 +1058,7 @@
             if (!categoryRoomId) { notify('Выберите категорию', 'error'); return; }
 
             try {
-                const res = await fetch(`${ROOM_URL}/api/rooms`, {
+                const res = await fetchWithAuth(`${ROOM_URL}/api/rooms`, {
                     method: 'POST',
                     headers: authHeaders(),
                     body: JSON.stringify({ name, description, categoryRoomId, status })
@@ -1075,7 +1075,7 @@
 
         async function updateRoomStatus(id, status) {
             try {
-                const res = await fetch(`${ROOM_URL}/api/rooms`, {
+                const res = await fetchWithAuth(`${ROOM_URL}/api/rooms`, {
                     method: 'PUT',
                     headers: authHeaders(),
                     body: JSON.stringify({ id, status })
@@ -1092,7 +1092,7 @@
             if (!confirm(`Удалить комнату ${id}?`)) return;
 
             try {
-                const res = await fetch(`${ROOM_URL}/api/rooms/${id}`, {
+                const res = await fetchWithAuth(`${ROOM_URL}/api/rooms/${id}`, {
                     method: 'DELETE',
                     headers: authHeaders()
                 });
@@ -1111,7 +1111,7 @@
         async function loadUsersForDropdown() {
             if (allUsers.length) return;
             try {
-                const res = await fetch(`${IDENTITY_URL}/api/auth/user/all`);
+                const res = await fetchWithAuth(`${IDENTITY_URL}/api/auth/user/all`);
                 allUsers = await res.json();
             } catch (e) {
                 console.error('Не удалось загрузить пользователей');
@@ -1197,7 +1197,7 @@
             tbody.innerHTML = '<tr><td colspan="8" class="loading">Загрузка...</td></tr>';
 
             try {
-                const res = await fetch(`${BOOKING_URL}/api/booking`, { headers: authHeaders() });
+                const res = await fetchWithAuth(`${BOOKING_URL}/api/booking`, { headers: authHeaders() });
                 const bookings = await res.json();
 
                 allBookings = bookings;
