@@ -95,7 +95,9 @@ namespace GatewayService.Services.Telegram
                 {
                     var userName = userNames.TryGetValue(b.UserId, out var u) ? u : "Неизвестный";
                     var roomName = roomNames.TryGetValue(b.RoomId, out var r) ? r : "Неизвестно";
-                    var label = $"{roomName} — {userName} {b.Period?.TimeBegin?.ToLocalTime():dd.MM HH:mm}";
+                    var bookingStatus = b.Status.ToString();
+                    var label = $"{roomName} — {userName} {b.Period?.TimeBegin?.ToLocalTime():dd.MM HH:mm} ({bookingStatus})";
+                    
                     return new List<InlineKeyboardButton>
                     {
                         InlineKeyboardButton.WithCallbackData(label, $"booking_{b.Id}")
