@@ -147,23 +147,7 @@ namespace BookingService
             });
 
             var app = builder.Build();
-            /*
-            using (var scope = app.Services.CreateScope())
-            {
-                var factory = scope.ServiceProvider.GetRequiredService<ConnectionFactory>();
-                using var connection = await factory.CreateConnectionAsync();
-                using var channel = await connection.CreateChannelAsync();
 
-                foreach (var queue in new[] { Common.Constants.LOGIN_SERVICE_QUEUE, Common.Constants.STATISTIC_SERVICE_QUEUE })
-                {
-                    await channel.QueueDeclareAsync(
-                        queue: queue,
-                        durable: false,
-                        exclusive: false,
-                        autoDelete: false);
-                }
-            }
-            */
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Application started");
 
