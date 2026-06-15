@@ -147,7 +147,7 @@ namespace BookingService
             });
 
             var app = builder.Build();
-
+            /*
             using (var scope = app.Services.CreateScope())
             {
                 var factory = scope.ServiceProvider.GetRequiredService<ConnectionFactory>();
@@ -163,7 +163,7 @@ namespace BookingService
                         autoDelete: false);
                 }
             }
-
+            */
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Application started");
 

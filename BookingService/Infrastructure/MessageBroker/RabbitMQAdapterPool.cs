@@ -54,7 +54,7 @@ namespace BookingService.Infrastructure.MessageBroker
                 await channel.BasicPublishAsync(
                     exchange: "",
                     routingKey: queueName,
-                    mandatory: true,
+                    mandatory: false,
                     basicProperties: properties,
                     body: body,
                     cancellationToken: ct);
