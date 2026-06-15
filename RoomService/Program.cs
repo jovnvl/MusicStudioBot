@@ -19,11 +19,11 @@ namespace RoomService
         {
             try
             {
-                var connectionFactory = new ConnectionFactory() { HostName = "localhost" };
+                var builder = WebApplication.CreateBuilder(args);
+                var rabbitConnectionString = builder.Configuration.GetConnectionString("RabbitMQConnection") ?? "localhost";
+                var connectionFactory = new ConnectionFactory() { HostName =  rabbitConnectionString};
                 var connection = await connectionFactory.CreateConnectionAsync();
                 var channel = await connection.CreateChannelAsync();
-
-                var builder = WebApplication.CreateBuilder(args);
 
                 // ===== JWT AUTHENTICATION =====
                 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

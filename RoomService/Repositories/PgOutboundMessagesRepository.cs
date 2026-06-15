@@ -33,11 +33,11 @@ namespace RoomService.Repositories
             }
         }
 
-        public async Task<OutboundMessages?> GetActiveOutboundMessagesAsync(CancellationToken ct)
+        public async Task<List<OutboundMessages>> GetActiveOutboundMessagesAsync(CancellationToken ct)
         {
             return await _dataContext.OutboundMessages.Where(x => x.Status == MessageStatus.Active)
                     .OrderBy(x => x.CreatedAt)
-                    .FirstOrDefaultAsync(ct);
+                    .ToListAsync(ct);
         }
 
         public async Task<List<OutboundMessages>> GetOutboundMessagesByFilterAsync(LogFilterDto logFilterDto, CancellationToken ct)
@@ -72,6 +72,7 @@ namespace RoomService.Repositories
             if (outboundMessage != null)
             {
                 outboundMessage.Status = messageStatus;
+                outboundMessage.ProcessedAt = DateTime.UtcNow;
                 await _dataContext.SaveChangesAsync(ct);
             }
         }

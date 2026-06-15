@@ -20,7 +20,7 @@ namespace LoggingService.Repositories
             {
                 EventType = logDto.EventType,
                 Level = logDto.Level,
-                Message = logDto.Message,
+                Message = logDto.Message.Length > 500 ? logDto.Message.Substring(0, 500) : logDto.Message,
                 Service = logDto.Service,
                 Timestamp = logDto.Timestamp
             };

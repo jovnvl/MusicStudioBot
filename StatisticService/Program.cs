@@ -9,9 +9,10 @@ namespace StatisticService
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var redisConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "localhost:6379";
 
             builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-            ConnectionMultiplexer.Connect("localhost:6379"));
+            ConnectionMultiplexer.Connect(redisConnectionString));
 
             builder.Services.AddScoped<IStatisticService, RedisService>();
             builder.Services.AddControllers();
