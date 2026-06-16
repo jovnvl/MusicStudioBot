@@ -2,8 +2,6 @@
 using RoomService.DTO;
 using RoomService.Models.Entities;
 using RoomService.Repositories;
-using System.Linq.Expressions;
-using System.Xml.Linq;
 
 namespace RoomService.Services
 {

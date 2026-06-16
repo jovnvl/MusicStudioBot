@@ -3,9 +3,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 
-namespace BookingService.Infrastructure
+namespace BookingService.Infrastructure.MessageBroker
 {
-    public class RabbitMQPublisher : IRabbitMQPublisher
+    public class RabbitMQPublisher : IMessagePublisher
     {
         private readonly ILogger<RabbitMQPublisher> _logger;
         private readonly string _hostName;

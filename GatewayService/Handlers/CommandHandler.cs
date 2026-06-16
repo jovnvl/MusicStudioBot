@@ -1,15 +1,11 @@
-﻿using GatewayService.Configuration;
-using GatewayService.DTO;
-using GatewayService.Models.DTOs;
+﻿using GatewayService.DTO;
 using GatewayService.Models.Enums;
 using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
-using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using Telegram.Bot.Types;
 
 namespace GatewayService.Handlers
 {
@@ -34,18 +30,6 @@ namespace GatewayService.Handlers
             _sessionService = sessionService;
             _messageSender = messageSender;
             _rabbitMQPublisher = rabbitMQPublisher;
-        }
-
-        protected string MapToEmojiStatus(int status)
-        {
-            return status switch
-            {
-                0 => "✅", // Available
-                1 => "🔴", // Occupied
-                2 => "🟡", // Reserved
-                3 => "🔧", // Maintenance
-                _ => "❓"
-            };
         }
 
         protected async Task<bool> IsPermitted(long chatId, UserRole role)

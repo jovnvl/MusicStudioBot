@@ -1,13 +1,12 @@
-﻿using GatewayService.Models.DTOs;
-using GatewayService.Models.Enums;
-using System.Text.Json.Serialization;
+﻿using GatewayService.Models.Enums;
 
 namespace GatewayService.DTO
 
 {
-    public class CreateBookingRequest
+    public class BookingRequest
 
     {
+        public Guid Id { get; set; }
         public string Description { get; set; } = string.Empty;
         public Guid UserId { get; set; }
         public int RoomId { get; set; }

@@ -1,6 +1,5 @@
 ﻿using RoomService.DTO;
 using RoomService.Infrastructure;
-using RoomService.Models.Entities;
 
 namespace RoomService.Services
 {

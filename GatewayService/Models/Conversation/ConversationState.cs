@@ -5,19 +5,24 @@
         None,
 
         // Регистрация
-        AwaitingRegistrationPassword,
         AwaitingRegistrationFirstName,
         AwaitingRegistrationLastName,
 
         // Обновление профиля
         AwaitingUpdateProfileField,
 
-        // Создание бронирования
+        // Создание/изменение бронирования
         AwaitingRoomSelection,
         AwaitingBookingDate,
         AwaitingBookingStartTime,
         AwaitingBookingEndTime,
         AwaitingBookingSelection,
-        AwaitingBookingStatus
+        AwaitingBookingStatus,
+        AwaitingCancelBookingSelection,
+        AwaitingCancelBookingConfirmation,
+
+        //Изменение статуса комнаты
+        AwaitingRoomStatusSelection,
+        AwaitingRoomStatusConfirmation,
     }
 }

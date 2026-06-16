@@ -1,5 +1,4 @@
-﻿using LoggingService.Data;
-using LoggingService.Models.Entities;
+﻿using LoggingService.Models.Entities;
 using LoggingService.Models.Entities.DTO;
 using LoggingService.Repositories;
 

@@ -1,8 +1,6 @@
-﻿using LoggingService.Models.Entities.DTO;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using RoomService.DTO;
 using RoomService.Services;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace RoomService.Controllers
 {
@@ -41,20 +39,6 @@ namespace RoomService.Controllers
 
             var logs = await _outboundMessagesService.GetsOutboundMessagesByFilterAsync(logFilterDto, ct);
             return Ok(logs);
-        }
-
-        // GET api/<ValuesController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        // PUT api/<ValuesController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-            throw new NotImplementedException();
         }
     }
 }

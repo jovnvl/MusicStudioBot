@@ -1,5 +1,4 @@
-﻿using LoggingService.Models.Entities.DTO;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RoomService.Data;
 using RoomService.DTO;
 using RoomService.Models.Entities;
@@ -34,11 +33,11 @@ namespace RoomService.Repositories
             }
         }
 
-        public async Task<OutboundMessages?> GetActiveOutboundMessagesAsync(CancellationToken ct)
+        public async Task<List<OutboundMessages>> GetActiveOutboundMessagesAsync(CancellationToken ct)
         {
             return await _dataContext.OutboundMessages.Where(x => x.Status == MessageStatus.Active)
                     .OrderBy(x => x.CreatedAt)
-                    .FirstOrDefaultAsync(ct);
+                    .ToListAsync(ct);
         }
 
         public async Task<List<OutboundMessages>> GetOutboundMessagesByFilterAsync(LogFilterDto logFilterDto, CancellationToken ct)
@@ -48,7 +47,7 @@ namespace RoomService.Repositories
                 query = query.Where(x => x.CreatedAt >= logFilterDto.from.Value);
 
             if (logFilterDto.to.HasValue)
-                query = query.Where(x => x.CreatedAt >= logFilterDto.to.Value);
+                query = query.Where(x => x.CreatedAt <= logFilterDto.to.Value);
 
             if (!string.IsNullOrEmpty(logFilterDto.service))
                 query = query.Where(x => x.Service == logFilterDto.service);
@@ -73,6 +72,7 @@ namespace RoomService.Repositories
             if (outboundMessage != null)
             {
                 outboundMessage.Status = messageStatus;
+                outboundMessage.ProcessedAt = DateTime.UtcNow;
                 await _dataContext.SaveChangesAsync(ct);
             }
         }

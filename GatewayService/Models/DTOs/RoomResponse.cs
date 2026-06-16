@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using GatewayService.Models.Enums;
+using System.Text.Json.Serialization;
 
 namespace GatewayService.Models.DTOs
 {
@@ -17,6 +18,6 @@ namespace GatewayService.Models.DTOs
         [JsonPropertyName("categoryRoomId")]
         public int CategoryRoomId { get; set; }
         [JsonPropertyName("status")]
-        public int Status { get; set; }
+        public RoomStatus? Status { get; set; }
     }
 }

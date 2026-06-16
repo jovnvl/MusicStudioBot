@@ -1,9 +1,14 @@
 ﻿using BookingService.Common;
 using BookingService.Data;
+using BookingService.Domain;
+using BookingService.Domain.Events;
 using BookingService.DTO;
 using BookingService.Infrastructure;
+using BookingService.Infrastructure.Concurrency;
 using BookingService.Infrastructure.Events;
+using BookingService.Infrastructure.MessageBroker;
 using BookingService.Models.Entities;
+using BookingService.Models.Mapping;
 using BookingService.Repositories;
 
 namespace BookingService.Services
@@ -11,59 +16,62 @@ namespace BookingService.Services
     public class BookingService : IBookingService
     {
         private readonly IBookingRepository _bookingRepository;
-        private readonly IRabbitMQPublisher _rabbitMQPublisher;
         private readonly ILogger<BookingService> _logger;
 
-        private readonly IEventDispatcher _dispatcher;
-        public BookingService(IBookingRepository bookingRepository, IRabbitMQPublisher rabbitMQPublisher, IEventDispatcher dispatcher, ILogger<BookingService> logger)
+        private readonly IEventDispatcher<BookingEvent> _bookingDispatcher;
+        private readonly IEventDispatcher<StatisticEvent> _statisticDispatcher;
+        private readonly IBookingValidationPipeline _validationPipeline;
+
+        private readonly IBookingLockProvider _lockProvider;
+
+        public BookingService(IBookingRepository bookingRepository, IBookingValidationPipeline validationPipeline,
+            IEventDispatcher<BookingEvent> bookingDispatcher, IEventDispatcher<StatisticEvent> statisticDispatcher, ILogger<BookingService> logger, IBookingLockProvider lockProvider)
         {
             _bookingRepository = bookingRepository;
-            _rabbitMQPublisher = rabbitMQPublisher;
-            _dispatcher = dispatcher;
+            _bookingDispatcher = bookingDispatcher;
+            _statisticDispatcher = statisticDispatcher;
             _logger = logger;
+            _validationPipeline = validationPipeline;
+            _lockProvider = lockProvider;
         }
-
         public async Task<Booking?> CreateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
             try
             {
                 if (bookingDto is null)
                     throw new InvalidOperationException("BookingDto is null.");
-
-                // Валидация бизнес-ограничений
-                if (bookingDto.TimeBegin >= bookingDto.TimeEnd)
-                    throw new InvalidOperationException($"TimeBegin must be less than TimeEnd: ");
-
                 if (bookingDto.UserId == Guid.Empty)
                     throw new InvalidOperationException("Invalid UserId.");
 
-                // Проверка пересечения бронирований
-                if (await _bookingRepository.HasOverlappingBookingAsync(bookingDto.RoomId, BookingPeriod.Create(bookingDto.TimeBegin, bookingDto.TimeEnd), ct))
-                    throw new InvalidOperationException($"Уже есть бронь на кабинет {bookingDto.RoomId} на период {bookingDto.TimeBegin?.ToLocalTime()} - {bookingDto.TimeEnd?.ToLocalTime()}");
+                var booking = Booking.Create
+                (
+                    roomId: bookingDto.RoomId,
+                    userId: bookingDto.UserId,
+                    status: bookingDto.Status,
+                    period: BookingPeriod.Create(bookingDto.TimeBegin?.ToUniversalTime(), bookingDto.TimeEnd?.ToUniversalTime()),
+                    description: bookingDto.Description
+                );
 
-                var booking = new Booking
+                var semaphore = _lockProvider.GetLock(bookingDto.RoomId);
+                await semaphore.WaitAsync(ct);
+                try
                 {
-                    Id = Guid.NewGuid(),
-                    RoomId = bookingDto.RoomId,
-                    UserId = bookingDto.UserId,
-                    Status = bookingDto.Status,
-                    Period = BookingPeriod.Create(bookingDto.TimeBegin?.ToUniversalTime(), bookingDto.TimeEnd?.ToUniversalTime()),
-                    Description = bookingDto.Description,
-                    CreationDate = DateTime.UtcNow
-                };
+                    await _validationPipeline.ValidateAsync(bookingDto.ToEntity(), ct);
+                    await _bookingRepository.AddBookingAsync(booking, ct);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
 
-                await _bookingRepository.AddBookingAsync(booking, ct);
-                //
-                await _dispatcher.DispatcherAsync(new BookingCreatedEvent(booking.Id));
-                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingCreatedEvent(booking.Id), ct);
-                //
-                await LogToServiceAsync("Information", "create-booking", $"New booking {booking?.Id} for room {booking?.RoomId} on {booking?.Period?.TimeBegin?.ToLocalTime()}-{booking?.Period?.TimeEnd?.ToLocalTime()} created");
+                await LogToServiceAsync(LogLevelType.Information, "create-booking", $"New booking {booking?.Id} for room {booking?.RoomId} on {booking?.Period?.TimeBegin?.ToLocalTime()}-{booking?.Period?.TimeEnd?.ToLocalTime()} created");
+                                
                 await StatisticToServiceAsync("CreatedBooking");
                 return booking;
             }
             catch (InvalidOperationException ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "invalid-operation", $"ERROR Create booking: {ex.Message}");
+                await LogToServiceAsync(LogLevelType.Error, "invalid-operation", $"ERROR Create booking: {ex.Message}");
                 throw;
             }
             catch (OperationCanceledException)
@@ -72,7 +80,7 @@ namespace BookingService.Services
             }
             catch (Exception)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", "Create booking internal server error");
+                await LogToServiceAsync(LogLevelType.Error, "int-server-error", "Create booking internal server error");
                 throw;
             }
         }
@@ -81,26 +89,40 @@ namespace BookingService.Services
         {
             try
             {
-                var _booking = await _bookingRepository.UpdateBookingAsync(bookingDto, true, ct);
-
-                if (!_booking)
+                bool _updateBooking = false;
+                var semaphore = _lockProvider.GetLock(bookingDto.RoomId);
+                await semaphore.WaitAsync(ct);
+                try
                 {
-                    await LogToServiceAsync(Constants.ERROR, "update-booking-error", "Booking was not updated");
+
+                    await _validationPipeline.ValidateAsync(bookingDto.ToEntity(), ct);
+
+                    _updateBooking = await _bookingRepository.UpdateBookingAsync(bookingDto, true, ct);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+
+                if (!_updateBooking)
+                {
+                    await LogToServiceAsync(LogLevelType.Error, "update-booking-error", "Booking was not updated");
                     throw new InvalidOperationException($"Не удалось обновить бронь {bookingDto.Id}");
                     //return BadRequest(new { Message = "Не удалось обновить бронирование" });
                 }
-                await LogToServiceAsync("Information", "update-booking", $"Booking {bookingDto.Id} was updated");
+                await LogToServiceAsync(LogLevelType.Information, "update-booking", $"Booking {bookingDto.Id}  for room {bookingDto?.RoomId} on {bookingDto?.TimeBegin?.ToLocalTime()}-{bookingDto?.TimeEnd?.ToLocalTime()} was updated");
+
                 await StatisticToServiceAsync("UpdatedBooking");
-                return _booking;
+                return _updateBooking;
             }
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "operation-canceled", "Update booking operation canceled");
+                await LogToServiceAsync(LogLevelType.Error, "operation-canceled", "Update booking operation canceled");
                 throw;
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", $"Update booking internal server error: {ex.Message}");
+                await LogToServiceAsync(LogLevelType.Error, "int-server-error", $"Update booking internal server error: {ex.Message}");
                 throw;
             }
         }
@@ -112,25 +134,23 @@ namespace BookingService.Services
                 var _deleted = await _bookingRepository.RemoveBookingAsync(id, ct);
                 if (!_deleted)
                 {
-                    await LogToServiceAsync(Constants.ERROR, "delete-booking-error", "Booking was not deleted");
+                    await LogToServiceAsync(LogLevelType.Error, "delete-booking-error", "Booking was not deleted");
                     throw new InvalidOperationException($"Не удалось удалить бронь {id} на кaбинет");
                 }
 
-                await LogToServiceAsync("Information", "delete-booking", $"Booking {id} was deleted");
-                //
-                //await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new BookingDeletedEvent(id), ct);
-                //
+                await LogToServiceAsync(LogLevelType.Information, "delete-booking", $"Booking {id} was deleted");
+
                 await StatisticToServiceAsync("DeletedBooking");
                 return _deleted;
             }
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "operation-canceled", "Delete booking operation canceled");
+                await LogToServiceAsync(LogLevelType.Error, "operation-canceled", "Delete booking operation canceled");
                 throw;
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", $"Delete booking internal server error: {ex.Message}");
+                await LogToServiceAsync(LogLevelType.Error, "int-server-error", $"Delete booking internal server error: {ex.Message}");
                 throw;
             }
         }
@@ -151,13 +171,13 @@ namespace BookingService.Services
 
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-bookings-cancel", "Get bookings operation canceled");
+                await LogToServiceAsync(LogLevelType.Error, "get-bookings-cancel", "Get bookings operation canceled");
                 throw;
             }
 
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", $"Get bookings internal server error: {ex.Message}");
+                await LogToServiceAsync(LogLevelType.Error, "int-server-error", $"Get bookings internal server error: {ex.Message}");
                 throw;      
             }
         }
@@ -169,19 +189,19 @@ namespace BookingService.Services
                 var booking = await _bookingRepository.GetByIdAsync(id, ct);
                 if (booking == null)
                 {
-                    await LogToServiceAsync(Constants.ERROR, "booking-not-found", $"Booking with ID {id} not found");
+                    await LogToServiceAsync(LogLevelType.Error, "booking-not-found", $"Booking with ID {id} not found");
                     return null;
                 }
                 return booking;
             }
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-booking-by-Id-cancel", "Get booking by Id operation canceled");
+                await LogToServiceAsync(LogLevelType.Error, "get-booking-by-Id-cancel", "Get booking by Id operation canceled");
                 throw;
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", $"Get booking internal server error: {ex.Message}");
+                await LogToServiceAsync(LogLevelType.Error, "int-server-error", $"Get booking internal server error: {ex.Message}");
                 throw;
             }
         }
@@ -195,12 +215,12 @@ namespace BookingService.Services
             }
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-bookings-by-roomId-cancel", "Get bookings by roomId operation canceled");
+                await LogToServiceAsync(LogLevelType.Error, "get-bookings-by-roomId-cancel", "Get bookings by roomId operation canceled");
                 throw;
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", $"Get bookings by roomId internal server error: {ex.Message}");
+                await LogToServiceAsync(LogLevelType.Error, "int-server-error", $"Get bookings by roomId internal server error: {ex.Message}");
                 throw;
             }
         }
@@ -214,13 +234,13 @@ namespace BookingService.Services
 
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-bookings-by-userid-cancel", "Get bookings by userId operation canceled");
+                await LogToServiceAsync(LogLevelType.Error, "get-bookings-by-userid-cancel", "Get bookings by userId operation canceled");
                 throw;
             }
 
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", $"Get bookings by userId internal server error: {ex.Message}");
+                await LogToServiceAsync(LogLevelType.Error, "int-server-error", $"Get bookings by userId internal server error: {ex.Message}");
                 throw;
             }
         }
@@ -233,24 +253,29 @@ namespace BookingService.Services
             }
             catch (OperationCanceledException)
             {
-                await LogToServiceAsync(Constants.ERROR, "get-bookings-by-description-cancel", "Get bookings by description operation canceled");
+                await LogToServiceAsync(LogLevelType.Error, "get-bookings-by-description-cancel", "Get bookings by description operation canceled");
                 throw;
             }
             catch (Exception ex)
             {
-                await LogToServiceAsync(Constants.ERROR, "int-server-error", $"Get bookings by description internal server error: {ex.Message}");
+                await LogToServiceAsync(LogLevelType.Error, "int-server-error", $"Get bookings by description internal server error: {ex.Message}");
                 throw;
             }
         }
 
-        private async Task LogToServiceAsync(string level, string eventType, string message, CancellationToken ct = default)
+        private async Task LogToServiceAsync(LogLevelType level, string eventType, string message, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync(Constants.LOGIN_SERVICE_QUEUE, new LogEventDto(level, eventType, message), ct);
+            await _bookingDispatcher.DispatchAsync(new BookingEvent(
+                level,
+                eventType,
+                message),
+                ct);
         }
 
+        
         private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
-            await _rabbitMQPublisher.PublishAsync(Constants.STATISTIC_SERVICE_QUEUE, new { EventType = $"{eventType}" }, ct);
+            await _statisticDispatcher.DispatchAsync(new StatisticEvent(eventType), ct);
         }
     }
 }

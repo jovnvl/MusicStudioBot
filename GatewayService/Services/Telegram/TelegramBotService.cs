@@ -61,12 +61,43 @@ namespace GatewayService.Services.Telegram
 
             if (data.StartsWith("menu_"))
             {
-                await HandleMenuCallbackWithScope(chatId, data, scope);
+                var username = callbackQuery.From?.Username ?? callbackQuery.From?.Id.ToString() ?? chatId.ToString();
+                await HandleMenuCallbackWithScope(chatId, data, scope, username);
             }
             else if (data.StartsWith("room_"))
             {
                 var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
                 await handler.HandleRoomSelectionCallback(chatId, data);
+            }
+            else if (data.StartsWith("booking_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                await handler.HandleBookingSelectionCallback(chatId, data);
+            }
+            else if (data.StartsWith("cancelbook_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                await handler.HandleCancelBookingSelectionCallback(chatId, data);
+            }
+            else if (data.StartsWith("confirmcancel_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                await handler.HandleConfirmCancelBookingCallback(chatId, data);
+            }
+            else if (data.StartsWith("status_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                await handler.HandleBookingStatusSelectionCallback(chatId, data);
+            }
+            else if (data.StartsWith("roomstatus_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                await handler.HandleRoomStatusSelectionCallback(chatId, data);
+            }
+            else if (data.StartsWith("newroomstatus_"))
+            {
+                var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                await handler.HandleRoomNewStatusCallback(chatId, data);
             }
             else if (data == "cancel")
             {
@@ -86,59 +117,47 @@ namespace GatewayService.Services.Telegram
             var stateService = scope.ServiceProvider.GetRequiredService<IConversationStateService>();
             var conversation = stateService.GetOrCreate(chatId);
 
-            if (conversation.State != ConversationState.None)
-            {
-                if (messageText == "❌ Отмена")
-                {
-                    conversation.Clear();
-                    await _messageSender.SendMessageAsync(chatId, "❌ Действие отменено.");
-
-                    var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
-                    await handler.HandleStartCommand(chatId);
-                    return;
-                }
-
-                await HandleConversationMessageAsync(chatId, messageText, conversation, scope);
-                return;
-            }
             switch (messageText)
             {
                 case "/start":
                 case "🏠 Главное меню":
                     {
-                        var startHandler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
-                        await startHandler.HandleStartCommand(chatId);
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
+                        await handler.HandleStartCommand(chatId);
                         break;
                     }
 
                 case "/help":
                 case "ℹ️ Помощь":
                     {
-                        var helpHandler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
-                        await helpHandler.HandleHelpCommand(chatId);
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
+                        await handler.HandleHelpCommand(chatId);
                         break;
                     }
+
                 case "📝 Регистрация":
                     {
-                        conversation.State = ConversationState.AwaitingRegistrationPassword;
+                        conversation.Clear();
+                        conversation.SetValue("username", message.From?.Username ?? message.From?.Id.ToString() ?? chatId.ToString());
+                        conversation.State = ConversationState.AwaitingRegistrationFirstName;
                         await _messageSender.SendMessageAsync(chatId,
-                        "📝 Регистрация\n\nВведите пароль:",
-                        replyMarkup: KeyboardHelper.GetLoginPasswordKeyboard());
+                            "📝 Регистрация\n\nВведите Имя:",
+                            replyMarkup: KeyboardHelper.GetLoginPasswordKeyboard());
                         break;
                     }
 
                 case "🔑 Войти":
                     {
+                        conversation.Clear();
                         var authMiddleware = scope.ServiceProvider.GetRequiredService<TelegramAuthMiddleware>();
                         var isAuthenticated = await authMiddleware.EnsureAuthenticatedAsync(chatId);
-
                         if (isAuthenticated)
                         {
-                            await _messageSender.SendMessageAsync(chatId,
-                                "✅ Вход выполнен успешно!");
-
-                            var startHandler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
-                            await startHandler.HandleStartCommand(chatId);
+                            await _messageSender.SendMessageAsync(chatId, "✅ Вход выполнен успешно!");
+                            var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
+                            await handler.HandleStartCommand(chatId);
                         }
                         else
                         {
@@ -146,89 +165,113 @@ namespace GatewayService.Services.Telegram
                                 "❌ Не удалось выполнить вход.\n\n" +
                                 "Вы еще не зарегистрированы. Используйте кнопку '📝 Регистрация'.");
                         }
-                    
-                        break; 
-                    }
-
-                default:
-                    {
-                        var authMiddleware = scope.ServiceProvider.GetRequiredService<TelegramAuthMiddleware>();
-                        var isAuthenticated = await authMiddleware.EnsureAuthenticatedAsync(chatId);
-
-                        if (!isAuthenticated)
-                        {
-                            await _messageSender.SendMessageAsync(chatId,
-                                "⚠️ Требуется авторизация.");
-                            return;
-                        }
-
-                        await HandleAuthenticatedMenuAsync(chatId, messageText, scope);
                         break;
                     }
-            }
-        }
 
-        private async Task HandleAuthenticatedMenuAsync(long chatId, string messageText, IServiceScope scope)
-        {
-            switch (messageText)
-            {
                 case "/myprofile":
                 case "👤 Мой профиль":
                     {
-                        var profileHandler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
-                        await profileHandler.HandleMyProfileCommand(chatId);
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
+                        await handler.HandleMyProfileCommand(chatId);
                         break;
                     }
 
                 case "✏️ Изменить профиль":
                     {
-                        var stateService = scope.ServiceProvider.GetRequiredService<IConversationStateService>();
-                        var conversation = stateService.GetOrCreate(chatId);
+                        conversation.Clear();
                         conversation.State = ConversationState.AwaitingUpdateProfileField;
                         await _messageSender.SendMessageAsync(chatId,
-                        "✏️ Обновление профиля\n\nВведите данные в формате:\nusername firstname lastname\n\nИспользуйте '-' для пропуска.");
+                            "✏️ Обновление профиля\n\nВведите данные в формате:\nfirstname lastname\n\nИспользуйте '-' для пропуска.");
                         break;
                     }
+
                 case "/rooms":
                 case "🏠 Комнаты":
                     {
-                        var roomHandler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
-                        await roomHandler.HandleGetRoomsCommand(chatId);
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                        await handler.HandleGetRoomsCommand(chatId);
+                        break;
+                    }
+
+                case "/bookings":
+                case "📋 Мои бронирования":
+                    {
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                        await handler.HandleGetMyBookingsCommand(chatId);
                         break;
                     }
 
                 case "📅 Забронировать комнату":
                     {
-                        var bookingHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
-                        var conv = scope.ServiceProvider.GetRequiredService<IConversationStateService>().GetOrCreate(chatId);
-                        await bookingHandler.StartCreateBooking(chatId, conv);
-                            break;
-                    }
-                case "/bookings":
-                case "📋 Мои бронирования":
-                    {
-                        var bookingsHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
-                        await bookingsHandler.HandleGetMyBookingsCommand(chatId);
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                        await handler.StartCreateBooking(chatId, conversation);
                         break;
                     }
+
+                case "❌ Отменить бронирование":
+                    {
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                        await handler.HandleCancelMyBookingInput(chatId, conversation);
+                        break;
+                    }
+
                 case "⚙️ Показать все бронирования":
                     {
-                        var bookingsHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
-                        await bookingsHandler.HandleGetBookingsCommand(chatId);
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                        await handler.HandleGetBookingsCommand(chatId);
                         break;
                     }
-                //case "Сменить статус бронирования":
-                //   { 
-                //        var bookingStatusHandler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
-                //        var conv = scope.ServiceProvider.GetRequiredService<IConversationStateService>().GetOrCreate(chatId);
-                //        await bookingStatusHandler.HandleUpdateBookingInput(chatId, conv);
-                //        break;
-                //    }
+
+                case "⚙️ Сменить статус бронирования":
+                    {
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<BookingCommandHandler>();
+                        await handler.HandleUpdateBookingInput(chatId, conversation);
+                        break;
+                    }
+
+                case "⚙️ Сменить статус комнаты":
+                    {
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<RoomCommandHandler>();
+                        await handler.HandleUpdateRoomStatusInput(chatId, conversation);
+                        break;
+                    }
+
+                case "/logout":
+                    {
+                        conversation.Clear();
+                        var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
+                        await handler.HandleLogoutCommand(chatId);
+                        break;
+                    }
 
                 default:
-                    await _messageSender.SendMessageAsync(chatId,
-                        "Неизвестная команда. Используйте меню.");
-                    break;
+                    {
+                        if (conversation.State != ConversationState.None)
+                        {
+                            if (messageText == "❌ Отмена")
+                            {
+                                conversation.Clear();
+                                await _messageSender.SendMessageAsync(chatId, "❌ Действие отменено.");
+                                var handler = scope.ServiceProvider.GetRequiredService<SystemCommandHandler>();
+                                await handler.HandleStartCommand(chatId);
+                                return;
+                            }
+
+                            await HandleConversationMessageAsync(chatId, messageText, conversation, scope);
+                            return;
+                        }
+
+                        await _messageSender.SendMessageAsync(chatId, "Неизвестная команда. Используйте меню.");
+                        break;
+                    }
             }
         }
 
@@ -236,11 +279,6 @@ namespace GatewayService.Services.Telegram
         {
             switch (conversation.State)
             {
-                case ConversationState.AwaitingRegistrationPassword:
-                    var regHandler = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
-                    await regHandler.HandleRegistrationPasswordInput(chatId, messageText, conversation);
-                    break;
-
                 case ConversationState.AwaitingRegistrationFirstName:
                     var regHandler2 = scope.ServiceProvider.GetRequiredService<IdentityCommandHandler>();
                     await regHandler2.HandleRegistrationFirstNameInput(chatId, messageText, conversation);
@@ -277,18 +315,19 @@ namespace GatewayService.Services.Telegram
             }
         }
 
-        private async Task HandleMenuCallbackWithScope(long chatId, string callbackData, IServiceScope scope)
+        private async Task HandleMenuCallbackWithScope(long chatId, string callbackData, IServiceScope scope, string telegramUsername)
         {
             var stateService = scope.ServiceProvider.GetRequiredService<IConversationStateService>();
             var conversation = stateService.GetOrCreate(chatId);
             conversation.Clear();
 
-            // Команды, НЕ требующие авторизации
+            // Команды, не требующие авторизации
             if (callbackData == "menu_register")
             {
-                conversation.State = ConversationState.AwaitingRegistrationPassword;
+                conversation.SetValue("username", telegramUsername);
+                conversation.State = ConversationState.AwaitingRegistrationFirstName;
                 await _messageSender.SendMessageAsync(chatId,
-                    "📝 Регистрация\n\nВведите пароль:",
+                    "📝 Регистрация\n\nВведите Имя:",
                     replyMarkup: KeyboardHelper.GetCancelKeyboard());
                 return;
             }
@@ -307,9 +346,9 @@ namespace GatewayService.Services.Telegram
             switch (callbackData)
             {
                 case "menu_register":
-                    conversation.State = ConversationState.AwaitingRegistrationPassword;
+                    conversation.State = ConversationState.AwaitingRegistrationFirstName;
                     await _messageSender.SendMessageAsync(chatId,
-                        "📝 Регистрация\n\nВведите пароль:",
+                        "📝 Регистрация\n\nВведите Имя:",
                         replyMarkup: KeyboardHelper.GetCancelKeyboard());
                     break;
 
@@ -321,7 +360,7 @@ namespace GatewayService.Services.Telegram
                 case "menu_update_profile":
                     conversation.State = ConversationState.AwaitingUpdateProfileField;
                     await _messageSender.SendMessageAsync(chatId,
-                        "✏️ Обновление профиля\n\nВведите данные в формате:\nusername firstname lastname\n\nИспользуйте '-' для пропуска.",
+                        "✏️ Обновление профиля\n\nВведите данные в формате:\nfirstname lastname\n\nИспользуйте '-' для пропуска.",
                         replyMarkup: KeyboardHelper.GetCancelKeyboard());
                     break;
 

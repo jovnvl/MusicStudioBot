@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-
+﻿
 namespace RoomService.DTO
 {
     public class LogEventDto
@@ -9,9 +8,6 @@ namespace RoomService.DTO
         public string Level { get; private set; }
         public string EventType { get; private set; }
         public string Message { get; private set; } 
-        //public Guid CorrelationId;
-        //public string Metadata;
-        //public DurationMs = stopwatch.ElapsedMilliseconds,
         public LogEventDto(string level, string eventType, string message   )
         {
             Timestamp = DateTime.UtcNow;

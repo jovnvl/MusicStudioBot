@@ -41,19 +41,40 @@ namespace BookingService.Migrations
                     b.Property<int?>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("TimeBegin")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("TimeEnd")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Bookings", (string)null);
+                    b.ToTable("Bookings");
+                });
+
+            modelBuilder.Entity("BookingService.Models.Entities.Booking", b =>
+                {
+                    b.OwnsOne("BookingService.Models.Entities.BookingPeriod", "Period", b1 =>
+                        {
+                            b1.Property<Guid>("BookingId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime?>("TimeBegin")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("TimeBegin");
+
+                            b1.Property<DateTime?>("TimeEnd")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("TimeEnd");
+
+                            b1.HasKey("BookingId");
+
+                            b1.ToTable("Bookings");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BookingId");
+                        });
+
+                    b.Navigation("Period")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

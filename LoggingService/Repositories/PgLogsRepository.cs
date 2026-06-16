@@ -1,9 +1,7 @@
 ﻿using LoggingService.Data;
 using LoggingService.Models.Entities;
 using LoggingService.Models.Entities.DTO;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace LoggingService.Repositories
 {
@@ -22,7 +20,7 @@ namespace LoggingService.Repositories
             {
                 EventType = logDto.EventType,
                 Level = logDto.Level,
-                Message = logDto.Message,
+                Message = logDto.Message.Length > 500 ? logDto.Message.Substring(0, 500) : logDto.Message,
                 Service = logDto.Service,
                 Timestamp = logDto.Timestamp
             };
@@ -38,7 +36,7 @@ namespace LoggingService.Repositories
                 query = query.Where(x => x.Timestamp >=  logFilterDto.from.Value);
             
             if (logFilterDto.to.HasValue)
-                query = query.Where(x => x.Timestamp >= logFilterDto.to.Value);
+                query = query.Where(x => x.Timestamp <= logFilterDto.to.Value);
 
             if (!string.IsNullOrEmpty(logFilterDto.service))
                 query = query.Where(x => x.Service == logFilterDto.service);

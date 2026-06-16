@@ -1,6 +1,5 @@
 ﻿using GatewayService.Models.Enums;
 using System.Text.Json.Serialization;
-using Telegram.Bot.Types;
 
 namespace GatewayService.Models.DTOs
 {
@@ -11,9 +10,6 @@ namespace GatewayService.Models.DTOs
 
         [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
-
-        [JsonPropertyName("user")]
-        public User User { get; set; } = null!;
 
         [JsonPropertyName("roomId")]
         public int RoomId { get; set; }
