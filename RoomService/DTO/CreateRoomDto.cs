@@ -25,7 +25,7 @@ namespace RoomService.DTO
         public int CategoryRoomId { get; init; }
 
         [Required(ErrorMessage = "Статус комнаты обязателен")]
-        [Range(0, 3, ErrorMessage = "Статус должен быть от 0 до 3 (0-свободна, 1-занята, 2-бронирование, 3-недоступна)")]
+        [Range(0, 1, ErrorMessage = "Статус должен быть 0 или 1 (0-свободна, 1-недоступна)")]
         [Display(Name = "Статус комнаты")]
         public RoomStatus Status { get; init; }
     }

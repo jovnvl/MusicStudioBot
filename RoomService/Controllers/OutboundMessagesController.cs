@@ -40,17 +40,5 @@ namespace RoomService.Controllers
             var logs = await _outboundMessagesService.GetsOutboundMessagesByFilterAsync(logFilterDto, ct);
             return Ok(logs);
         }
-
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
