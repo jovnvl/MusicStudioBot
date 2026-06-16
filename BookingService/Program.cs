@@ -148,17 +148,17 @@ namespace BookingService
             });
 
             var app = builder.Build();
-            app.UseMiddleware<ExceptionMiddleware>();
 
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Application started");
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                //Console.WriteLine("Не настроена строка подключения");
-                app.Logger.LogInformation("Не настроена строка подключения");
+                app.Logger.LogError("Не настроена строка подключения");
                 return;
             }
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseCors();
 

@@ -79,10 +79,7 @@ namespace BookingService.Controllers
         [Authorize(Roles = "Student,Moderator,Administrator")]
         public async Task<ActionResult<Booking>> UpdateBookingAsync(BookingDto bookingDto, CancellationToken ct = default)
         {
-            var updatedBooking = await _bookingService.UpdateBookingAsync(bookingDto, ct);
-
-            if (!updatedBooking)
-                return BadRequest(new { Message = $"Не удалось обновить бронь {bookingDto.Id}" });
+            await _bookingService.UpdateBookingAsync(bookingDto, ct);
 
             return Ok();
         }
@@ -91,10 +88,7 @@ namespace BookingService.Controllers
         [Authorize(Roles = "Student,Moderator,Administrator")]
         public async Task<IActionResult> DeleteBookingAsync(Guid id, CancellationToken ct = default)
         {
-            var deleted = await _bookingService.DeleteBookingAsync(id, ct);
-
-            if (!deleted)
-                return BadRequest(new { Message = $"Не удалось удалить бронь {id} на кaбинет" });
+            await _bookingService.DeleteBookingAsync(id, ct);
 
             return Ok();
         }
