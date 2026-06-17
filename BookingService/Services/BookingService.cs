@@ -19,15 +19,17 @@ namespace BookingService.Services
         private readonly ILogger<BookingService> _logger;
 
         private readonly IEventDispatcher<BookingEvent> _bookingDispatcher;
+        private readonly IEventDispatcher<NotificationEvent> _notificationDispatcher;
         private readonly IEventDispatcher<StatisticEvent> _statisticDispatcher;
         private readonly IBookingValidationPipeline _validationPipeline;
 
         private readonly IBookingLockProvider _lockProvider;
 
-        public BookingService(IBookingRepository bookingRepository, IBookingValidationPipeline validationPipeline,
+        public BookingService(IBookingRepository bookingRepository, IBookingValidationPipeline validationPipeline, IEventDispatcher<NotificationEvent> notificationDispatcher,
             IEventDispatcher<BookingEvent> bookingDispatcher, IEventDispatcher<StatisticEvent> statisticDispatcher, ILogger<BookingService> logger, IBookingLockProvider lockProvider)
         {
             _bookingRepository = bookingRepository;
+            _notificationDispatcher = notificationDispatcher;
             _bookingDispatcher = bookingDispatcher;
             _statisticDispatcher = statisticDispatcher;
             _logger = logger;
@@ -141,6 +143,8 @@ namespace BookingService.Services
                 await LogToServiceAsync(LogLevelType.Information, "delete-booking", $"Booking {id} was deleted");
 
                 await StatisticToServiceAsync("DeletedBooking");
+
+                await NotificationToServiceAsync(LogLevelType.Information, "booking_reminder", $"Booking {id} was reminder");
                 return _deleted;
             }
             catch (OperationCanceledException)
@@ -262,6 +266,17 @@ namespace BookingService.Services
                 throw;
             }
         }
+        public async Task<List<Booking>> GetBookingsStartingWithinHourAsync(DateTime start, CancellationToken ct = default)
+        {
+            var bookings = await _bookingRepository.GetBookingsStartingWithinHourAsync(start, ct);
+            return bookings;
+        }
+
+        private async Task NotificationToServiceAsync(LogLevelType level, string eventType, string message, CancellationToken ct = default)
+        {
+            await _notificationDispatcher.DispatchAsync(new NotificationEvent(level,eventType,message),
+                ct);
+        }
 
         private async Task LogToServiceAsync(LogLevelType level, string eventType, string message, CancellationToken ct = default)
         {
@@ -271,8 +286,7 @@ namespace BookingService.Services
                 message),
                 ct);
         }
-
-        
+                
         private async Task StatisticToServiceAsync(string eventType, CancellationToken ct = default)
         {
             await _statisticDispatcher.DispatchAsync(new StatisticEvent(eventType), ct);

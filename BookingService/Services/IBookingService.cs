@@ -13,5 +13,6 @@ namespace BookingService.Services
         Task<bool> DeleteBookingAsync(Guid id, CancellationToken ct);
         Task<IReadOnlyList<Booking>>GetAllBookingsAsync(CancellationToken ct);
         Task<bool> UpdateBookingAsync(BookingDto bookingDto, CancellationToken ct);
+        Task<List<Booking>> GetBookingsStartingWithinHourAsync(DateTime start, CancellationToken ct);
     }
 }

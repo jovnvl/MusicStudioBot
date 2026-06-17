@@ -61,6 +61,10 @@ namespace GatewayService.Handlers
         {
             await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
         }
+        protected async Task NotificationToServiceAsync(string level, string eventType, string message)
+        {
+            await _rabbitMQPublisher.PublishAsync("notification_service_queue", new LogEventDto(level, eventType, message));
+        }
 
         protected async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string endpoint, long chatId, object? request = null)
         {

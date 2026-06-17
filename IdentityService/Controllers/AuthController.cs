@@ -2,6 +2,7 @@
 using IdentityService.Models.DTOs;
 using IdentityService.Services;
 using IdentityService.Services.RabbitMQ;
+using IdentityService.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -151,6 +152,24 @@ namespace IdentityService.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // GET api/auth/role/
+        [HttpGet("user/role/{userRole:int}")]
+        [Authorize]
+        public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetUsersOnRole(UserRole userRole)
+        {
+            try
+            {
+                var users = await _authService.GetAllUsersOnRoleAsync(userRole);
+                if (users == null) return NotFound();
+                return Ok(users);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
 
         // GET api/auth/user/telegram/{telegramId}
         [HttpGet("user/telegram/{telegramId:long}")]

@@ -14,5 +14,6 @@ namespace BookingService.Repositories
         Task<bool> RemoveBookingAsync(Guid id, CancellationToken ct);
         Task<bool> HasOverlappingBookingAsync(int roomId, BookingPeriod? bookingPeriod, Guid id, CancellationToken ct);
         Task<bool> UpdateBookingAsync(BookingDto bookingDto, bool saveChanges, CancellationToken ct);
+        Task<List<Booking>> GetBookingsStartingWithinHourAsync(DateTime start, CancellationToken ct);
     }
 }

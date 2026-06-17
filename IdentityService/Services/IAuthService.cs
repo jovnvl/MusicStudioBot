@@ -1,4 +1,5 @@
 ﻿using IdentityService.Models.DTOs;
+using IdentityService.Models.Entities;
 
 namespace IdentityService.Services
 {
@@ -10,6 +11,7 @@ namespace IdentityService.Services
         Task<UserResponse?> GetUserByTelegramIdAsync(long telegramId);
         Task<UserResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
         Task<IReadOnlyList<UserResponse>> GetAllUsersAsync();
+        Task<IReadOnlyList<UserResponse>> GetAllUsersOnRoleAsync(UserRole role);
         Task<UserResponse> ChangeRoleAsync(ChangeRoleRequest request);
         Task<UserResponse> SetActiveStatusAsync(Guid userId, bool isActive);
         Task<AuthResponse> RefreshTokenAsync(string refreshToken);

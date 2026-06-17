@@ -107,6 +107,13 @@ namespace BookingService
             builder.Services.AddScoped<
                 IEventHandler<StatisticEvent>,
                 StatisticEventHandler>();
+            builder.Services.AddScoped<
+                IEventHandler<NotificationEvent>,
+                NotificationEventHandler>();
+
+            builder.Services.AddHostedService<
+                BookingReminderBackgroundService>();
+
             //
             //Add BookingValidationStrategy
             builder.Services.AddScoped<
@@ -160,6 +167,21 @@ namespace BookingService
 
             app.UseMiddleware<ExceptionMiddleware>();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var factory = scope.ServiceProvider.GetRequiredService<ConnectionFactory>();
+                using var connection = await factory.CreateConnectionAsync();
+                using var channel = await connection.CreateChannelAsync();
+
+                foreach (var queue in new[] { Common.Constants.LOGIN_SERVICE_QUEUE, Common.Constants.STATISTIC_SERVICE_QUEUE, Common.Constants.NOTIFICATION_SERVICE_QUEUE })
+                {
+                    await channel.QueueDeclareAsync(
+                        queue: queue,
+                        durable: false,
+                        exclusive: false,
+                        autoDelete: false);
+                }
+            }
             app.UseCors();
 
             app.UseAuthentication();

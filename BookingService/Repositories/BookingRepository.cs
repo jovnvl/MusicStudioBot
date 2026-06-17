@@ -75,6 +75,12 @@ namespace BookingService.Repositories
                 .Where(b => b.UserId == userId)
                 .ToListAsync(ct);
         }
+        public async Task<List<Booking>> GetBookingsStartingWithinHourAsync(DateTime start, CancellationToken ct)
+        {
+            return await _dataContext.Bookings
+                .Where(b => b.Period.TimeBegin >= start)
+                .ToListAsync(ct);
+        }
 
         public async Task<bool> RemoveBookingAsync(Guid id, CancellationToken ct)
         {

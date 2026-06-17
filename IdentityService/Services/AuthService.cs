@@ -63,6 +63,11 @@ namespace IdentityService.Services
             var users = await _context.Users.ToListAsync(); 
             return users.Select(u => MapToResponse(u)).ToList();
         }
+        public async Task<IReadOnlyList<UserResponse>> GetAllUsersOnRoleAsync(UserRole userRole)
+        {
+            var users = await _context.Users.Where(u=>u.Role == userRole).ToListAsync();
+            return users.Select(u => MapToResponse(u)).ToList();
+        }
 
         public async Task<UserResponse?> GetUserByIdAsync(Guid userId)
         {

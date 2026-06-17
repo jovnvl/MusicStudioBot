@@ -715,6 +715,7 @@ namespace GatewayService.Handlers
                 {
                     await _messageSender.SendMessageAsync(chatId, "✅ Бронирование отменено.");
                     await LogToServiceAsync("Information", "cancel-booking", $"Booking {bookingId} canceled by user");
+                    //await NotificationToServiceAsync("Information", "cancel-booking", $"Booking {bookingId} canceled by user");
                 }
                 else
                 {
