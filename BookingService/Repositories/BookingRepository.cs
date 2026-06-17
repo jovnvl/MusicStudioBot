@@ -24,7 +24,7 @@ namespace BookingService.Repositories
 
         public async Task<IReadOnlyList<Booking>> GetAllBookingsAsync(CancellationToken ct)
         {
-            var _bookings = await _dataContext.Bookings.ToListAsync(ct);
+            var _bookings = await _dataContext.Bookings.AsNoTracking().ToListAsync(ct);
             /*
             var bookings = await _dataContext.Bookings
                 .AsNoTracking()
