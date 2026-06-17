@@ -1,3 +1,4 @@
+using BookingService.Common;
 using BookingService.Data;
 using BookingService.Domain.Events;
 using BookingService.Domain.Handlers;
@@ -5,9 +6,9 @@ using BookingService.Infrastructure;
 using BookingService.Infrastructure.Concurrency;
 using BookingService.Infrastructure.Events;
 using BookingService.Infrastructure.MessageBroker;
+using BookingService.Middleware;
 using BookingService.Repositories;
 using BookingService.Services;
-using BookingService.Common;
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -153,10 +154,11 @@ namespace BookingService
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                //Console.WriteLine("Не настроена строка подключения");
-                app.Logger.LogInformation("Не настроена строка подключения");
+                app.Logger.LogError("Не настроена строка подключения");
                 return;
             }
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseCors();
 
