@@ -733,5 +733,145 @@ namespace GatewayService.Handlers
                 conversation.Clear();
             }
         }
+        //метод обработки события из RabbitMQ
+        public async Task HandleBookingNotificationAsync(
+            BookingNotificationMessage message)
+        {
+            try
+            {
+                var userNames =
+                    await GetUserNamesAsync(
+                        new[] { message.UserId },
+                        0);
+
+                var roomNames =
+                    await GetRoomNamesAsync(
+                        new[] { message.RoomId },
+                        0);
+
+                var booking = new BookingResponse
+                {
+                    Id = message.BookingId,
+                    UserId = message.UserId,
+                    RoomId = message.RoomId,
+                    Status = message.Status,
+                    Description = message.Description,
+                    Period = new BookingPeriod
+                    {
+                        TimeBegin = message.TimeBegin,
+                        TimeEnd = message.TimeEnd
+                    }
+                };
+
+                var notificationText =
+                    BuildNotificationText(
+                        message.EventType,
+                        booking,
+                        userNames,
+                        roomNames);
+
+                await NotifyBookingOwner(
+                    message.UserId,
+                    notificationText);
+
+                await NotifyModerators(
+                    notificationText);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to process booking notification");
+            }
+        }
+
+        //Уведомление владельца:
+        private async Task NotifyBookingOwner(
+            Guid userId,
+            string text)
+        {
+            var response =
+                await SendRequestAsync(
+                    HttpMethod.Get,
+                    $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/{userId}",
+                    0);
+
+            if (!response.IsSuccessStatusCode)
+                return;
+
+            var body =
+                await response.Content.ReadAsStringAsync();
+
+            var user =
+                JsonSerializer.Deserialize<UserResponse>(body);
+
+            if (user == null)
+                return;
+
+            await _messageSender.SendMessageAsync(
+                user.TelegramId,
+                text);
+        }
+        //Уведомление модераторов:
+        private async Task NotifyModerators(
+            string text)
+        {
+            var response =
+                await SendRequestAsync(
+                    HttpMethod.Get,
+                    $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/role/1",
+                    0);
+
+            if (!response.IsSuccessStatusCode)
+                return;
+
+            var body =
+                await response.Content.ReadAsStringAsync();
+
+            var moderators =
+                JsonSerializer.Deserialize<List<UserResponse>>(body);
+
+            if (moderators == null)
+                return;
+
+            foreach (var moderator in moderators)
+            {
+                await _messageSender.SendMessageAsync(
+                    moderator.TelegramId,
+                    text);
+            }
+        }
+
+        //Нужен текст уведомления в зависимости от события.
+
+        private string BuildNotificationText(
+            string eventType,
+            BookingResponse booking,
+            Dictionary<Guid, string> userNames,
+            Dictionary<int, string> roomNames)
+        {
+            var title = eventType switch
+            {
+                "created" =>
+                    "📅 Создано новое бронирование",
+
+                "updated" =>
+                    "✏️ Бронирование изменено",
+
+                "confirmed" =>
+                    "✅ Бронирование подтверждено",
+
+                "canceled" =>
+                    "❌ Бронирование отменено",
+
+                _ =>
+                    "📢 Изменение бронирования"
+            };
+
+            return $"{title}\n\n" +
+                   ComposeBookingString(
+                       booking,
+                       userNames,
+                       roomNames);
+        }
     }
 }
