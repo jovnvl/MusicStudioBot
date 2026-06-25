@@ -27,6 +27,10 @@ namespace GatewayService.Services.Notifications
 
         public async Task HandleAsync(BookingNotificationDto message)
         {
+            _logger.LogInformation(
+                "Received booking notification. Event={EventType}, Booking={BookingId}",
+                message.EventType,
+                message.BookingDto.Id);
             try
             {
                 var text = message.EventType switch
@@ -122,6 +126,10 @@ namespace GatewayService.Services.Notifications
             if (user == null)
                 return;
 
+            _logger.LogInformation(
+                    "Sending notification to user {UserId}, TelegramId={TelegramId}",
+                    userId,
+                    user.TelegramId);
             await _messageSender.SendMessageAsync(
                 user.TelegramId,
                 text);
@@ -152,6 +160,10 @@ namespace GatewayService.Services.Notifications
             {
                 try
                 {
+                    _logger.LogInformation(
+                            "Sending notification to moderator {UserId}, TelegramId={TelegramId}",
+                            moderator.Id,
+                            moderator.TelegramId);
                     await _messageSender.SendMessageAsync(
                         moderator.TelegramId,
                         text);
