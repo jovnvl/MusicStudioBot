@@ -1,6 +1,8 @@
 ﻿using GatewayService.Configuration;
 using GatewayService.Models.DTOs;
 using Microsoft.Extensions.Options;
+using Telegram.Bot.Types;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace GatewayService.Services.Notifications
 {
@@ -25,40 +27,143 @@ namespace GatewayService.Services.Notifications
 
         public async Task HandleAsync(BookingNotificationMessage message)
         {
-            // обработка события RabbitMQ
-            /*
-            var userNames =
-    await GetUserNamesAsync(
-        new[] { message.UserId });
+            try
+            {
+                var text = message.EventType switch
+                {
+                    "created" =>
+                        $"""
+                🎵 Новое бронирование
 
-            var roomNames =
-                await GetRoomNamesAsync(
-                    new[] { message.RoomId });
+                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
 
-            var booking = MapToBookingResponse(message);
+                {message.Description}
+                """,
 
-            var text =
-                BuildNotificationText(
-                    message.EventType,
-                    booking,
-                    userNames,
-                    roomNames);
+                    "updated" =>
+                        $"""
+                ✏️ Бронирование изменено
 
-            await NotifyOwnerAsync(
-                message.UserId,
-                text);
+                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
 
-            await NotifyModeratorsAsync(
-                text);
-            */
+                {message.Description}
+                """,
+
+                    "approved" =>
+                        $"""
+                ✅ Бронирование подтверждено
+
+                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                """,
+
+                    "rejected" =>
+                        $"""
+                ❌ Бронирование отклонено
+
+                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                """,
+
+                    "deleted" =>
+                        $"""
+                🗑 Бронирование отменено
+
+                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                """,
+
+                    _ =>
+                        $"""
+                ℹ️ Изменение бронирования
+
+                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                """
+                };
+
+                await NotifyOwnerAsync(message.UserId, text);
+
+                if (message.EventType is "created" or "updated" or "deleted")
+                {
+                    await NotifyModeratorsAsync(text);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error while processing booking notification {BookingId}",
+                    message.BookingId);
+            }
         }
 
-        private async Task NotifyOwnerAsync()
+        private async Task NotifyOwnerAsync(Guid userId, string text)
         {
+            var client = _httpClientFactory.CreateClient();
+
+            var response = await client.GetAsync(
+                $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/{userId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "User {UserId} not found for notification",
+                    userId);
+
+                return;
+            }
+
+            var user = await response.Content
+                .ReadFromJsonAsync<UserResponse>();
+
+            if (user == null)
+                return;
+
+            await _messageSender.SendMessageAsync(
+                user.TelegramId,
+                text);
         }
 
-        private async Task NotifyModeratorsAsync()
+        private async Task NotifyModeratorsAsync(string text)
         {
+            var client = _httpClientFactory.CreateClient();
+
+            var response = await client.GetAsync(
+                $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/role/1");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Failed to load moderators list");
+
+                return;
+            }
+
+            var moderators =
+                await response.Content.ReadFromJsonAsync<List<UserResponse>>();
+
+            if (moderators == null)
+                return;
+
+            foreach (var moderator in moderators)
+            {
+                try
+                {
+                    await _messageSender.SendMessageAsync(
+                        moderator.TelegramId,
+                        text);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "Failed notify moderator {ModeratorId}",
+                        moderator.Id);
+                }
+            }
         }
     }
 }
