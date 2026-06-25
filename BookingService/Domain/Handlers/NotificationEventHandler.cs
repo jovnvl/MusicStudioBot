@@ -23,6 +23,10 @@ namespace BookingService.Domain.Handlers
             NotificationEvent @event,
             CancellationToken ct)
         {
+            _logger.LogInformation(
+                "Publishing booking notification. Event={EventType}, BookingId={BookingId}",
+                @event.eventType,
+                @event.BookingDto.Id);
             await _publisher.PublishAsync(Constants.NOTIFICATION_SERVICE_QUEUE,
                   new BookingNotificationDto(
                       eventType: @event.eventType,

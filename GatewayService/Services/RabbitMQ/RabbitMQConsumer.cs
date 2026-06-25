@@ -46,12 +46,18 @@ namespace GatewayService.Services.RabbitMQ
             {
                 try
                 {
+                    _logger.LogInformation(
+    "Received notification from RabbitMQ");
                     var json = Encoding.UTF8.GetString(ea.Body.Span);
 
                     var dto = JsonSerializer.Deserialize<BookingNotificationDto>(json);
 
                     if (dto != null)
                     {
+                        _logger.LogInformation(
+                            "Notification deserialized. Event={EventType}, BookingId={BookingId}",
+                            dto.EventType,
+                            dto.BookingDto.Id);
                         using var scope = _serviceProvider.CreateScope();
 
                         var handler =
