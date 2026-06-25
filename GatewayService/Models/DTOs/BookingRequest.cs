@@ -1,7 +1,6 @@
 ﻿using GatewayService.Models.Enums;
 
-namespace GatewayService.DTO
-
+namespace GatewayService.Models.DTOs
 {
     public class BookingRequest
 

@@ -1,4 +1,5 @@
 ﻿using GatewayService.DTO;
+using GatewayService.Models.DTOs;
 using GatewayService.Models.Enums;
 using GatewayService.Services;
 using GatewayService.Services.RabbitMQ;
@@ -61,9 +62,9 @@ namespace GatewayService.Handlers
         {
             await _rabbitMQPublisher.PublishAsync("logging_service_queue", new LogEventDto(level, eventType, message));
         }
-        protected async Task NotificationToServiceAsync(string level, string eventType, string message)
+        protected async Task NotificationToServiceAsync(string level, string eventType, BookingRequest message)
         {
-            await _rabbitMQPublisher.PublishAsync("notification_service_queue", new LogEventDto(level, eventType, message));
+            await _rabbitMQPublisher.PublishAsync("notification_service_queue", new BookingNotificationDto(eventType, message));
         }
 
         protected async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string endpoint, long chatId, object? request = null)

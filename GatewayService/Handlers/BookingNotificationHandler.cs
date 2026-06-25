@@ -25,7 +25,7 @@ namespace GatewayService.Services.Notifications
             _servicesSettings = servicesSettings.Value;
         }
 
-        public async Task HandleAsync(BookingNotificationMessage message)
+        public async Task HandleAsync(BookingNotificationDto message)
         {
             try
             {
@@ -35,56 +35,56 @@ namespace GatewayService.Services.Notifications
                         $"""
                 🎵 Новое бронирование
 
-                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
-                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                Начало: {message.BookingDto.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.BookingDto.TimeEnd:dd.MM.yyyy HH:mm}
 
-                {message.Description}
+                {message.BookingDto.Description}
                 """,
 
                     "updated" =>
                         $"""
                 ✏️ Бронирование изменено
 
-                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
-                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                Начало: {message.BookingDto.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.BookingDto.TimeEnd:dd.MM.yyyy HH:mm}
 
-                {message.Description}
+                {message.BookingDto.Description}
                 """,
 
                     "approved" =>
                         $"""
                 ✅ Бронирование подтверждено
 
-                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
-                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                Начало: {message.BookingDto.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.BookingDto.TimeEnd:dd.MM.yyyy HH:mm}
                 """,
 
                     "rejected" =>
                         $"""
                 ❌ Бронирование отклонено
 
-                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
-                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                Начало: {message.BookingDto.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.BookingDto.TimeEnd:dd.MM.yyyy HH:mm}
                 """,
 
                     "deleted" =>
                         $"""
                 🗑 Бронирование отменено
 
-                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
-                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                Начало: {message.BookingDto.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.BookingDto.TimeEnd:dd.MM.yyyy HH:mm}
                 """,
 
                     _ =>
                         $"""
                 ℹ️ Изменение бронирования
 
-                Начало: {message.TimeBegin:dd.MM.yyyy HH:mm}
-                Окончание: {message.TimeEnd:dd.MM.yyyy HH:mm}
+                Начало: {message.BookingDto.TimeBegin:dd.MM.yyyy HH:mm}
+                Окончание: {message.BookingDto.TimeEnd:dd.MM.yyyy HH:mm}
                 """
                 };
 
-                await NotifyOwnerAsync(message.UserId, text);
+                await NotifyOwnerAsync(message.BookingDto.UserId, text);
 
                 if (message.EventType is "created" or "updated" or "deleted")
                 {
@@ -96,7 +96,7 @@ namespace GatewayService.Services.Notifications
                 _logger.LogError(
                     ex,
                     "Error while processing booking notification {BookingId}",
-                    message.BookingId);
+                    message.BookingDto.Id);
             }
         }
 
