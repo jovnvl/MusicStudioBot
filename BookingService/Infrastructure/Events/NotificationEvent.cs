@@ -1,9 +1,10 @@
 ﻿using BookingService.Domain.Events;
+using BookingService.DTO;
 
 namespace BookingService.Infrastructure.Events
 {
         public sealed record NotificationEvent(
-            LogLevelType Level,
-            string EventType,
-            string Message) : IEvent;
+            string eventType,
+            BookingDto BookingDto
+            ) : IEvent;
 }

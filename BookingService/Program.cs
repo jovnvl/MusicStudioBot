@@ -54,6 +54,7 @@ namespace BookingService
 
             builder.Services.AddScoped<IBookingService, BookingService.Services.BookingService>();
             builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+            builder.Services.AddScoped<INotificationService, BookingService.Services.NotificationService>();
             //RabbitMQ
             //Простой способ публикации сообщений в RabbitMQ - создавать новое соединение и канал для каждого сообщения. Это просто, но неэффективно из-за накладных расходов на установление соединения.
             //builder.Services.AddSingleton<RabbitMqConnection>();
@@ -166,7 +167,7 @@ namespace BookingService
             }
 
             app.UseMiddleware<ExceptionMiddleware>();
-
+            /*
             using (var scope = app.Services.CreateScope())
             {
                 var factory = scope.ServiceProvider.GetRequiredService<ConnectionFactory>();
@@ -182,6 +183,7 @@ namespace BookingService
                         autoDelete: false);
                 }
             }
+            */
             app.UseCors();
 
             app.UseAuthentication();

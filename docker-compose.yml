@@ -49,7 +49,7 @@ services:
     depends_on:
       - redis
   kafka:
-    image: bitnami/kafka:latest
+    image: apache/kafka:3.9.1
     container_name: musicstudio_kafka
     hostname: kafka
     ports:

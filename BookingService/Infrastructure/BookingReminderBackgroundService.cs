@@ -31,7 +31,7 @@ namespace BookingService.Infrastructure
 
                 var bookings =
                     await bookingService
-                        .GetBookingsStartingWithinHourAsync(DateTime.Now.AddMinutes(1),
+                        .GetBookingsStartingWithinHourAsync(DateTime.UtcNow.AddMinutes(1),
                             stoppingToken);
 
                 foreach (var booking in bookings)

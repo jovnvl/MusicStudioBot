@@ -1,7 +1,7 @@
-﻿using BookingService.Models.Entities;
+﻿using NotificationService.Models.Entities;
 using System.ComponentModel.DataAnnotations;
 
-namespace BookingService.DTO
+namespace NotificationService.Models.Entities.DTO
 {
     public class BookingDto
     {
@@ -17,12 +17,10 @@ namespace BookingService.DTO
        
         public DateTime CreationDate { get; set; } = DateTime.UtcNow;
 
-        [Range(0, 4,
-            ErrorMessage = "Статус бронирования кабинета должен быть от 0 до 3 (0-не подтвержден, 1-отменен, 2-забронирован, 3-завершен)")]
         public BookingStatus Status { get; set; } = BookingStatus.Booked;
 
-        public DateTime? TimeBegin { get; set; } //= DateTime.UtcNow;
-        public DateTime? TimeEnd { get; set; } //= DateTime.UtcNow.AddMinutes(45);
+        public DateTime TimeBegin { get; set; }
+        public DateTime TimeEnd { get; set; }
 
     }
 }

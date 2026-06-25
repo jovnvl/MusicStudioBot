@@ -8,7 +8,10 @@
 
         public const string Logs = "logs";
         public const string Statistics = "statistics";
+        public const string Notifications = "notifications";
+
         public const string BookingCreated = "booking-created";
         public const string BookingDeleted = "booking-deleted";
+        public const string BookingUpdated = "booking-updated";
     }
 }

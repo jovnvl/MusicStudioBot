@@ -30,7 +30,7 @@ namespace BookingService.Models.Entities
                 throw new InvalidOperationException(
                     "Description is required");
 
-            var booking = new Booking
+            Booking booking = new Booking
             {
                 Id = Guid.NewGuid(),
                 CreationDate = DateTime.UtcNow,

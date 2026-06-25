@@ -24,7 +24,10 @@ namespace BookingService.Domain.Handlers
             CancellationToken ct)
         {
             await _publisher.PublishAsync(Constants.NOTIFICATION_SERVICE_QUEUE,
-                  new LogEventDto(@event.Level.ToString(), @event.EventType, @event.Message), ct);
+                  new BookingNotificationDto(
+                      eventType: @event.eventType,
+                      bookingDto: @event.BookingDto
+                      ), ct);
         }
     }
 }
