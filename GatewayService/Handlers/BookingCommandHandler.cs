@@ -23,7 +23,7 @@ namespace GatewayService.Handlers
             ILogger<CommandHandler> logger, 
             IUserSessionService sessionService, 
             IMessageSender messageSender, 
-            IRabbitMQPublisher rabbitMQPublisher, 
+            IRabbitMQPublisher rabbitMQPublisher,
             IOptions<ServicesSettings> servicesSettings,
             IConversationStateService conversationService) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
         {

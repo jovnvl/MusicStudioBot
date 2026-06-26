@@ -19,7 +19,7 @@ namespace GatewayService.Handlers
             ILogger<CommandHandler> logger, 
             IUserSessionService sessionService, 
             IMessageSender messageSender, 
-            IRabbitMQPublisher rabbitMQPublisher, 
+            IRabbitMQPublisher rabbitMQPublisher,
             IOptions<ServicesSettings> servicesSettings) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
         {
             _servicesSettings = servicesSettings.Value;

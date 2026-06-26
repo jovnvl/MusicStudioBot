@@ -121,7 +121,7 @@ namespace IdentityService.Controllers
 
         // GET api/auth/user/{id}
         [HttpGet("user/{id:guid}")]
-        [Authorize]
+        //[Authorize]
         public async Task<ActionResult<UserResponse>> GetUserById(Guid id)
         {
             try
@@ -155,7 +155,7 @@ namespace IdentityService.Controllers
 
         // GET api/auth/role/
         [HttpGet("user/role/{userRole:int}")]
-        [Authorize]
+        //[Authorize]
         public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetUsersOnRole(UserRole userRole)
         {
             try

@@ -1,29 +1,29 @@
 ﻿using GatewayService.Configuration;
+using GatewayService.Handlers;
 using GatewayService.Models.DTOs;
+using GatewayService.Models.Enums;
+using GatewayService.Services.RabbitMQ;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 using Telegram.Bot.Types;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace GatewayService.Services.Notifications
 {
-    public class BookingNotificationHandler
+    public class BookingNotificationHandler : CommandHandler
     {
-        private readonly IMessageSender _messageSender;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<BookingNotificationHandler> _logger;
         private readonly ServicesSettings _servicesSettings;
 
         public BookingNotificationHandler(
+          IHttpClientFactory httpClientFactory,
+            ILogger<CommandHandler> logger,
+            IUserSessionService sessionService,
             IMessageSender messageSender,
-            IHttpClientFactory httpClientFactory,
-            ILogger<BookingNotificationHandler> logger,
-            IOptions<ServicesSettings> servicesSettings)
+            IRabbitMQPublisher rabbitMQPublisher,
+            IOptions<ServicesSettings> servicesSettings) : base(httpClientFactory, logger, sessionService, messageSender, rabbitMQPublisher)
         {
-            _messageSender = messageSender;
-            _httpClientFactory = httpClientFactory;
-            _logger = logger;
             _servicesSettings = servicesSettings.Value;
         }
+
 
         public async Task HandleAsync(BookingNotificationDto message)
         {
@@ -90,9 +90,11 @@ namespace GatewayService.Services.Notifications
 
                 await NotifyOwnerAsync(message.BookingDto.UserId, text);
 
-                if (message.EventType is "create-booking" or "update-booking" or "delete-booking")
+                if (message.EventType is "create-booking" or "update-booking" or "approve-booking" or "delete-booking" or "reject-booking")
                 {
-                    await NotifyModeratorsAsync(text);
+                    var moderators = await UsersWithRoleAsync(UserRole.Moderator);
+                    moderators?.RemoveAll(u => u.Id == message.BookingDto.UserId);
+                    await NotifyUsersAsync(moderators, text);
                 }
             }
             catch (Exception ex)
@@ -106,10 +108,8 @@ namespace GatewayService.Services.Notifications
 
         private async Task NotifyOwnerAsync(Guid userId, string text)
         {
-            var client = _httpClientFactory.CreateClient();
-
-            var response = await client.GetAsync(
-                $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/{userId}");
+            var response = await SendRequestAsync(HttpMethod.Get,
+                    $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/{userId}", 0);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -135,45 +135,46 @@ namespace GatewayService.Services.Notifications
                 text);
         }
 
-        private async Task NotifyModeratorsAsync(string text)
+        private async Task<List<UserResponse>?> UsersWithRoleAsync(UserRole userRole)
         {
-            var client = _httpClientFactory.CreateClient();
-
-            var response = await client.GetAsync(
-                $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/role/1");
+            List<UserResponse>? users = new List<UserResponse>();
+            var response = await SendRequestAsync(HttpMethod.Get,
+                                $"{_servicesSettings.IdentityServiceUrl}/api/auth/user/role/{(int)userRole}", 0);
 
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning(
-                    "Failed to load moderators list");
+                    $"Failed to load list users with role {userRole}");
 
-                return;
             }
+            else
+                users = await response.Content.ReadFromJsonAsync<List<UserResponse>>();
+            return users;
+        }
 
-            var moderators =
-                await response.Content.ReadFromJsonAsync<List<UserResponse>>();
 
-            if (moderators == null)
+        private async Task NotifyUsersAsync( List<UserResponse>? users, string text)
+        {
+            if (users == null)
                 return;
-
-            foreach (var moderator in moderators)
+            foreach (var user in users)
             {
                 try
                 {
                     _logger.LogInformation(
-                            "Sending notification to moderator {UserId}, TelegramId={TelegramId}",
-                            moderator.Id,
-                            moderator.TelegramId);
+                            "Sending notification to user {UserId}, TelegramId={TelegramId}",
+                            user.Id,
+                            user.TelegramId);
                     await _messageSender.SendMessageAsync(
-                        moderator.TelegramId,
+                        user.TelegramId,
                         text);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(
                         ex,
-                        "Failed notify moderator {ModeratorId}",
-                        moderator.Id);
+                        "Failed notify user {ModeratorId}",
+                        user.Id);
                 }
             }
         }
