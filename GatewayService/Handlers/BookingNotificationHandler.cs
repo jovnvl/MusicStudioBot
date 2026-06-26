@@ -35,7 +35,7 @@ namespace GatewayService.Services.Notifications
             {
                 var text = message.EventType switch
                 {
-                    "created" =>
+                    "create-booking" =>
                         $"""
                 🎵 Новое бронирование
 
@@ -45,7 +45,7 @@ namespace GatewayService.Services.Notifications
                 {message.BookingDto.Description}
                 """,
 
-                    "updated" =>
+                    "update-booking" =>
                         $"""
                 ✏️ Бронирование изменено
 
@@ -55,7 +55,7 @@ namespace GatewayService.Services.Notifications
                 {message.BookingDto.Description}
                 """,
 
-                    "approved" =>
+                    "approve-booking" =>
                         $"""
                 ✅ Бронирование подтверждено
 
@@ -63,7 +63,7 @@ namespace GatewayService.Services.Notifications
                 Окончание: {message.BookingDto.TimeEnd:dd.MM.yyyy HH:mm}
                 """,
 
-                    "rejected" =>
+                    "reject-booking" =>
                         $"""
                 ❌ Бронирование отклонено
 
@@ -71,7 +71,7 @@ namespace GatewayService.Services.Notifications
                 Окончание: {message.BookingDto.TimeEnd:dd.MM.yyyy HH:mm}
                 """,
 
-                    "deleted" =>
+                    "delete-booking" =>
                         $"""
                 🗑 Бронирование отменено
 
@@ -90,7 +90,7 @@ namespace GatewayService.Services.Notifications
 
                 await NotifyOwnerAsync(message.BookingDto.UserId, text);
 
-                if (message.EventType is "created" or "updated" or "deleted")
+                if (message.EventType is "create-booking" or "update-booking" or "delete-booking")
                 {
                     await NotifyModeratorsAsync(text);
                 }
